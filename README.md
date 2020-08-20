@@ -19,5 +19,7 @@ For example, with the touch of a button, you can do routine tasks such as adding
 (I've thought about it a few times, but unfortunately this add-on only allows you to register work within Blender.)
 
 # Tutorial&Readme
+
 [日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
+
 [English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
