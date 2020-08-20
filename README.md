@@ -28,11 +28,11 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
  - v3.3　August 21, 2020
 
-Changed the name of each part of the work window.
-Addition of the category function
-You can now set icons.
-Add temporary disablement of macros
-Added import and export functionality.
-Actions can now be rearranged
-Optimized button placement
-Other bug fixes
+Changed the name of each part of the work window.<br>
+Addition of the category function<br>
+You can now set icons.<br>
+Add temporary disablement of macros<br>
+Added import and export functionality.<br>
+Actions can now be rearranged<br>
+Optimized button placement<br>
+Other bug fixes<br>
