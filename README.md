@@ -6,7 +6,7 @@ This add-on is similar to Affinity Photo and Photoshop's "Action"<br>
 macro registration and batch processing
 
 
-# ・Add-ons Explained
+# Add-ons Explained
 
 Convert complex, repetitive tasks into one click!
 
