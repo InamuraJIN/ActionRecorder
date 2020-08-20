@@ -35,4 +35,4 @@ Add temporary disablement of macros<br>
 Added import and export functionality.<br>
 Actions can now be rearranged<br>
 Optimized button placement<br>
-Other bug fixes<br>
+Fixed 16 other bugs.<br>
