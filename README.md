@@ -1,7 +1,19 @@
-# ActRec
+# Welcome to ActionRecorder!
 
-This add-on is under Development(Daily Build)<br>
-<br>
-Please refrain from using it for serious work</p>
-Twitter：https://twitter.com/Inamura_JIN</br>
+It's **Blender** add-on!
+#
+## ・Add-ons Explained
 
+Convert complex, repetitive tasks into one click!
+
+You have to remember is "Add" & "Play" Only!
+
+Supported Versions: 2.83 to 2.9 (build version)
+
+Simplify complex repetitive tasks, which were difficult to do with the standard “Repeat Last”(Shift+R) function of Blender, by registering multiple actions.
+
+You can register, edit and play back various tasks as you wish
+
+For example, with the touch of a button, you can do routine tasks such as adding instant coffee, milk and sugar while boiling water and adding hot water!
+
+(I've thought about it a few times, but unfortunately this add-on only allows you to register work within Blender.)
