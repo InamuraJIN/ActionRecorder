@@ -17,3 +17,7 @@ You can register, edit and play back various tasks as you wish
 For example, with the touch of a button, you can do routine tasks such as adding instant coffee, milk and sugar while boiling water and adding hot water!
 
 (I've thought about it a few times, but unfortunately this add-on only allows you to register work within Blender.)
+
+# Tutorial&Readme
+[日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
+[English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
