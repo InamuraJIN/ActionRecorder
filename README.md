@@ -30,7 +30,7 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
 # Update
 
- - v3.3　August 21, 2020
+ - v3.3.0　August 21, 2020
 
 Changed the name of each part of the work window.<br>
 Addition of the category function<br>
