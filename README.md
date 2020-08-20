@@ -1,6 +1,10 @@
 # Welcome to ActionRecorder!
 
-It's **Blender** add-on!
+ActRec is an add-on developed to streamline your work in Blender
+
+This add-on is similar to Affinity Photo and Photoshop's "Action"<br>
+macro registration and batch processing
+
 #
 ## ・Add-ons Explained
 
