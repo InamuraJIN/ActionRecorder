@@ -30,7 +30,8 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
 # Update
 
- - v3.3.0　August 21, 2020
+ - v3.3.0<br>
+ August 21, 2020<br>
 
 Changed the name of each part of the work window.<br>
 Addition of the category function<br>
@@ -40,3 +41,8 @@ Added import and export functionality.<br>
 Actions can now be rearranged<br>
 Optimized button placement<br>
 Fixed 16 other bugs.<br>
+
+- V3.3.1<br>
+ August 22, 2020<br>
+ 
+Some of the URLs have been corrected.<br>
