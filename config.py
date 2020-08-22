@@ -4,5 +4,5 @@ config = {
     "BugReport_URL": 'https://twitter.com/Inamura_JIN',
     "checkSource_URL": 'https://api.github.com/repos/InamuraJIN/ActionRecorder/contents/__init__.py',
     "repoSource_URL": 'https://github.com/InamuraJIN/ActionRecorder',
-    "releasNotes_URL": ''
+    "releasNotes_URL": 'https://github.com/InamuraJIN/ActionRecorder#update'
 }
