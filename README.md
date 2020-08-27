@@ -5,6 +5,10 @@ ActRec is an add-on developed to streamline your work in Blender
 This add-on is similar to Affinity Photo and Photoshop's "Action"<br>
 macro registration and batch processing
 
+This add-on is available for Free!<br>
+It takes a lot of coffee to develop an Add-on!
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://paypal.me/InamuraJIN?locale.x=ja_JP)
+
 
 # Add-ons Explained
 
