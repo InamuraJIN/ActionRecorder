@@ -505,6 +505,7 @@ def InitSavedPanel(dummy = None):
     catlength[0] = len(AR_Var.Categories)
     TempSaveCats()
     TempUpdate()
+    multiselection_buttons[0] = False
     oninit[0] = False
 
 def GetPanelIndex(cat): #Get Index of a Category
@@ -659,13 +660,19 @@ def ImportSortedZip(filepath):
 
         sorteddirlist = [None] * len(dirlist)
         for i in range(len(dirlist)):
-            new_i = int(dirlist[i].split("~")[0])
-            sorteddirlist[new_i] = dirlist[i]
-            dirfileslist[new_i], dirfileslist[i] = dirfileslist[i], dirfileslist[new_i]
-            sortedfilelist = [None] * len(dirfileslist[new_i])
-            for fil in dirfileslist[new_i]:
-                sortedfilelist[int(os.path.basename(fil).split("~")[0])] = fil
-            dirfileslist[new_i] = sortedfilelist
+            if "~" in dirlist[i]:
+                new_i = int(dirlist[i].split("~")[0])
+                sorteddirlist[new_i] = dirlist[i]
+                dirfileslist[new_i], dirfileslist[i] = dirfileslist[i], dirfileslist[new_i]
+                sortedfilelist = [None] * len(dirfileslist[new_i])
+                for fil in dirfileslist[new_i]:
+                    if fil.count("~") == 3 and fil.endswith('.py'):
+                        sortedfilelist[int(os.path.basename(fil).split("~")[0])] = fil
+                    else:
+                        return (None, None)
+                dirfileslist[new_i] = sortedfilelist
+            else:
+                return (None, None)
         return (dirfileslist, sorteddirlist)
 
 def CheckForUpdate():
@@ -837,7 +844,7 @@ def panelFactory(spaceType): #Create Panels for every spacetype with UI
                 row = layout.row()
                 row2 = row.split(factor= 0.7)
                 col = row2.column()
-                col.enabled = len(AR_Var.Instance_Coll) > 0 and not multiselection_buttons[0]
+                col.enabled = len(AR_Var.Instance_Coll) > 0 and not (multiselection_buttons[0] and len(InstanceLastselected) > 1)
                 col.prop(AR_Var , 'Rename' , text='')
                 row2.operator(AR_OT_Button_Rename.bl_idname , text='ReName')
     AR_PT_Global.__name__ = "AR_PT_Global_%s" % spaceType
@@ -1257,106 +1264,84 @@ class AR_OT_Import(Operator, ImportHelper):
         scene = context.scene
         ar_categories = AR_Var.Categories
         if self.filepath.endswith(".zip"):
-            if self.Mode == 'overwrite':
+            if self.AddNewCategory:
                 dirfileslist, sorteddirlist = ImportSortedZip(self.filepath)
-                for cat in ar_categories:
-                    RegisterUnregister_Category(len(categories), False)
-                ar_categories.clear()
-                AR_Var.Instance_Coll.clear()
-                AR_Var.Instance_Index = 0
-                AR_Var.ar_enum()
                 with zipfile.ZipFile(self.filepath, 'r') as zip_out:
-                    for i in range(len(sorteddirlist)):
-                        cat = AR_Var.Importsettings.add()
-                        name = "".join(sorteddirlist[i].split("~")[1:])
-                        cat.pn_name = name
-                        cat.name = name
-                        cat.Instance_Start = len(AR_Var.Instance_Coll)
-                        RegisterUnregister_Category(GetPanelIndex(cat))
-                        for dir_file in dirfileslist[i]:
-                            btn = AR_Var.Instance_Coll.add()
-                            name_icon = os.path.splitext(os.path.basename(dir_file))[0]
-                            btn.name = "".join(name_icon.split("~")[1:-1])
-                            btn.icon = name_icon.split("~")[-1]
-                            for cmd in zip_out.read(dir_file).decode("utf-8").splitlines():
-                                new = btn.command.add()
-                                new.name = cmd
-                    TempSaveCats()
-            else:
-                if self.AddNewCategory:
-                    dirfileslist, sorteddirlist = ImportSortedZip(self.filepath)
-                    with zipfile.ZipFile(self.filepath, 'r') as zip_out:
-                        mycat = ar_categories.add()
-                        name = CheckForDublicates([n.pn_name for n in ar_categories], self.Category)
-                        mycat.name = name
-                        mycat.pn_name = name
-                        mycat.Instance_Start = len(AR_Var.Instance_Coll)
-                        RegisterUnregister_Category(GetPanelIndex(mycat))
-                        for dirs in dirfileslist:
-                            for btn_file in dirs:
-                                name_icon = os.path.splitext(os.path.basename(btn_file))[0]
-                                name = "".join(name_icon.split("~")[1:-1])
-                                icon = name_icon.split("~")[-1]
-                                inst = AR_Var.Instance_Coll.add()
-                                inst.name = CheckForDublicates([ele.name for ele in AR_Var.Instance_Coll], name)
-                                inst.icon = icon
-                                for line in zip_out.read(btn_file).decode("utf-8").splitlines():
-                                    cmd = inst.command.add()
-                                    cmd.name = line
-                                new_e = AR_Var.ar_enum.add()
-                                e_index = len(AR_Var.ar_enum) - 1
-                                new_e.name = str(e_index)
-                                new_e.Index = e_index
-                                mycat.Instance_length += 1
-                else:
-                    for icat in AR_Var.Importsettings:
-                        Index = -1
-                        mycat = None
-                        if icat.enum == 'append':
-                            Index = AR_Var.Categories.find(icat.cat_name)
-                        if Index == -1:
-                            mycat = ar_categories.add()
-                            name = icat.cat_name
-                            name = CheckForDublicates([n.pn_name for n in ar_categories], name)
-                            mycat.name = name
-                            mycat.pn_name = name
-                            mycat.Instance_Start = len(AR_Var.Instance_Coll)
-                            RegisterUnregister_Category(GetPanelIndex(mycat))
-                        else:
-                            mycat = ar_categories[Index]
-                            for btn in icat.Buttons:
-                                if btn.enum == 'overwrite':
-                                    for i in range(mycat.Instance_Start, mycat.Instance_Start + mycat.Instance_length):
-                                        inst = AR_Var.Instance_Coll[i]
-                                        if btn.btn_name == inst.name:
-                                            inst.name = btn.btn_name
-                                            inst.icon = btn.icon
-                                            inst.command.clear()
-                                            for cmd in btn.command.splitlines():
-                                                new = inst.command.add()
-                                                new.name = cmd
-                                            break
-                                    else:
-                                        btn.enum = 'add'
-
-                        for btn in icat.Buttons:
-                            if btn.enum == 'overwrite':
-                                continue
-                            inserti = mycat.Instance_Start + mycat.Instance_length
-                            name = btn.btn_name
-                            icon = btn.icon
-                            data = {"name": CheckForDublicates([ele.name for ele in AR_Var.Instance_Coll], name),
-                                    "command": btn.command.splitlines(),
-                                    "icon": icon}
-                            Inst_Coll_Insert(inserti, data, AR_Var.Instance_Coll)
+                    mycat = ar_categories.add()
+                    name = CheckForDublicates([n.pn_name for n in ar_categories], self.Category)
+                    mycat.name = name
+                    mycat.pn_name = name
+                    mycat.Instance_Start = len(AR_Var.Instance_Coll)
+                    RegisterUnregister_Category(GetPanelIndex(mycat))
+                    for dirs in dirfileslist:
+                        for btn_file in dirs:
+                            name_icon = os.path.splitext(os.path.basename(btn_file))[0]
+                            name = "".join(name_icon.split("~")[1:-1])
+                            icon = name_icon.split("~")[-1]
+                            inst = AR_Var.Instance_Coll.add()
+                            inst.name = CheckForDublicates([AR_Var.Instance_Coll[i].name for i in range(mycat.Instance_Start, mycat.Instance_Start + mycat.Instance_length)], name)
+                            inst.icon = icon
+                            for line in zip_out.read(btn_file).decode("utf-8").splitlines():
+                                cmd = inst.command.add()
+                                cmd.name = line
                             new_e = AR_Var.ar_enum.add()
                             e_index = len(AR_Var.ar_enum) - 1
                             new_e.name = str(e_index)
                             new_e.Index = e_index
                             mycat.Instance_length += 1
-                            if Index != -1:
-                                for cat in ar_categories[Index + 1:] :
-                                    cat.Instance_Start += 1
+            else:
+                if not len(AR_Var.Importsettings):
+                    if bpy.ops.ar.data_import_options('EXEC_DEFAULT', filepath= self.filepath, fromoperator= True) == {'CANCELLED'}:
+                        self.report({'ERROR'}, "The selected file is not compatible")
+                        return {'CANCELLED'}
+                for icat in AR_Var.Importsettings:
+                    Index = -1
+                    mycat = None
+                    if icat.enum == 'append':
+                        Index = AR_Var.Categories.find(icat.cat_name)
+                    if Index == -1:
+                        mycat = ar_categories.add()
+                        name = icat.cat_name
+                        name = CheckForDublicates([n.pn_name for n in ar_categories], name)
+                        mycat.name = name
+                        mycat.pn_name = name
+                        mycat.Instance_Start = len(AR_Var.Instance_Coll)
+                        RegisterUnregister_Category(GetPanelIndex(mycat))
+                    else:
+                        mycat = ar_categories[Index]
+                        for btn in icat.Buttons:
+                            if btn.enum == 'overwrite':
+                                for i in range(mycat.Instance_Start, mycat.Instance_Start + mycat.Instance_length):
+                                    inst = AR_Var.Instance_Coll[i]
+                                    if btn.btn_name == inst.name:
+                                        inst.name = btn.btn_name
+                                        inst.icon = btn.icon
+                                        inst.command.clear()
+                                        for cmd in btn.command.splitlines():
+                                            new = inst.command.add()
+                                            new.name = cmd
+                                        break
+                                else:
+                                    btn.enum = 'add'
+
+                    for btn in icat.Buttons:
+                        if btn.enum == 'overwrite':
+                            continue
+                        inserti = mycat.Instance_Start + mycat.Instance_length
+                        name = btn.btn_name
+                        icon = btn.icon
+                        data = {"name": CheckForDublicates([AR_Var.Instance_Coll[i].name for i in range(mycat.Instance_Start, mycat.Instance_Start + mycat.Instance_length)], name),
+                                "command": btn.command.splitlines(),
+                                "icon": icon}
+                        Inst_Coll_Insert(inserti, data, AR_Var.Instance_Coll)
+                        new_e = AR_Var.ar_enum.add()
+                        e_index = len(AR_Var.ar_enum) - 1
+                        new_e.name = str(e_index)
+                        new_e.Index = e_index
+                        mycat.Instance_length += 1
+                        if Index != -1:
+                            for cat in ar_categories[Index + 1:] :
+                                cat.Instance_Start += 1
             SetEnumIndex()
             if AR_Var.Autosave:
                 Save()
@@ -1364,6 +1349,7 @@ class AR_OT_Import(Operator, ImportHelper):
             self.report({'ERROR'}, "{ " + self.filepath + " } Select a .zip file")
         AR_Var = context.preferences.addons[__package__].preferences
         AR_Var.Importsettings.clear()
+        TempSaveCats()
         return {"FINISHED"}
     
     def draw(self, context):
@@ -1403,11 +1389,17 @@ class AR_OT_ImportLoadSettings(bpy.types.Operator):
     bl_description = "Load the select the file to change the importsettings"
 
     filepath : StringProperty()
+    fromoperator : BoolProperty()
 
     def execute(self, context):
         AR_Var = context.preferences.addons[__package__].preferences
         if os.path.exists(self.filepath) and self.filepath.endswith(".zip"):
             dirfileslist, sorteddirlist = ImportSortedZip(self.filepath)
+            if dirfileslist is None:
+                if not self.fromoperator:
+                    self.report({'ERROR'}, "The selected file is not compatible")
+                self.fromoperator = False
+                return {'CANCELLED'}
             with zipfile.ZipFile(self.filepath, 'r') as zip_out:
                 AR_Var.Importsettings.clear()
                 for i in range(len(sorteddirlist)):
@@ -1717,7 +1709,7 @@ class AR_OT_Button_Rename(Operator):
     @classmethod
     def poll(cls, context):
         AR_Var = context.preferences.addons[__package__].preferences
-        return len(AR_Var.Instance_Coll) and not multiselection_buttons[0]
+        return len(AR_Var.Instance_Coll) and not (multiselection_buttons[0] and len(InstanceLastselected) > 1)
 
     def execute(self, context):
         AR_Var = context.preferences.addons[__package__].preferences
@@ -1756,6 +1748,7 @@ class AR_OT_Category_Cmd_Icon(bpy.types.Operator):
         AR_Var = context.preferences.addons[__package__].preferences
         AR_Var.Instance_Coll[self.index].icon = AR_Prop.SelectedIcon
         AR_Prop.SelectedIcon = "BLANK1"
+        TempSaveCats()
         bpy.context.area.tag_redraw()
         return {"FINISHED"}
     
@@ -2304,9 +2297,13 @@ def Instance_Updater(self, context):
         bpy.ops.ar.check_ctrl('INVOKE_DEFAULT')
     if multiselection_buttons[0]:
         if self.Value:
-            InstanceLastselected.insert(0, self.Index)
+            if not self.Index in InstanceLastselected:
+                InstanceLastselected.insert(0, self.Index)
+                AR_Var.Instance_Index = self.Index
         else:
             InstanceLastselected.remove(self.Index)
+            if len(InstanceLastselected) < 1:
+                self.Value = True
         InstanceCurrentselected[0] = self.Index
     else:
         if len(InstanceLastselected) > 1:
