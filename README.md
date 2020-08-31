@@ -38,3 +38,9 @@ For example, with the touch of a button, you can do routine tasks such as adding
 # Update
 
 https://github.com/InamuraJIN/ActionRecorder/wiki
+
+
+# Community
+Discord
+https://discord.gg/XTWbkFx
+
