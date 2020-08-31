@@ -41,6 +41,6 @@ https://github.com/InamuraJIN/ActionRecorder/wiki
 
 
 # Community
-Discord
+Discord<br>
 https://discord.gg/XTWbkFx
 
