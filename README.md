@@ -1,12 +1,9 @@
-# ActRec
+# Action Recorder
+Are you tirred of coding long intimidating coding task just for one-off modeling? Or may be you're not good coding at all !<br>
+Introducing "ActionRecorder" !<br>
 
-This add-on is under Development(Daily Build)<br>
-<br>
-Please refrain from using it for serious work</p>
-Twitter：https://twitter.com/Inamura_JIN</br>
+ActRec is an add-on developed to streamline your work in Blender<br>
 
-<<<<<<< HEAD
-=======
 This add-on is similar to Affinity Photo and Photoshop's "Action"<br>
 This add-on has been reborn!
 **Command Recorder --> Action Recorder**
@@ -47,4 +44,3 @@ https://github.com/InamuraJIN/ActionRecorder/wiki
 Discord<br>
 https://discord.gg/XTWbkFx
 
->>>>>>> 8f40e2cce727a93e1adc44c5921daee68755a6e0
