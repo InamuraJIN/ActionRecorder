@@ -1,0 +1,6 @@
+bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0))
+bpy.ops.object.subdivision_set(level=2, relative=False)
+bpy.ops.object.convert(target='MESH')
+bpy.ops.object.editmode_toggle()
+bpy.ops.transform.tosphere(value=1, mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+bpy.ops.object.editmode_toggle()

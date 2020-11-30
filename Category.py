@@ -1,7 +1,8 @@
 Category = {
     "Mode": {
         "EDIT_MESH": [
-            "Edit Mode"
+            "Edit Mode",
+            "UV Mode"
         ],
         "EDIT_CURVE": [],
         "EDIT_SURFACE": [],
@@ -25,7 +26,9 @@ Category = {
         "VERTEX_GPENCIL": []
     },
     "Area": {
-        "VIEW_3D": [],
+        "VIEW_3D": [
+            "Example"
+        ],
         "VIEW": [],
         "UV": [
             "UV Mode"
