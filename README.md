@@ -1,9 +1,16 @@
-# Welcome to ActionRecorder!
+# Action Recorder
+Are you tirred of coding long intimidating coding task just for one-off modeling? Or may be you're not good coding at all !<br>
+Introducing "ActionRecorder" !<br>
 
-ActRec is an add-on developed to streamline your work in Blender
+ActRec is an add-on developed to streamline your work in Blender<br>
 
 This add-on is similar to Affinity Photo and Photoshop's "Action"<br>
-macro registration and batch processing
+This add-on has been reborn!
+**Command Recorder --> Action Recorder**
+
+This add-on is available for Free!<br>
+But, It takes a lot of coffee to develop an Add-on!
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://paypal.me/InamuraJIN?locale.x=ja_JP)
 
 
 # Add-ons Explained
@@ -30,13 +37,10 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
 # Update
 
- - v3.3.0　August 21, 2020
+https://github.com/InamuraJIN/ActionRecorder/wiki
 
-Changed the name of each part of the work window.<br>
-Addition of the category function<br>
-You can now set icons.<br>
-Add temporary disablement of macros<br>
-Added import and export functionality.<br>
-Actions can now be rearranged<br>
-Optimized button placement<br>
-Fixed 16 other bugs.<br>
+
+# Community
+Discord<br>
+https://discord.gg/XTWbkFx
+
