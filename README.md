@@ -19,7 +19,7 @@ Convert complex, repetitive tasks into one click!
 
 You have to remember is "Add" & "Play" Only!
 
-Supported Versions: 2.83 to 2.9 (build version)
+Supported Versions: 2.83 to 2.9
 
 Simplify complex repetitive tasks, which were difficult to do with the standard “Repeat Last”(Shift+R) function of Blender, by registering multiple actions.
 
