@@ -12,6 +12,9 @@ This add-on is available for Free!<br>
 But, It takes a lot of coffee to develop an Add-on!
 [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://paypal.me/InamuraJIN?locale.x=ja_JP)
 
+The update button has been moved!<br>
+:warning: Be sure to use this button<br>
+![](https://i.imgur.com/YAJ4wqY.png)
 
 # Add-ons Explained
 
