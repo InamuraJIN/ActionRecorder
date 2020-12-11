@@ -32,10 +32,16 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
 (I've thought about it a few times, but unfortunately this add-on only allows you to register work within Blender.)
 
+
+
+
 # Tutorial&Readme
 [日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
 
 [English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
+
+
+
 
 
 # Update
@@ -43,7 +49,22 @@ For example, with the touch of a button, you can do routine tasks such as adding
 https://github.com/InamuraJIN/ActionRecorder/wiki
 
 
-# Community
+
+
+
+# Community 
 Discord<br>
 https://discord.gg/XTWbkFx
 
+
+
+
+# Bug Reports and Requests
+- Discord<br>
+https://discord.gg/XTWbkFx
+- Twitter<br>
+https://twitter.com/Inamura_JIN
+- GitHub<br>
+https://github.com/InamuraJIN/ActionRecorder/issues
+<br><br><br>
+thank you
