@@ -31,7 +31,7 @@ You can register, edit and play back various tasks as you wish
 For example, with the touch of a button, you can do routine tasks such as adding instant coffee, milk and sugar while boiling water and adding hot water!
 
 (I've thought about it a few times, but unfortunately this add-on only allows you to register work within Blender.)
-
+<br><br><br>
 
 
 
@@ -39,7 +39,7 @@ For example, with the touch of a button, you can do routine tasks such as adding
 [日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
 
 [English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
-
+<br><br><br>
 
 
 
@@ -47,7 +47,7 @@ For example, with the touch of a button, you can do routine tasks such as adding
 # Update
 
 https://github.com/InamuraJIN/ActionRecorder/wiki
-
+<br><br><br>
 
 
 
@@ -55,7 +55,7 @@ https://github.com/InamuraJIN/ActionRecorder/wiki
 # Community 
 Discord<br>
 https://discord.gg/XTWbkFx
-
+<br><br><br>
 
 
 
@@ -66,5 +66,5 @@ https://discord.gg/XTWbkFx
 https://twitter.com/Inamura_JIN
 - GitHub<br>
 https://github.com/InamuraJIN/ActionRecorder/issues
-<br><br><br>
+<br><br><br><br><br><br>
 thank you
