@@ -61,10 +61,10 @@ https://discord.gg/XTWbkFx
 
 # Bug Reports and Requests
 - Discord<br>
-https://discord.gg/XTWbkFx
+https://discord.gg/XTWbkFx<br><br>
 - Twitter<br>
-https://twitter.com/Inamura_JIN
+https://twitter.com/Inamura_JIN<br><br>
 - GitHub<br>
-https://github.com/InamuraJIN/ActionRecorder/issues
+https://github.com/InamuraJIN/ActionRecorder/issues<br><br>
 <br><br><br><br><br><br>
 thank you
