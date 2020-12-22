@@ -30,6 +30,8 @@ from bpy.types import Panel, UIList, Operator, PropertyGroup, AddonPreferences, 
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 import rna_keymap_ui
 import bpy.utils.previews
+
+import sys
 # endregion
 
 # region Variables
@@ -64,10 +66,9 @@ class AR_UL_Selector(UIList):
         row = layout.row(align= True)
         row.alert = item.alert
         row.operator(AR_OT_Record_Icon.bl_idname, text= "", icon_value= AR_Var.Record_Coll[0].Command[index].icon, emboss= False).index = index
-        if active_data.Index == index:
-            row.prop(item, 'cname', text = '', emboss= False)
-        else:
-            row.operator(AR_OT_Record_Edit.bl_idname, text= item.cname, emboss= False).index = index
+        col = row.column()
+        col.ui_units_x = 0.5
+        row.prop(item, 'cname', text = '', emboss= False)
 classes.append(AR_UL_Selector)
 class AR_UL_Command(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -143,14 +144,35 @@ def Record(Num, Mode):
     else:
         AR_Prop.Record = False
         notadded = []
-        for i in range (AR_Prop.Temp_Num, len(Recent)):
-            TempText = Recent[i-1].body
+        startCommand = ""
+        lastCommand = ""
+        for i in range(AR_Prop.Temp_Num, len(Recent)):
+            TempText = Recent[i - 1].body
             if TempText.count('bpy'):
                 name = TempText[TempText.find('bpy'):]
+                if lastCommand.split("(", 1)[0] == name.split("(", 1)[0] and startCommand != name:
+                    lastCommand = name
+                    continue
                 macro = GetMacro(name)
-                if macro is None or macro is True:
+                if macro is True:
+                    continue
+                if startCommand != lastCommand:
+                    lastMacro = GetMacro(lastCommand)
+                    if lastMacro is None:
+                        notadded.append(name)
+                        if AR_Var.CreateEmpty:
+                            Item = AR_Var.Record_Coll[CheckCommand(Num)].Command[-1]
+                            Item.macro = "<Empty>"
+                            Item.cname = ""
+                    else:
+                        Item = AR_Var.Record_Coll[CheckCommand(Num)].Command[-1]
+                        Item.macro = lastMacro
+                        Item.cname = lastCommand
+                lastCommand = name
+                startCommand = name
+                if macro is None:
                     notadded.append(name)
-                    if macro is None and AR_Var.CreateEmpty:
+                    if AR_Var.CreateEmpty:
                         Item = AR_Var.Record_Coll[CheckCommand(Num)].Command.add()
                         Item.macro = "<Empty>"
                         Item.cname = ""
@@ -158,6 +180,18 @@ def Record(Num, Mode):
                     Item = AR_Var.Record_Coll[CheckCommand(Num)].Command.add()
                     Item.macro = macro
                     Item.cname = name
+        if startCommand != lastCommand:
+            lastMacro = GetMacro(lastCommand)
+            if lastMacro is None:
+                notadded.append(name)
+                if AR_Var.CreateEmpty:
+                    Item = AR_Var.Record_Coll[CheckCommand(Num)].Command[-1]
+                    Item.macro = "<Empty>"
+                    Item.cname = ""
+            else:
+                Item = AR_Var.Record_Coll[CheckCommand(Num)].Command[-1]
+                Item.macro = lastMacro
+                Item.cname = lastCommand
         UpdateRecordText(Num)
         bpy.data.texts.remove(bpy.data.texts['Recent Reports'])
         return notadded
@@ -236,13 +270,13 @@ def getlastoperation(data, i=-1):
     else:
         return getlastoperation(data, i-1)
 
-def CheckAddCommand(data):
+def CheckAddCommand(data, line = 0):
     name, index = getlastoperation(data)
     macro = GetMacro(name)
     if macro is True:
-        return CheckAddCommand(data[ :index])
+        return CheckAddCommand(data[ :index], line + 1)
     else:
-        return (name, macro)
+        return (name, macro, len(data) + line - 1)
 
 def Add(Num, command = None):
     AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -250,10 +284,11 @@ def Add(Num, command = None):
         Recent = Get_Recent('Reports_All')
         try: #Add Macro
             if command is None:
-                name, macro = CheckAddCommand(Recent)
+                name, macro, line = CheckAddCommand(Recent)
             else:
                 name = command
                 macro = GetMacro(command)
+                line = -1
             notadded = False
             if macro is None or macro is True:
                 notadded = name
@@ -261,10 +296,19 @@ def Add(Num, command = None):
                     Item = AR_Var.Record_Coll[CheckCommand(Num)].Command.add()
                     Item.macro = "<Empty>"
                     Item.cname = ""
+            elif AR_Var.LastLineIndex == line and AR_Var.LastLineCmd == name:
+                notadded = "<Empty>"
+                Item = AR_Var.Record_Coll[CheckCommand(Num)].Command.add()
+                Item.macro = "<Empty>"
+                Item.cname = ""
             else:
                 Item = AR_Var.Record_Coll[CheckCommand(Num)].Command.add()
                 Item.macro = macro
                 Item.cname = name
+                if line != -1:
+                    AR_Var.LastLine = macro
+                    AR_Var.LastLineIndex = line
+                    AR_Var.LastLineCmd = name
             UpdateRecordText(Num)
             bpy.data.texts.remove(bpy.data.texts['Recent Reports'])
             return notadded
@@ -336,10 +380,27 @@ def Select_Command(Mode): # Select the upper/lower Record
         else:
             AR_Var.Record_Coll[CheckCommand(0)].Index = currentIndex + 1
 
-def RespAlert(Command, index):
-    Command.alert = True
-    Alert(index)
+def RespAlert(Command, index, CommandIndex):
+    AR_Var = bpy.context.preferences.addons[__package__].preferences
+    if CommandIndex == AR_Var.Record_Coll[CheckCommand(index + 1)].Index:
+        if AR_Var.Record_Coll[CheckCommand(index + 1)].Index == 0:
+            if len(AR_Var.Record_Coll[CheckCommand(index + 1)].Command) > 1:
+                AR_Var.Record_Coll[CheckCommand(index + 1)].Index = 1
+                bpy.context.area.tag_redraw()
+        else:
+            AR_Var.Record_Coll[CheckCommand(index + 1)].Index = 0
+            bpy.context.area.tag_redraw()
+        bpy.app.timers.register(functools.partial(AfterAlert, Command, index, CommandIndex), first_interval= 0.01)
+    else:
+        AfterAlert(Command, index, CommandIndex)
     return True
+
+def AfterAlert(Command, index, CommandIndex):
+    AR_Var = bpy.context.preferences.addons[__package__].preferences
+    AR_Var.Record_Coll[CheckCommand(index + 1)].Index = CommandIndex
+    Command.alert = True
+    AR_Var.Record_Coll[CheckCommand(index + 1)].Index = CommandIndex
+    Alert(index)
 
 def Play(Commands, index, AllLoops = None, extension = 0 ): #Execute the Macro
     if AllLoops is None:
@@ -370,7 +431,7 @@ def Play(Commands, index, AllLoops = None, extension = 0 ): #Execute the Macro
                                 AllLoops = BackLoops
                             continue
                         except:
-                            return RespAlert(Command, index)
+                            return RespAlert(Command, index, i)
                         return
                     else:
                         for k in np.arange(data["Startnumber"], data["Endnumber"], data["Stepnumber"]):
@@ -400,7 +461,7 @@ def Play(Commands, index, AllLoops = None, extension = 0 ): #Execute the Macro
                     if obj in [o for o in objs]:
                         objs.active = obj
                     else:
-                        return RespAlert(Command, index)
+                        return RespAlert(Command, index, i)
                     continue
                 elif data['Type'] == 'Select Vertices':
                     obj = bpy.context.object
@@ -420,16 +481,16 @@ def Play(Commands, index, AllLoops = None, extension = 0 ): #Execute the Macro
                         mesh.update()
                     else:
                         bpy.ops.object.mode_set(mode=mode)
-                        return RespAlert(Command, index)
+                        return RespAlert(Command, index, i)
                     bpy.ops.object.mode_set(mode=mode)
                     continue
                 else:
-                    return RespAlert(Command, index)
+                    return RespAlert(Command, index, i)
             try:
                 exec(Command.cname)
             except Exception as err:
                 print(err)
-                return RespAlert(Command, index)
+                return RespAlert(Command, index, i)
 
 def Clear(Num) : # Clear all Macros
     AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -526,8 +587,16 @@ def LoadLocalActions(dummy):
             locmd.active = cmd['active']
             locmd.alert = cmd['alert']
             locmd.icon = cmd['icon']
-    if len(AR_Var.Record_Coll) > len(local):
-        AR_Var.Record_Coll.remove(1) # Bug
+    # Check Command
+    i = 0
+    while i < len(local):
+        ele = local[i]
+        loc = AR_Var.Record_Coll[i]
+        if  loc.name == ele['name'] and loc.Index == ele['Index'] and len(ele['Command']) == len(loc.Command):
+            i += 1
+        else:
+            AR_Var.Record_Coll.remove(i)
+    SaveToDataHandler(None)
 
 def Recorder_to_Instance(panel): #Convert Record to Button
     AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -923,10 +992,10 @@ def DeleteProps(address):
     exec("del %s" % address)
 
 def getIcons():
-    return bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.keys()[1:] + list(preview_collections['ar_custom'])
+    return bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.keys()[1:]
 
 def getIconsvalues():
-    return [icon.value for icon in bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.values()[1:]] + [icon.icon_id for icon in preview_collections['ar_custom'].values()]
+    return [icon.value for icon in bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.values()[1:]]
 
 def registerIcon(pcoll, name: str, filepath: str):
     try:
@@ -1071,6 +1140,24 @@ def LoadActionFromTexteditor(texts):
             if line != '':
                 AR_Var = bpy.context.preferences.addons[__package__].preferences
                 Add(len(AR_Var.Record_Coll[0].Command), line)
+
+def showCategory(name, context):
+    AR_Var = context.preferences.addons[__package__].preferences
+    if AR_Var.ShowAllCategories:
+        return True
+    if name in CatVisibility["Area"][context.area.ui_type]:
+        return True
+    if context.area.ui_type == "VIEW_3D":
+        if name in CatVisibility["Mode"][context.mode]:    
+            return True
+    l = []
+    for ele in CatVisibility["Area"].values():
+        for item in ele:
+            l.append(item)
+    for ele in CatVisibility["Mode"].values():
+        for item in ele:
+            l.append(item)
+    return not (name in l)
 # endregion
 
 # region Panels
@@ -1086,7 +1173,7 @@ def panelFactory(spaceType): #Create Panels for every spacetype with UI
 
         '''def draw_header(self, context):
             self.layout.label(text = '', icon = 'REC')'''
-        #メニューの描画処理
+
         def draw(self, context):
             AR_Var = context.preferences.addons[__package__].preferences
             scene = bpy.context.scene
@@ -1254,7 +1341,7 @@ def panelFactory(spaceType): #Create Panels for every spacetype with UI
             row2.operator(AR_OT_Category_MoveUp.bl_idname, text= '',icon= 'TRIA_UP').Index = selectedCat_index
             row2.operator(AR_OT_Category_MoveDown.bl_idname, text= '',icon= 'TRIA_DOWN').Index = selectedCat_index
             row2.operator(AR_OT_Category_Add.bl_idname, text= '', icon= 'ADD').edit = False
-            row2.operator(AR_OT_Category_Delet.bl_idname, text= '', icon= 'TRASH')
+            row2.operator(AR_OT_Category_Delete.bl_idname, text= '', icon= 'TRASH')
             row.label(text= '')
             row = col.row(align= False)
             row.operator(AR_OT_Category_Edit.bl_idname, text= 'Edit')
@@ -1294,22 +1381,7 @@ def RegisterUnregister_Category(index, register = True): #Register/Unregister on
                 AR_Var = context.preferences.addons[__package__].preferences
                 index = int(self.bl_idname.split("_")[3])
                 category = AR_Var.Categories[index]
-                name = category.pn_name
-                if AR_Var.ShowAllCategories:
-                    return True
-                if name in CatVisibility["Area"][context.area.ui_type]:
-                    return True
-                if context.area.ui_type == "VIEW_3D":
-                    if name in CatVisibility["Mode"][context.mode]:    
-                        return True
-                l = []
-                for ele in CatVisibility["Area"].values():
-                    for item in ele:
-                        l.append(item)
-                for ele in CatVisibility["Mode"].values():
-                    for item in ele:
-                        l.append(item)
-                return not (name in l)
+                return showCategory(category.pn_name, context)
 
             def draw_header(self, context):
                 AR_Var = context.preferences.addons[__package__].preferences
@@ -1485,7 +1557,7 @@ class AR_OT_Category_Add(Operator):
         Data.CatVisis.clear()
 classes.append(AR_OT_Category_Add)
 
-class AR_OT_Category_Apply_Visibility(bpy.types.Operator):
+class AR_OT_Category_Apply_Visibility(Operator):
     bl_idname = "ar.category_applyvisibility"
     bl_label = "Apply Visibility"
     bl_description = ""
@@ -1512,7 +1584,7 @@ class AR_OT_Category_Apply_Visibility(bpy.types.Operator):
         return {"FINISHED"}
 classes.append(AR_OT_Category_Apply_Visibility)
 
-class AR_OT_Category_Delete_Visibility(bpy.types.Operator):
+class AR_OT_Category_Delete_Visibility(Operator):
     bl_idname = "ar.category_deletevisibility"
     bl_label = "Delete Visibility"
     bl_description = ""
@@ -1524,8 +1596,8 @@ class AR_OT_Category_Delete_Visibility(bpy.types.Operator):
         return {"FINISHED"}
 classes.append(AR_OT_Category_Delete_Visibility)
 
-class AR_OT_Category_Delet(Operator):
-    bl_idname = "ar.category_delet"
+class AR_OT_Category_Delete(Operator):
+    bl_idname = "ar.category_delete"
     bl_label = "Delete Category"
     bl_description = "Delete the selected Category"
 
@@ -1571,7 +1643,7 @@ class AR_OT_Category_Delet(Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
-classes.append(AR_OT_Category_Delet)
+classes.append(AR_OT_Category_Delete)
 
 class AR_OT_Category_Edit(Operator):
     bl_idname = "ar.category_edit"
@@ -1596,8 +1668,8 @@ classes.append(AR_OT_Category_Edit)
 
 class AR_OT_Category_MoveButton(Operator):
     bl_idname = "ar.category_move_category_button"
-    bl_label = "Move Button"
-    bl_description = "Moves the selected Button of a Category to another Category"
+    bl_label = "Move Action Button"
+    bl_description = "Move the selected Action Button of a Category to Another Category"
 
     @classmethod
     def poll(cls, context):
@@ -1668,16 +1740,22 @@ class AR_OT_Category_MoveUp(Operator):
         AR_Var = context.preferences.addons[__package__].preferences
         i = self.Index
         categories = AR_Var.Categories
-        if i - 1 >= 0:
+        y = i - 1
+        if y >= 0:
+            cat2 = categories[y]
+            while not showCategory(cat2.pn_name, context):
+                y -= 1
+                if y < 0:
+                    return {"CANCELLED"}
+                cat2 = categories[y]
             cat1 = categories[i]
-            cat2 = categories[i - 1]
             cat1.name, cat2.name = cat2.name, cat1.name
             cat1.pn_name, cat2.pn_name = cat2.pn_name, cat1.pn_name
             cat1.pn_show, cat2.pn_show = cat2.pn_show, cat1.pn_show
             cat1.pn_selected, cat2.pn_selected = cat2.pn_selected, cat1.pn_selected
             cat1.Instance_Start, cat2.Instance_Start = cat2.Instance_Start, cat1.Instance_Start
             cat1.Instance_length, cat2.Instance_length = cat2.Instance_length, cat1.Instance_length
-            AR_Var.Selected_Category[i - 1].selected = True
+            AR_Var.Selected_Category[y].selected = True
         bpy.context.area.tag_redraw()
         TempSaveCats()
         if AR_Var.Autosave:
@@ -1696,16 +1774,22 @@ class AR_OT_Category_MoveDown(Operator):
         AR_Var = context.preferences.addons[__package__].preferences
         i = self.Index
         categories = AR_Var.Categories
-        if i + 1 < len(categories):
+        y = i + 1 
+        if y < len(categories):
+            cat2 = categories[y]
+            while not showCategory(cat2.pn_name, context):
+                y += 1
+                if y >= len(categories):
+                    return {"CANCELLED"}
+                cat2 = categories[y]
             cat1 = categories[i]
-            cat2 = categories[i + 1]
             cat1.name, cat2.name = cat2.name, cat1.name
             cat1.pn_name, cat2.pn_name = cat2.pn_name, cat1.pn_name
             cat1.pn_show, cat2.pn_show = cat2.pn_show, cat1.pn_show
             cat1.pn_selected, cat2.pn_selected = cat2.pn_selected, cat1.pn_selected
             cat1.Instance_Start, cat2.Instance_Start = cat2.Instance_Start, cat1.Instance_Start
             cat1.Instance_length, cat2.Instance_length = cat2.Instance_length, cat1.Instance_length
-            AR_Var.Selected_Category[i + 1].selected = True
+            AR_Var.Selected_Category[y].selected = True
         bpy.context.area.tag_redraw()
         TempSaveCats()
         if AR_Var.Autosave:
@@ -1715,8 +1799,8 @@ classes.append(AR_OT_Category_MoveDown)
 
 class AR_OT_RecordToButton(Operator):
     bl_idname = "ar.record_record_to_button"
-    bl_label = "Record to Button"
-    bl_description = "Add the selectd Record to a Category"
+    bl_label = "Action to Global"
+    bl_description = "Add the selected Action to a Category"
 
     @classmethod
     def poll(cls, context):
@@ -1726,25 +1810,35 @@ class AR_OT_RecordToButton(Operator):
     def execute(self, context):
         AR_Var = context.preferences.addons[__package__].preferences
         categories = AR_Var.Categories
-        for cat in categories:
-            if cat.pn_selected:
-                Recorder_to_Instance(cat)
-                break
-        if AR_Var.RecToBtn_Mode == 'move':
-            Remove(0)
-            TempUpdate()
-        TempSaveCats()
-        if AR_Var.Autosave:
-            Save()
-        bpy.context.area.tag_redraw()
-        return {"FINISHED"}
+        if len(categories):
+            for cat in categories:
+                if cat.pn_selected:
+                    Recorder_to_Instance(cat)
+                    break
+            if AR_Var.RecToBtn_Mode == 'move':
+                Remove(0)
+                TempUpdate()
+            TempSaveCats()
+            if AR_Var.Autosave:
+                Save()
+            bpy.context.area.tag_redraw()
+            return {"FINISHED"}
+        else:
+            return {'CANCELLED'}
 
     def draw(self, context):
         AR_Var = context.preferences.addons[__package__].preferences
         categories = AR_Var.Categories
         layout = self.layout
-        for cat in categories:
-            layout.prop(cat, 'pn_selected', text= cat.pn_name)
+        if len(categories):
+            for cat in categories:
+                layout.prop(cat, 'pn_selected', text= cat.pn_name)
+        else:
+            box = layout.box()
+            col = box.column()
+            col.scale_y = 0.9
+            col.label(text= 'Please Add a Category first', icon= 'INFO')
+            col.label(text= 'To do that, go to the Advanced menu', icon= 'BLANK1')
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
@@ -1753,6 +1847,7 @@ classes.append(AR_OT_RecordToButton)
 class AR_OT_Import(Operator, ImportHelper):
     bl_idname = "ar.data_import"
     bl_label = "Import"
+    bl_description = "Import the Action file into the storage"
 
     filter_glob: StringProperty( default='*.zip', options={'HIDDEN'} )
 
@@ -1920,6 +2015,7 @@ classes.append(AR_OT_ImportLoadSettings)
 class AR_OT_Export(Operator, ExportHelper):
     bl_idname = "ar.data_export"
     bl_label = "Export"
+    bl_description = "Export the Action file as a ZIP"
 
     filter_glob: StringProperty( default='*.zip', options={'HIDDEN'} )
     filename_ext = ".zip"
@@ -2021,7 +2117,7 @@ classes.append(AR_OT_Export)
 class AR_OT_Record_Add(Operator):
     bl_idname = "ar.record_add"
     bl_label = "Add"
-    bl_description = "Add a new Record"
+    bl_description = "Add a New Action"
 
     def execute(self, context):
         AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -2036,7 +2132,7 @@ classes.append(AR_OT_Record_Add)
 class AR_OT_Record_Remove(Operator):
     bl_idname = "ar.record_remove"
     bl_label = "Remove"
-    bl_description = "Remove the selected Record"
+    bl_description = "Remove the selected Action"
 
     @classmethod
     def poll(cls, context):
@@ -2055,7 +2151,7 @@ classes.append(AR_OT_Record_Remove)
 class AR_OT_Record_MoveUp(Operator):
     bl_idname = "ar.record_move_up"
     bl_label = "Move Up"
-    bl_description = "Move the selected Record up"
+    bl_description = "Move the selected Action Up"
 
     @classmethod
     def poll(cls, context):
@@ -2074,7 +2170,7 @@ classes.append(AR_OT_Record_MoveUp)
 class AR_OT_Record_MoveDown(Operator):
     bl_idname = "ar.record_move_down"
     bl_label = "Move Down"
-    bl_description = "Move the selected Record down"
+    bl_description = "Move the selected Action Down"
     bl_options = {"REGISTER"}
 
     @classmethod
@@ -2096,7 +2192,7 @@ class AR_LLA_TextProps(PropertyGroup):
     apply : BoolProperty(default= False)
 classes.append(AR_LLA_TextProps)
 
-class AR_OT_Record_LoadLoaclActions(bpy.types.Operator):
+class AR_OT_Record_LoadLoaclActions(Operator):
     bl_idname = "ar.record_loadlocalactions"
     bl_label = "Load Loacl Actions"
     bl_description = "Load the Local Action from the last Save"
@@ -2141,7 +2237,7 @@ classes.append(AR_OT_Record_LoadLoaclActions)
 class AR_OT_Save(Operator):
     bl_idname = "ar.data_save"
     bl_label = "Save"
-    bl_description = "Save all data to the disk (delete the old data from the disk)"
+    bl_description = "Save all Global Actions to the Storage"
 
     def execute(self, context):
         Save()
@@ -2151,7 +2247,7 @@ classes.append(AR_OT_Save)
 class AR_OT_Load(Operator):
     bl_idname = "ar.data_load"
     bl_label = "Load"
-    bl_description = "Load all data from the disk (delete the current data in Blender)"
+    bl_description = "Load all Action data from the Storage"
 
     def execute(self, context):
         Load()
@@ -2162,8 +2258,8 @@ classes.append(AR_OT_Load)
 
 class AR_OT_ButtonToRecord(Operator):
     bl_idname = "ar.category_button_to_record"
-    bl_label = "Button to Record"
-    bl_description = "Load the selected Button as a Record"
+    bl_label = "Action Button to Local"
+    bl_description = "Add the selected Action Button as a Local"
 
     @classmethod
     def poll(cls, context):
@@ -2187,8 +2283,8 @@ classes.append(AR_OT_ButtonToRecord)
 
 class AR_OT_Button_Remove(Operator):
     bl_idname = "ar.category_remove_button"
-    bl_label = "Remove Button"
-    bl_description = "Remove the selected Button"
+    bl_label = "Remove Action Button"
+    bl_description = "Remove the selected Action Button "
 
     @classmethod
     def poll(cls, context):
@@ -2211,7 +2307,7 @@ classes.append(AR_OT_Button_Remove)
 class AR_OT_Button_MoveUp(Operator):
     bl_idname = "ar.category_move_up_button"
     bl_label = "Move Button Up"
-    bl_description = "Move the selected Button up"
+    bl_description = "Move the selected Action Button Up"
 
     @classmethod
     def poll(cls, context):
@@ -2230,8 +2326,8 @@ classes.append(AR_OT_Button_MoveUp)
 
 class AR_OT_Button_MoveDown(Operator):
     bl_idname = "ar.category_move_down_button"
-    bl_label = "Move Button Down"
-    bl_description = "Move the selected Button down"
+    bl_label = "Move Action Button Down"
+    bl_description = "Move the selected Action Button Down"
 
     @classmethod
     def poll(cls, context):
@@ -2270,7 +2366,8 @@ classes.append(AR_OT_Button_Rename)
 
 class AR_OT_Category_Cmd(Operator):
     bl_idname = 'ar.category_cmd_button'
-    bl_label = 'ComRec Command'
+    bl_label = 'ActRec Action Button'
+    bl_description = 'Play this Action Button'
     bl_options = {'UNDO', 'INTERNAL'}
 
     Index : IntProperty()
@@ -2282,24 +2379,10 @@ class AR_OT_Category_Cmd(Operator):
         return{'FINISHED'}
 classes.append(AR_OT_Category_Cmd)
 
-class AR_OT_Category_Cmd_Icon(Operator):
-    bl_idname = "ar.category_cmd_icon"
+class IconTable(Operator):
     bl_label = "Icons"
     bl_description = "Press to select an Icon"
 
-    index : IntProperty()
-    search : StringProperty(name= "Icon Search", description= "search Icon by name")
-
-    def execute(self, context):
-        AR_Var = context.preferences.addons[__package__].preferences
-        AR_Var.Instance_Coll[self.index].icon = AR_Prop.SelectedIcon
-        AR_Prop.SelectedIcon = 101 #Icon: BLANK1
-        TempSaveCats()
-        if AR_Var.Autosave:
-            Save()
-        bpy.context.area.tag_redraw()
-        return {"FINISHED"}
-    
     def draw(self, execute):
         layout = self.layout
         box = layout.box()
@@ -2313,8 +2396,40 @@ class AR_OT_Category_Cmd_Icon(Operator):
         iconvalues = getIconsvalues()
         for i,ic in enumerate(getIcons()):
             normalname = ic.lower().replace("_"," ")
-            if self.search == '' or self.search in normalname:
+            if self.search == '' or self.search.lower() in normalname:
                 gridf.operator(AR_OT_Selector_Icon.bl_idname, text= "", icon_value= iconvalues[i]).icon = iconvalues[i]
+        box = layout.box()
+        row = box.row().split(factor= 0.5)
+        row.label(text= "Custom Icons")
+        row2 = row.row()
+        row2.operator(AR_OT_AddCustomIcon.bl_idname, text= "Add Custom Icon", icon= 'PLUS').activatPopUp = self.bl_idname
+        row2.operator(AR_OT_DeleteCustomIcon.bl_idname, text= "Delete", icon= 'TRASH')
+        gridf = box.grid_flow(row_major=True, columns= 35, even_columns= True, even_rows= True, align= True)
+        customIconValues = [icon.icon_id for icon in preview_collections['ar_custom'].values()]
+        for i,ic in enumerate(list(preview_collections['ar_custom'])):
+            normalname = ic.lower().replace("_"," ")
+            if self.search == '' or self.search.lower() in normalname:
+                gridf.operator(AR_OT_Selector_Icon.bl_idname, text= "", icon_value= customIconValues[i]).icon = customIconValues[i]
+
+    def check(self, context):
+        return True
+
+class AR_OT_Category_Cmd_Icon(IconTable, Operator):
+    bl_idname = "ar.category_cmd_icon"
+
+    notInit : BoolProperty(default=False)
+    index : IntProperty()
+    search : StringProperty(name= "Icon Search", description= "search Icon by name", options= {'TEXTEDIT_UPDATE'})
+
+    def execute(self, context):
+        AR_Var = context.preferences.addons[__package__].preferences
+        AR_Var.Instance_Coll[self.index].icon = AR_Prop.SelectedIcon
+        AR_Prop.SelectedIcon = 101 #Icon: BLANK1
+        TempSaveCats()
+        if AR_Var.Autosave:
+            Save()
+        bpy.context.area.tag_redraw()
+        return {"FINISHED"}
 
     def invoke(self, context, event):
         AR_Var = context.preferences.addons[__package__].preferences
@@ -2327,6 +2442,7 @@ class AR_OT_Selector_Icon(Operator):
     bl_idname = "ar.category_icon"
     bl_label = "Icon"
     bl_options = {'REGISTER','INTERNAL'}
+    bl_description = "Select the Icon"
 
     icon : IntProperty(default= 101) #Icon: BLANK1
 
@@ -2358,6 +2474,7 @@ classes.append(AR_OT_Record_SelectorDown)
 class AR_OT_Record_Play(Operator):
     bl_idname = 'ar.record_play'
     bl_label = 'ActRec Play'
+    bl_description = 'Play the selected Action.'
     bl_options = {'REGISTER','UNDO'}
 
     @classmethod
@@ -2375,7 +2492,7 @@ classes.append(AR_OT_Record_Play)
 class AR_OT_Record_Start(Operator):
     bl_idname = "ar.record_start"
     bl_label = "Start Recording"
-    bl_description = "starts recording the actions"
+    bl_description = "Starts Recording the Macros"
 
     @classmethod
     def poll(cls, context):
@@ -2393,7 +2510,7 @@ classes.append(AR_OT_Record_Start)
 class AR_OT_Record_Stop(Operator):
     bl_idname = "ar.record_stop"
     bl_label = "Stop Recording"
-    bl_description = "stops recording the actions"
+    bl_description = "Stops Recording the Macros"
 
     def execute(self, context):
         AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -2410,13 +2527,11 @@ class AR_OT_Record_Stop(Operator):
         return {"FINISHED"}
 classes.append(AR_OT_Record_Stop)
 
-class AR_OT_Record_Icon(Operator):
+class AR_OT_Record_Icon(IconTable, Operator):
     bl_idname = "ar.record_icon"
-    bl_label = "Icons"
-    bl_description = "Press to select an Icon"
 
     index : IntProperty()
-    search : StringProperty(name= "Icon Search", description= "search Icon by name")
+    search : StringProperty(name= "Icon Search", description= "search Icon by name", options= {'TEXTEDIT_UPDATE'})
 
     def execute(self, context):
         AR_Var = context.preferences.addons[__package__].preferences
@@ -2425,22 +2540,6 @@ class AR_OT_Record_Icon(Operator):
         bpy.context.area.tag_redraw()
         SaveToDataHandler(None)
         return {"FINISHED"}
-    
-    def draw(self, execute):
-        layout = self.layout
-        box = layout.box()
-        row = box.row()
-        row.label(text= "Selected Icon:")
-        row.label(text=" ", icon_value= AR_Prop.SelectedIcon)
-        row.prop(self, 'search', text= 'Search:')
-        row.operator(AR_OT_Selector_Icon.bl_idname, text= "Clear Icon").icon = 101 #Icon: BLANK1
-        box = layout.box()
-        gridf = box.grid_flow(row_major=True, columns= 35, even_columns= True,  even_rows= True, align= True)
-        iconvalues = getIconsvalues()
-        for i,ic in enumerate(getIcons()):
-            normalname = ic.lower().replace("_"," ")
-            if self.search == '' or self.search in normalname:
-                gridf.operator(AR_OT_Selector_Icon.bl_idname, text= "", icon_value= iconvalues[i]).icon = iconvalues[i]
 
     def invoke(self, context, event):
         self.search = ''
@@ -2464,7 +2563,7 @@ classes.append(AR_OT_Record_Execute)
 class AR_OT_Command_Add(Operator):
     bl_idname = "ar.command_add"
     bl_label = "ActRec Add Macro"
-    bl_description = "Add a Macro to the selected Record"
+    bl_description = "Add the last operation you executed"
 
     command : StringProperty()
 
@@ -2480,11 +2579,16 @@ class AR_OT_Command_Add(Operator):
             message = Add(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)
         else:
             message = Add(AR_Var.Record_Coll[CheckCommand(0)].Index + 1, self.command)
-        if type(message) == str:
+        if message == "<Empty>":
+            rec = AR_Var.Record_Coll[CheckCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)]
+            index = len(rec.Command) - 1
+            rec.Index = index
+            bpy.ops.ar.command_edit('INVOKE_DEFAULT', index= index, Edit= True)
+        elif type(message) == str:
             self.report({'ERROR'}, "Action could not be added because it is not of type Operator:\n %s" % message)
         elif message:
             self.report({'ERROR'}, "No Action could be added")
-        else:
+        if (AR_Var.CreateEmpty and message) or not message:
             rec = AR_Var.Record_Coll[CheckCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)]
             rec.Index = len(rec.Command) - 1
         TempUpdateCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)
@@ -2495,8 +2599,8 @@ classes.append(AR_OT_Command_Add)
 
 class AR_OT_Command_Remove(Operator):
     bl_idname = "ar.command_remove"
-    bl_label = "Remove Command"
-    bl_description = "Remove the selected Command"
+    bl_label = "Remove Macro"
+    bl_description = "Remove the selected Macro"
 
     @classmethod
     def poll(cls, context):
@@ -2555,8 +2659,8 @@ classes.append(AR_OT_Command_MoveDown)
 
 class AR_OT_Command_Clear(Operator):
     bl_idname = "ar.command_clear"
-    bl_label = "Clear Command"
-    bl_description = "Delete all Commands of the selected Record"
+    bl_label = "Clear Macros"
+    bl_description = "Delete all Macro of the selected Action"
 
     @classmethod
     def poll(cls, context):
@@ -2585,14 +2689,21 @@ class AR_OT_Command_Edit(Operator):
     Command : StringProperty(name= "Command", update= Edit_Commandupdate)
     last : StringProperty()
     index : IntProperty()
+    Edit : BoolProperty(default= False)
+    CopyData : BoolProperty(default= False, name= "Copy Previous", description= "Copy the data of the previous recorded Macro and place it in this Macro")
 
     def execute(self, context):
+        self.Edit = False
         AR_Var = bpy.context.preferences.addons[__package__].preferences
         index_btn = AR_Var.Record_Coll[CheckCommand(0)].Index + 1
         index_macro = AR_Var.Record_Coll[CheckCommand(index_btn)].Index
         macro = AR_Var.Record_Coll[CheckCommand(index_btn)].Command[index_macro]
-        macro.macro = self.Name
-        macro.cname = self.Command
+        if self.CopyData:
+            macro.macro = AR_Var.LastLine
+            macro.cname = AR_Var.LastLineCmd
+        else:
+            macro.macro = self.Name
+            macro.cname = self.Command
         TempUpdateCommand(index_btn)
         bpy.context.area.tag_redraw()
         SaveToDataHandler(None)
@@ -2602,10 +2713,16 @@ class AR_OT_Command_Edit(Operator):
         self.Command = Data.Edit_Command
         AR_Var = context.preferences.addons[__package__].preferences
         layout = self.layout
-        layout.prop(self, 'Name', text= "Name")
-        layout.prop(self, 'Command', text= "")
-        ops = layout.operator(AR_OT_ClearOperator.bl_idname)
+        if self.CopyData:
+            layout.prop(AR_Var, 'LastLine', text= "Name")
+            layout.prop(AR_Var, 'LastLineCmd', text= "")
+        else:
+            layout.prop(self, 'Name', text= "Name")
+            layout.prop(self, 'Command', text= "")
+        row = layout.row().split(factor= 0.65)
+        ops = row.operator(AR_OT_ClearOperator.bl_idname)
         ops.Command = self.Command
+        row.prop(self, 'CopyData', toggle= True)
 
     def invoke(self, context, event):
         AR_Var = context.preferences.addons[__package__].preferences
@@ -2613,8 +2730,9 @@ class AR_OT_Command_Edit(Operator):
         macro = AR_Var.Record_Coll[CheckCommand(index_btn)].Command[self.index]
         mlast = f"{index_btn}.{self.index}" 
         t = time.time()
+        self.CopyData = False
         #print(str(self.last == mlast)+ "    " +str(cmd_edit_time[0] + 0.7 > t) + "      " + str(self.last) + "      " + str(mlast)+ "      " + str(cmd_edit_time[0])+ "      " + str(cmd_edit_time[0] + 0.7)+ "      " + str(t))
-        if self.last == mlast and cmd_edit_time[0] + 0.7 > t:
+        if self.last == mlast and cmd_edit_time[0] + 0.7 > t or self.Edit:
             self.last = mlast
             cmd_edit_time[0] = t
             split = macro.cname.split(":")
@@ -2644,6 +2762,9 @@ class AR_OT_Command_Edit(Operator):
             cmd_edit_time[0] = t
             AR_Var.Record_Coll[CheckCommand(index_btn)].Index = self.index
         return {"FINISHED"}
+
+    def cancel(self, context):
+        self.Edit = False
 classes.append(AR_OT_Command_Edit)
 
 class AR_OT_Command_Run_Queued(Operator):
@@ -2679,10 +2800,10 @@ class AR_OT_Command_Run_Queued(Operator):
         wm.event_timer_remove(self._timer)
 classes.append(AR_OT_Command_Run_Queued)
 
-class AR_OT_AddEvent(bpy.types.Operator):
+class AR_OT_AddEvent(Operator):
     bl_idname = "ar.addevent"
     bl_label = "Add Event"
-    bl_description = "Add a Event which wait until the event is triggered"
+    bl_description = "Add a Event which wait until the Event is Triggered"
 
     TypesList = [('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
                 ('Render Complet', 'Render complet', 'Wait until the rendering has finished', 'IMAGE_RGB_ALPHA', 1),
@@ -2753,6 +2874,8 @@ class AR_OT_AddEvent(bpy.types.Operator):
                         selverts.append(v.index)
                 data['Verts'] = selverts
             Item.cname = "ar.event:" + json.dumps(data)
+        rec = AR_Var.Record_Coll[CheckCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)]
+        rec.Index = len(rec.Command) - 1
         TempUpdateCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)
         return {"FINISHED"}
 
@@ -2789,7 +2912,7 @@ class AR_OT_AddEvent(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 classes.append(AR_OT_AddEvent)
 
-class AR_OT_CopyToActRec(bpy.types.Operator):
+class AR_OT_CopyToActRec(Operator):
     bl_idname = "ar.copy_to_actrec"
     bl_label = "Copy to Action Recorder"
     bl_description = "Copy the selected Operator to Action Recorder Macro"
@@ -2801,41 +2924,7 @@ class AR_OT_CopyToActRec(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.ui.copy_python_command_button()
-        op = bpy.context.window_manager.clipboard
-        op = eval(op.split('(')[0]).get_rna_type()
-        opid = op.bl_rna.identifier
-        split = opid.split("_OT_")
-        group = split[0]
-        ops = split[1]
-        props = []
-        opsprops = []
-        for opsprop in op.bl_rna.properties[1:]: # first element is nra_type (skiped)
-            prop = opsprop.identifier
-            if hasattr(opsprop, 'is_array'):
-                is_array = opsprop.is_array
-            else:
-                is_array = False
-            opsprops.append((prop, is_array))
-        for attr in dir(op):
-            for i in range(len(opsprops)):
-                if attr == opsprops[i][0] and hasattr( op, attr ):
-                    value = getattr(op, attr)
-                    if opsprops[i][1]:
-                        value = tuple(value)
-                    props.append((str(attr), value))
-                    opsprops.pop(i)
-                    break
-        propstr = "("
-        for prop, value in props:
-            if isinstance(value, str):
-                value = "\"" + value + "\""
-            elif value is None:
-                value = "\"\""
-            propstr += prop + "=" + str(value) + ", "
-        if propstr[-2:] == ", ":
-            propstr = propstr[:-2]
-        propstr += ")"
-        bpy.ops.ar.command_add('EXEC_DEFAULT', command="bpy.ops." + group.lower() + "." + ops + propstr)
+        bpy.ops.ar.command_add('EXEC_DEFAULT', command= bpy.context.window_manager.clipboard)
         return {"FINISHED"}
 classes.append(AR_OT_CopyToActRec)
 
@@ -2849,26 +2938,7 @@ class AR_OT_ClearOperator(Operator):
     def execute(self, context):
         Data.Edit_Command = self.Command.split("(")[0] + "()"
         return {"FINISHED"}
-classes.append(AR_OT_ClearOperator)     
-
-class AR_OT_Record_Edit(Operator):
-    bl_idname = "ar.record_edit"
-    bl_label = "Edit"
-    bl_description = "Double Click to Edit"
-
-    Name : StringProperty(name= "Name")
-    index : IntProperty()
-
-    def execute(self, context):
-        bpy.context.area.tag_redraw()
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        AR_Var = context.preferences.addons[__package__].preferences
-        index_btn = AR_Var.Record_Coll[CheckCommand(0)].Index
-        AR_Var.Record_Coll[CheckCommand(0)].Index = self.index
-        return self.execute(context)
-classes.append(AR_OT_Record_Edit)
+classes.append(AR_OT_ClearOperator)
 
 class AR_OT_Preferences_DirectorySelector(Operator, ExportHelper):
     bl_idname = "ar.preferences_directoryselector"
@@ -3002,7 +3072,8 @@ class AR_OT_AddCustomIcon(Operator, ImportHelper):
     bl_label = "Add Custom Icon"
     bl_description = "Adds a custom Icon"
 
-    filter_glob: StringProperty( default='*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp', options={'HIDDEN'} )
+    filter_glob : StringProperty(default='*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp', options={'HIDDEN'} )
+    activatPopUp : StringProperty(default= "")
 
     def execute(self, context):
         if os.path.isfile(self.filepath) and self.filepath.lower().endswith(('.png','.jpg','.jpeg','.tif','.tiff','.bmp')):
@@ -3011,10 +3082,12 @@ class AR_OT_AddCustomIcon(Operator, ImportHelper):
                 self.report({'ERROR'}, err)
         else:
             self.report({'ERROR'}, 'The selected File is not an Image')
+        if self.activatPopUp != "":
+            exec("bpy.ops." + ".".join(self.activatPopUp.split("_OT_")).lower() + "('INVOKE_DEFAULT')")
         return {"FINISHED"}
 classes.append(AR_OT_AddCustomIcon)
 
-class AR_OT_DeleteCustomIcon(bpy.types.Operator):
+class AR_OT_DeleteCustomIcon(Operator):
     bl_idname = "ar.deletecustomicon"
     bl_label = "Delete Icon"
     bl_description = "Delete a custom added icon"
@@ -3022,10 +3095,10 @@ class AR_OT_DeleteCustomIcon(bpy.types.Operator):
     class AR_Icon(PropertyGroup):
         iconId : IntProperty()
         iconName : StringProperty()
-        select : BoolProperty(default= False)
+        select : BoolProperty(default= False, name= 'Select')
     classes.append(AR_Icon)
     IconsColl : CollectionProperty(type= AR_Icon)
-    AllIcons : BoolProperty()
+    AllIcons : BoolProperty(name= "All Icons", description= "Select all Icons")
 
     def execute(self, context):
         AR_Var = bpy.context.preferences.addons[__package__].preferences
@@ -3044,10 +3117,16 @@ class AR_OT_DeleteCustomIcon(bpy.types.Operator):
         layout.prop(self, 'AllIcons')
         box = layout.box()
         coll = self.IconsColl
-        for ele in coll:
-            row = box.row()
-            row.prop(ele, 'select', text= '')
-            row.label(text= ele.iconName[3:], icon_value= ele.iconId)
+        if self.AllIcons:
+            for ele in coll:
+                row = box.row()
+                row.label(text= '', icon= "CHECKBOX_HLT")
+                row.label(text= ele.iconName[3:], icon_value= ele.iconId)
+        else:
+            for ele in coll:
+                row = box.row()
+                row.prop(ele, 'select', text= '')
+                row.label(text= ele.iconName[3:], icon_value= ele.iconId)
 
     def invoke(self, context, event):
         coll = self.IconsColl
@@ -3060,7 +3139,6 @@ class AR_OT_DeleteCustomIcon(bpy.types.Operator):
             new.iconName = iconl[i]
         return context.window_manager.invoke_props_dialog(self)
 classes.append(AR_OT_DeleteCustomIcon)
-
 # endregion
 
 # region Menus
@@ -3114,9 +3192,9 @@ def GetCname(self):
 class AR_Record_Struct(PropertyGroup):
     cname : StringProperty(set= SetRecordName, get=GetCname) #AR_Var.name
     macro : StringProperty()
-    active : BoolProperty(default= True, update= SavePrefs)
+    active : BoolProperty(default= True, update= SavePrefs, description= 'Toggles Macro on and off.')
     alert : BoolProperty()
-    icon : IntProperty(default= 101) #Icon: BLANK1
+    icon : IntProperty(default= 286) #Icon: MESH_PLANE
 classes.append(AR_Record_Struct)
 
 class AR_Record_Merge(PropertyGroup):
@@ -3185,7 +3263,7 @@ def Instance_Updater(self, context):
             self.Value = True
 
 class AR_Enum(PropertyGroup):
-    Value : BoolProperty(default= False, update= Instance_Updater, description= "Click this button to select this Macro")
+    Value : BoolProperty(default= False, update= Instance_Updater, description= "Select this Action Button", name = 'Select')
     Index : IntProperty()
     Init = True
 classes.append(AR_Enum)
@@ -3241,7 +3319,7 @@ def CategoriesRadioButton(self, content):
         self.selected = True
 
 class AR_SelectedCategory(PropertyGroup):
-    selected : BoolProperty(update= CategoriesRadioButton)
+    selected : BoolProperty(update= CategoriesRadioButton, description= 'Select this Category', name= 'Select')
     index : IntProperty()
 classes.append(AR_SelectedCategory)
 
@@ -3254,8 +3332,8 @@ class AR_Prop(AddonPreferences):
 
     Rename : StringProperty()
     Autosave : BoolProperty(default= True, name= "Autosave", description= "automatically saves all Global Buttons to the Storage")
-    RecToBtn_Mode : EnumProperty(items=[("copy", "Copy", "Copy the Action over to Global"), ("move", "Move", "Move the Action over to Global and delete it from Local")], name= "Mode")
-    BtnToRec_Mode : EnumProperty(items=[("copy", "Copy", "Copy the Action over to Local"), ("move", "Move", "Move the Action over to local and delete it from Global")], name= "Mode")
+    RecToBtn_Mode : EnumProperty(items=[("copy", "Copy", "Copy the Action over to Global"), ("move", "Move", "Move the Action over to Global and Delete it from Local")], name= "Mode")
+    BtnToRec_Mode : EnumProperty(items=[("copy", "Copy", "Copy the Action over to Local"), ("move", "Move", "Move the Action over to Local and Delete it from Global")], name= "Mode")
     SelectedIcon = 101 # Icon: BLANK1
 
     Instance_Coll : CollectionProperty(type= AR_Struct)
@@ -3280,6 +3358,9 @@ class AR_Prop(AddonPreferences):
 
     Record_Coll : CollectionProperty(type= AR_Record_Merge)
     CreateEmpty : BoolProperty(default= True)
+    LastLineIndex : IntProperty()
+    LastLine : StringProperty(default= "<Empty>")
+    LastLineCmd : StringProperty()
 
     StorageFilePath : StringProperty(name= "Stroage Path", description= "The Path to the Storage for the saved Categories", default= os.path.join(os.path.dirname(__file__), "Storage"))
     IconFilePath : StringProperty(name= "Icon Path", description= "The Path to the Storage for the added Icons", default= os.path.join(os.path.dirname(__file__), "Icons"))
@@ -3318,20 +3399,25 @@ class AR_Prop(AddonPreferences):
                 col.label(text= "A new Version is available (" + AR_Var.Version + ")")
             else:
                 col.label(text= "You are using the latest Vesion (" + AR_Var.Version + ")")
+        col.separator(factor= 1.5)
+        col.label(text= 'Action Storage Folder')
         row = col.row()
-        row.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Storage Folder", icon= 'FILEBROWSER').directory = "Storage"
-        row.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Default Directory", icon= 'FOLDER_REDIRECT').directory = "Storage"
+        row.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Action Button’s Storage Folder", icon= 'FILEBROWSER').directory = "Storage"
+        row.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Default Folder", icon= 'FOLDER_REDIRECT').directory = "Storage"
         box = col.box()
         box.label(text= self.StorageFilePath)
-        row = col.row()
-        row2 = row.row()
+        col.separator(factor= 1.5)
+        row = col.row().split(factor= 0.5)
+        row.label(text= "Icon Storage Folder")
+        row2 = row.row(align= True).split(factor= 0.65, align= True)
         row2.operator(AR_OT_AddCustomIcon.bl_idname, text= "Add Custom Icon", icon= 'PLUS')
-        row2.operator(AR_OT_DeleteCustomIcon.bl_idname, text= "", icon= 'TRASH')
-        row2 = row.row()
-        row2.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Icon Folder", icon= 'FILEBROWSER').directory = "Icons"
-        row2.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Icon Directory", icon= 'FOLDER_REDIRECT').directory = "Icons"
+        row2.operator(AR_OT_DeleteCustomIcon.bl_idname, text= "Delete", icon= 'TRASH')
+        row = col.row()
+        row.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Icon Storage Folder", icon= 'FILEBROWSER').directory = "Icons"
+        row.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Default Folder", icon= 'FOLDER_REDIRECT').directory = "Icons"
         box = col.box()
         box.label(text= self.IconFilePath)
+        col.separator(factor= 1.5)
         box = col.box()
         row = box.row()
         row.prop(self, "ShowKeymap", text= "", icon= 'TRIA_DOWN' if self.ShowKeymap else 'TRIA_RIGHT', emboss= False)
