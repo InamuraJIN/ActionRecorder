@@ -1262,7 +1262,7 @@ def panelFactory(spaceType): #Create Panels for every spacetype with UI
             col.label(text= "Data Management", icon= 'FILE_FOLDER')
             col.operator(AR_OT_Import.bl_idname, text= 'Import')
             col.operator(AR_OT_Export.bl_idname, text= 'Export')
-            col.label(text= "Strage File Settings", icon= "FOLDER_REDIRECT")
+            col.label(text= "Storage File Settings", icon= "FOLDER_REDIRECT")
             row = col.row()
             row.label(text= "AutoSave")
             row.prop(AR_Var, 'Autosave', toggle= True, text= "On" if AR_Var.Autosave else "Off")
@@ -3319,7 +3319,7 @@ class AR_Prop(AddonPreferences):
             else:
                 col.label(text= "You are using the latest Vesion (" + AR_Var.Version + ")")
         row = col.row()
-        row.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Strage Folder", icon= 'FILEBROWSER').directory = "Storage"
+        row.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Storage Folder", icon= 'FILEBROWSER').directory = "Storage"
         row.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Default Directory", icon= 'FOLDER_REDIRECT').directory = "Storage"
         box = col.box()
         box.label(text= self.StorageFilePath)
