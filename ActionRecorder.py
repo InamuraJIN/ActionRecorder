@@ -1526,7 +1526,7 @@ classes.append(AR_OT_Category_Delete_Visibility)
 
 class AR_OT_Category_Delet(Operator):
     bl_idname = "ar.category_delet"
-    bl_label = "Delet Category"
+    bl_label = "Delete Category"
     bl_description = "Delete the selected Category"
 
     @classmethod
@@ -2295,6 +2295,8 @@ class AR_OT_Category_Cmd_Icon(Operator):
         AR_Var.Instance_Coll[self.index].icon = AR_Prop.SelectedIcon
         AR_Prop.SelectedIcon = 101 #Icon: BLANK1
         TempSaveCats()
+        if AR_Var.Autosave:
+            Save()
         bpy.context.area.tag_redraw()
         return {"FINISHED"}
     
@@ -2482,6 +2484,9 @@ class AR_OT_Command_Add(Operator):
             self.report({'ERROR'}, "Action could not be added because it is not of type Operator:\n %s" % message)
         elif message:
             self.report({'ERROR'}, "No Action could be added")
+        else:
+            rec = AR_Var.Record_Coll[CheckCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)]
+            rec.Index = len(rec.Command) - 1
         TempUpdateCommand(AR_Var.Record_Coll[CheckCommand(0)].Index + 1)
         bpy.context.area.tag_redraw()
         SaveToDataHandler(None)
@@ -2795,41 +2800,42 @@ class AR_OT_CopyToActRec(bpy.types.Operator):
         return context.active_object is not None and len(AR_Var.Record_Coll[CheckCommand(0)].Command)
 
     def execute(self, context):
-        if hasattr(context, 'button_operator'):
-            op = context.button_operator
-            opid = op.bl_rna.identifier
-            split = opid.split("_OT_")
-            group = split[0]
-            ops = split[1]
-            props = []
-            opsprops = []
-            for opsprop in op.bl_rna.properties[1:]: # first element is nra_type (skiped)
-                prop = opsprop.identifier
-                if hasattr(opsprop, 'is_array'):
-                    is_array = opsprop.is_array
-                else:
-                    is_array = False
-                opsprops.append((prop, is_array))
-            for attr in dir(op):
-                for i in range(len(opsprops)):
-                    if attr == opsprops[i][0] and hasattr( op, attr ):
-                        value = getattr(op, attr)
-                        if opsprops[i][1]:
-                            value = tuple(value)
-                        props.append((str(attr), value))
-                        opsprops.pop(i)
-                        break
-            propstr = "("
-            for prop, value in props:
-                if isinstance(value, str):
-                    value = "\"" + value + "\""
-                elif value is None:
-                    value = "\"\""
-                propstr += prop + "=" + str(value) + ", "
-            if propstr[-2:] == ", ":
-                propstr = propstr[:-2]
-            propstr += ")"
-            bpy.ops.ar.command_add('EXEC_DEFAULT', command="bpy.ops." + group.lower() + "." + ops + propstr)
+        bpy.ops.ui.copy_python_command_button()
+        op = bpy.context.window_manager.clipboard
+        op = eval(op.split('(')[0]).get_rna_type()
+        opid = op.bl_rna.identifier
+        split = opid.split("_OT_")
+        group = split[0]
+        ops = split[1]
+        props = []
+        opsprops = []
+        for opsprop in op.bl_rna.properties[1:]: # first element is nra_type (skiped)
+            prop = opsprop.identifier
+            if hasattr(opsprop, 'is_array'):
+                is_array = opsprop.is_array
+            else:
+                is_array = False
+            opsprops.append((prop, is_array))
+        for attr in dir(op):
+            for i in range(len(opsprops)):
+                if attr == opsprops[i][0] and hasattr( op, attr ):
+                    value = getattr(op, attr)
+                    if opsprops[i][1]:
+                        value = tuple(value)
+                    props.append((str(attr), value))
+                    opsprops.pop(i)
+                    break
+        propstr = "("
+        for prop, value in props:
+            if isinstance(value, str):
+                value = "\"" + value + "\""
+            elif value is None:
+                value = "\"\""
+            propstr += prop + "=" + str(value) + ", "
+        if propstr[-2:] == ", ":
+            propstr = propstr[:-2]
+        propstr += ")"
+        bpy.ops.ar.command_add('EXEC_DEFAULT', command="bpy.ops." + group.lower() + "." + ops + propstr)
         return {"FINISHED"}
 classes.append(AR_OT_CopyToActRec)
 
@@ -2923,7 +2929,7 @@ class AR_OT_CheckUpdate(Operator):
         update = CheckForUpdate()
         AR_Var = context.preferences.addons[__package__].preferences
         AR_Var.Update = update[0]
-        if update[1] is str:
+        if isinstance(update[1], str):
             AR_Var.Version = update[1]
         else:
             AR_Var.Version = ".".join([str(i) for i in update[1]])
@@ -3008,33 +3014,50 @@ class AR_OT_AddCustomIcon(Operator, ImportHelper):
         return {"FINISHED"}
 classes.append(AR_OT_AddCustomIcon)
 
-def CustomIconList(self, context):
-    iconl = list(preview_collections['ar_custom'])
-    iconl_v = [icon.icon_id for icon in preview_collections['ar_custom'].values()]
-    return [(iconl[i], iconl[i], '', iconl_v[i], iconl_v[i]) for i in range(len(iconl))]
-
 class AR_OT_DeleteCustomIcon(bpy.types.Operator):
     bl_idname = "ar.deletecustomicon"
     bl_label = "Delete Icon"
     bl_description = "Delete a custom added icon"
 
-    IconsEnum : EnumProperty(items= CustomIconList, name= "IconList")
+    class AR_Icon(PropertyGroup):
+        iconId : IntProperty()
+        iconName : StringProperty()
+        select : BoolProperty(default= False)
+    classes.append(AR_Icon)
+    IconsColl : CollectionProperty(type= AR_Icon)
+    AllIcons : BoolProperty()
 
     def execute(self, context):
         AR_Var = bpy.context.preferences.addons[__package__].preferences
-        iconpath = self.IconsEnum[3:]
-        filenames = os.listdir(AR_Var.IconFilePath)
-        names = [os.path.splitext(os.path.basename(path))[0] for path in filenames]
-        if iconpath in names:
-            os.remove(os.path.join(AR_Var.IconFilePath,  filenames[names.index(iconpath)]))
-        unregisterIcon(preview_collections['ar_custom'], self.IconsEnum)
+        for ele in self.IconsColl:
+            if ele.select or self.AllIcons:
+                iconpath = ele.iconName[3:]
+                filenames = os.listdir(AR_Var.IconFilePath)
+                names = [os.path.splitext(os.path.basename(path))[0] for path in filenames]
+                if iconpath in names:
+                    os.remove(os.path.join(AR_Var.IconFilePath,  filenames[names.index(iconpath)]))
+                unregisterIcon(preview_collections['ar_custom'], ele.iconName)
         return {"FINISHED"}
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, 'IconsEnum')
+        layout.prop(self, 'AllIcons')
+        box = layout.box()
+        coll = self.IconsColl
+        for ele in coll:
+            row = box.row()
+            row.prop(ele, 'select', text= '')
+            row.label(text= ele.iconName[3:], icon_value= ele.iconId)
 
     def invoke(self, context, event):
+        coll = self.IconsColl
+        coll.clear()
+        iconl = list(preview_collections['ar_custom'])
+        iconl_v = [icon.icon_id for icon in preview_collections['ar_custom'].values()]
+        for i in range(len(iconl)):
+            new = coll.add()
+            new.iconId = iconl_v[i]
+            new.iconName = iconl[i]
         return context.window_manager.invoke_props_dialog(self)
 classes.append(AR_OT_DeleteCustomIcon)
 
@@ -3057,7 +3080,7 @@ class AR_MT_Action_Pie(Menu):
 classes.append(AR_MT_Action_Pie)
 
 def menu_func(self, context):
-    if hasattr(context, 'button_operator'):
+    if bpy.ops.ui.copy_python_command_button.poll():
         layout = self.layout
         layout.separator()
         layout.operator(AR_OT_CopyToActRec.bl_idname)
@@ -3162,7 +3185,7 @@ def Instance_Updater(self, context):
             self.Value = True
 
 class AR_Enum(PropertyGroup):
-    Value : BoolProperty(default= False, update= Instance_Updater)
+    Value : BoolProperty(default= False, update= Instance_Updater, description= "Click this button to select this Macro")
     Index : IntProperty()
     Init = True
 classes.append(AR_Enum)
@@ -3305,8 +3328,8 @@ class AR_Prop(AddonPreferences):
         row2.operator(AR_OT_AddCustomIcon.bl_idname, text= "Add Custom Icon", icon= 'PLUS')
         row2.operator(AR_OT_DeleteCustomIcon.bl_idname, text= "", icon= 'TRASH')
         row2 = row.row()
-        row2.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Strage Folder", icon= 'FILEBROWSER').directory = "Icons"
-        row2.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Default Directory", icon= 'FOLDER_REDIRECT').directory = "Icons"
+        row2.operator(AR_OT_Preferences_DirectorySelector.bl_idname, text= "Select Icon Folder", icon= 'FILEBROWSER').directory = "Icons"
+        row2.operator(AR_OT_Preferences_RecoverDirectory.bl_idname, text= "Recover Icon Directory", icon= 'FOLDER_REDIRECT').directory = "Icons"
         box = col.box()
         box.label(text= self.IconFilePath)
         box = col.box()
