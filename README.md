@@ -14,7 +14,7 @@ But, It takes a lot of coffee to develop an Add-on!
 
 The update button has been moved!<br>
 :warning: Be sure to use this button<br>
-![](https://i.imgur.com/YAJ4wqY.png)
+<img src="https://i.imgur.com/YAJ4wqY.png" width="150px">
 
 # Add-ons Explained
 
@@ -36,9 +36,9 @@ For example, with the touch of a button, you can do routine tasks such as adding
 
 
 # Tutorial&Readme
-[日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
+🇯🇵[日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)
 
-[English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
+🇺🇸[English](https://inamurajin.wixsite.com/website/post/tutorial_readme_en)
 <br><br><br>
 
 
