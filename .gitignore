@@ -1,3 +1,5 @@
 
-.vscode/settings.json
+.vscode/
 __pycache__/
+/logs
+TextEditorExample.txt
