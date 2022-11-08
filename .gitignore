@@ -1,3 +1,5 @@
-
-.vscode/settings.json
 __pycache__/
+/ActRec/logs
+/ActRec/keymap.json
+/ActRec/Icons
+TextEditorExample.txt

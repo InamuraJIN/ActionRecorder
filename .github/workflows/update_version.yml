@@ -1,0 +1,49 @@
+name: Update Version
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  update:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - id: files
+        uses: jitterbit/get-changed-files@v1
+        with:
+          format: 'csv'
+      - name: Update to new Version
+        id: update
+        working-directory: .github/workflows/scripts
+        run: |
+          output=$(python update_version.py -files ${{ steps.files.outputs.added_modified }} -removed ${{ steps.files.outputs.removed }})
+          output="${output//'%'/'%25'}"
+          output="${output//$'\n'/'%0A'}"
+          output="${output//$'\r'/'%0D'}" 
+          echo "::set-output name=log::$output"
+      - name: Print Log
+        run: echo "${{ steps.update.outputs.log }}"
+      - name: Update files on GitHub
+        uses: test-room-7/action-update-file@v1.5.0
+        with:
+          file-path: |
+              __init__.py
+              download_file.json
+              actrec/config.py
+          commit-msg: Update Files
+          github-token: ${{ secrets.FILE_UPDATER }}
+
+        
