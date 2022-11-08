@@ -45,5 +45,3 @@ jobs:
               ActRec/actrec/config.py
           commit-msg: Update Files
           github-token: ${{ secrets.FILE_UPDATER }}
-
-        
