@@ -37,12 +37,12 @@ jobs:
       - name: Print Log
         run: echo "${{ steps.update.outputs.log }}"
       - name: Update files on GitHub
-        uses: test-room-7/action-update-file@v1.5.0
+        uses: test-room-7/action-update-file@v1
         with:
           file-path: |
-              __init__.py
+              ActRec/__init__.py
               download_file.json
-              actrec/config.py
+              ActRec/actrec/config.py
           commit-msg: Update Files
           github-token: ${{ secrets.FILE_UPDATER }}
 
