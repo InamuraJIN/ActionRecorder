@@ -3,8 +3,6 @@ name: Update Version
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
 
@@ -33,7 +31,7 @@ jobs:
           output="${output//'%'/'%25'}"
           output="${output//$'\n'/'%0A'}"
           output="${output//$'\r'/'%0D'}" 
-          echo "::set-output name=log::$output"
+          echo "log=$output" >> $GITHUB_OUTPUT
       - name: Print Log
         run: echo "${{ steps.update.outputs.log }}"
       - name: Update files on GitHub
