@@ -1,0 +1,53 @@
+{
+    "cSpell.words": [
+        "actrec",
+        "autosave",
+        "COLLAPSEMENU",
+        "depsgraph",
+        "DOPESHEET",
+        "endcharacter",
+        "Endnumber",
+        "endregion",
+        "excepthook",
+        "FILEBROWSER",
+        "fonttools",
+        "Icontable",
+        "idname",
+        "keyconfigs",
+        "keymapitem",
+        "keymaps",
+        "levelname",
+        "mainfile",
+        "mathutils",
+        "oskey",
+        "propname",
+        "recategorize",
+        "SORTTIME",
+        "Startnumber",
+        "Stepnumber",
+        "TEXTEDIT",
+        "texteditor",
+        "topdown",
+        "TRIA",
+        "uilist",
+        "WHEELDOWNMOUSE",
+        "WHEELUPMOUSE"
+    ],
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=F722,F821,W503"
+    ],
+    "python.formatting.autopep8Args": [
+        "--max-line-length",
+        "120",
+        "--experimental"
+    ],
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/unit_test_addon.yml"
+    ]
+}
+
+// ActRec_pref (bpy.types.Preferences): preferences of this addon
+// context (bpy.types.Context): active blender context
+// default Blender property getter
