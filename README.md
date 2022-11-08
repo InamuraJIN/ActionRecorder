@@ -1,3 +1,10 @@
+# PLEASE!
+We have been so busy with work that it has become difficult for us to update and fix bugs<br>
+We hope that new programmers will be born!<br>
+We have therefore made some major changes to the Action Recorder add-on<br>
+We have separated the Python files and added comments to make it easier for other programmers to see<br>
+Please Fork this add-on!<br><br>
+
 # Action Recorder
 Are you tirred of coding long intimidating coding task just for one-off modeling? Or may be you're not good coding at all !<br>
 Introducing "ActionRecorder" !<br>
