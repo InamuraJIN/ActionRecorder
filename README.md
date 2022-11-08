@@ -1,8 +1,8 @@
 # PLEASE!
-We have been so busy with work that it has become difficult for us to update and fix bugs<br>
-We hope that new programmers will be born!<br>
+Our workload has made it difficult for us to update and fix bugs<br>
+New programmers are expected to be created!<br>
 We have therefore made some major changes to the Action Recorder add-on<br>
-We have separated the Python files and added comments to make it easier for other programmers to see<br>
+For example, we have separated the Python files and added comments to make it easier for other programmers to understand<br>
 Please Fork this add-on!<br><br>
 
 # Action Recorder
