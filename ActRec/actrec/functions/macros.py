@@ -604,14 +604,12 @@ def evaluate_operator(ops_type: str, ops_name: str, ops_values: dict) -> bool:
             return True
 
 
-def improve_operator_report(
-        context: bpy.types.Context, ops_type: str, ops_name: str, ops_values: dict, ops_evaluation: bool) -> str:
+def improve_operator_report(ops_type: str, ops_name: str, ops_values: dict, ops_evaluation: bool) -> str:
     """
     improve the operator if needed
     bpy.ops.<type>.<name>(values)
 
     Args:
-        context (bpy.types.Context): active blender context
         ops_type (str): type of the operator
         ops_name (str): name of the operator
         ops_values (dict): values of the operator

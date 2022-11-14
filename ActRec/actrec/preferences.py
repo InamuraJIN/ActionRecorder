@@ -21,7 +21,7 @@ class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
     addon_directory: StringProperty(
         name="addon directory",
-        default=os.path.dirname(os.path.dirname(__file__)),
+        default=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
     )  # get the base addon directory
 
