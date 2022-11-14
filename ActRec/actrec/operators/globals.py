@@ -302,13 +302,13 @@ class AR_OT_global_import_settings(Operator):
                 ActRec_pref.import_extension = ".json"
                 with open(self.filepath, 'r') as file:
                     data = json.loads(file.read())
-                actions = {action.id: action for action in data['actions']}
+                actions = {action['id']: action for action in data['actions']}
                 for category in data['categories']:
                     new_category = ActRec_pref.import_settings.add()
                     new_category.identifier = category['id']
                     new_category.label = category['label']
                     for id in category['actions']:
-                        action = actions[id]
+                        action = actions[id['id']]
                         new_action = new_category.actions.add()
                         new_action.identifier = action['id']
                         new_action.label = action['label']
