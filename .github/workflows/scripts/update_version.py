@@ -66,6 +66,7 @@ if __name__ == "__main__":
             lines.append(line)
     with open(os.path.join(addon_directory, "ActRec/__init__.py"), 'w', encoding='utf-8') as file:
         file.write("\n".join(lines))
+        file.write("\n")
 
     lines = []
     with open(os.path.join(addon_directory, "ActRec/actrec/config.py"), 'r', encoding='utf-8') as file:
@@ -76,3 +77,4 @@ if __name__ == "__main__":
             lines.append(line)
     with open(os.path.join(addon_directory, "ActRec/actrec/config.py"), 'w', encoding='utf-8') as file:
         file.write("\n".join(lines))
+        file.write("\n")
