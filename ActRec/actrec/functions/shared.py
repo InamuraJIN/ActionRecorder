@@ -322,7 +322,7 @@ def update_command(command: str) -> Union[str, bool]:
     """
     if command.startswith("bpy.ops."):
         command, values = command.split("(", 1)
-        values = extract_properties(values[:-1])
+        values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
         for i in range(len(values)):
             values[i] = values[i].split("=")
         try:

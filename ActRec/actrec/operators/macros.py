@@ -233,7 +233,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             self.macro_index = -1
 
         if self.type == 'Clipboard':
-            clipboard = context.window_manager.clipboard
+            clipboard = context.window_manager.clipboard.replace("\n", "")
             name = functions.get_name_of_command(context, clipboard)
             macro.label = name if isinstance(name, str) else clipboard
             macro.command = clipboard
