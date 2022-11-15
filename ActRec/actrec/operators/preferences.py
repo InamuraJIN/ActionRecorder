@@ -35,7 +35,7 @@ class AR_OT_preferences_directory_selector(Operator, ExportHelper):
     def execute(self, context):
         ActRec_pref = get_preferences(bpy.context)
         user_path = self.properties.filepath
-        if(not os.path.isdir(user_path)):
+        if (not os.path.isdir(user_path)):
             msg = "Please select a directory not a file\n" + user_path
             self.report({'ERROR'}, msg)
             return {'CANCELLED'}

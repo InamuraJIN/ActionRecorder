@@ -631,7 +631,7 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
         err = functions.play(context.copy(), action.macros, action, 'global_actions')
         if err:
             self.report({'ERROR'}, str(err))
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
 class AR_OT_global_icon(icon_manager.Icontable, shared.Id_based, Operator):

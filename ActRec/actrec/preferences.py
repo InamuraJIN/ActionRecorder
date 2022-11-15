@@ -63,7 +63,7 @@ class AR_preferences(AddonPreferences):
             origin_path (str): path of the new icon folder
         """
         self['icon_path'] = origin_path
-        if not(os.path.exists(origin_path) and os.path.isdir(origin_path)):
+        if not (os.path.exists(origin_path) and os.path.isdir(origin_path)):
             os.makedirs(origin_path)
 
     icon_path: StringProperty(
@@ -219,7 +219,7 @@ class AR_preferences(AddonPreferences):
             origin_path (str): path of the new storage file
         """
         self['storage_path'] = origin_path
-        if not(os.path.exists(origin_path) and os.path.isfile(origin_path)):
+        if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
             os.makedirs(os.path.dirname(origin_path))
             with open(origin_path, 'w') as storage_file:
                 storage_file.write('{}')

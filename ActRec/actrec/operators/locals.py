@@ -301,7 +301,7 @@ class AR_OT_local_selection_up(Operator):
         if ActRec_pref.active_local_action_index - 1 >= 0:
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index - 1
             context.area.tag_redraw()
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
 class AR_OT_local_selection_down(Operator):
@@ -318,7 +318,7 @@ class AR_OT_local_selection_down(Operator):
         if ActRec_pref.active_local_action_index + 1 < len(ActRec_pref.local_actions):
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index + 1
             context.area.tag_redraw()
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
 class AR_OT_local_play(shared.Id_based, Operator):
@@ -348,7 +348,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
         if err:
             self.report({'ERROR'}, str(err))
         self.clear()
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
 class AR_OT_local_record(shared.Id_based, Operator):

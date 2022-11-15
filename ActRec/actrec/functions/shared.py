@@ -254,7 +254,7 @@ def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[st
     if command.startswith("bpy.ops."):
         try:
             return eval("%s.get_rna_type().name" % command.split("(")[0])
-        except(KeyError):
+        except (KeyError):
             return None
     elif command.startswith("bpy.context."):
         split = command.split(' = ')
@@ -327,7 +327,7 @@ def update_command(command: str) -> Union[str, bool]:
             values[i] = values[i].split("=")
         try:
             props = eval("%s.get_rna_type().properties[1:]" % command)
-        except(KeyError):
+        except (KeyError):
             return False
         inputs = []
         for prop in props:
@@ -621,7 +621,7 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
             else:
                 lines.append(psb)
                 start += line_length + len(psb)
-    if(lines[0] == ""):
+    if (lines[0] == ""):
         lines.pop(0)
     return lines
 

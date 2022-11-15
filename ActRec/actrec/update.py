@@ -399,7 +399,7 @@ class AR_OT_update(Operator):
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        if not(Update_manager.version_file and Update_manager.update_data_chunks):
+        if not (Update_manager.version_file and Update_manager.update_data_chunks):
             return {'CANCELLED'}
         ActRec_pref = get_preferences(context)
         ActRec_pref.update = False

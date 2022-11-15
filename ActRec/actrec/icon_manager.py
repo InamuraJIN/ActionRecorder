@@ -94,7 +94,7 @@ def register_icon(preview_collection: bpy.utils.previews.ImagePreviewCollection,
         filepath (str): filepath to the image file
         only_new (bool): if icon is already register by name, it won't be registered again.
     """
-    if only_new and not(name in preview_collection) or not only_new:
+    if only_new and not (name in preview_collection) or not only_new:
         name = functions.check_for_duplicates(preview_collection, name)
         preview_collection.load(name, filepath, 'IMAGE', force_reload=True)
         logger.info("Custom Icon <%s> registered" % name)

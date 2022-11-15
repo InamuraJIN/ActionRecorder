@@ -657,7 +657,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         # referring to https://docs.blender.org/api/current/bpy.types.Menu.html?menu#extending-the-button-context-menu
         button_pointer = getattr(context, "button_pointer", None)
         button_prop = getattr(context, "button_prop", None)
-        if not(button_pointer is None or button_prop is None):
+        if not (button_pointer is None or button_prop is None):
             base_object = button_pointer.id_data
             object_class = base_object.__class__
             # scans to the context attributes to get data for adding context commands
