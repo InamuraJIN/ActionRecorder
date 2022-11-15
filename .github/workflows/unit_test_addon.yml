@@ -4,7 +4,7 @@ name: test-addon
 on:
   workflow_dispatch:
   push:
-    branches: [master, dev]
+    branches: [master, testing]
   pull_request:
     branches: [master]
 
