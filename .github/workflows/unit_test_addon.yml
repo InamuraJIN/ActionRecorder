@@ -30,7 +30,7 @@ jobs:
           python-version: "3.9"
 
       - name: Cache Blender release download
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ${{ env.BLENDER_CACHE }}
           key: ${{ matrix.os }}-blender-${{ matrix.blender-version }}
