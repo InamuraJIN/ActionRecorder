@@ -20,6 +20,6 @@ jobs:
       - name: flake8 Lint
         uses: py-actions/flake8@v2
         with:
-          ignore: "F722,F821,W503"
+          ignore: "E121,E123,E126,E226,E24,E704,F722,F821,F401,W503,W504"
           max-line-length: "120"
           path: "ActRec"
