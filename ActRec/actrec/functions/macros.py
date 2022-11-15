@@ -487,7 +487,7 @@ def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: l
     Args:
         obj (blender_object): object to compare against
         copy_dict (dict): copy of an blender object
-        source_path (list): path to trace for deeper compare, 
+        source_path (list): path to trace for deeper compare,
             path from the context (excluded) to the attribute (excluded)
         attribute (str): attribute to compare
         value (any): value the return with

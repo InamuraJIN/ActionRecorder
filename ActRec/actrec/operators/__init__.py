@@ -23,7 +23,7 @@ from .helper import (
     AR_OT_helper_object_to_collection
 )
 
-from .preferences import(
+from .preferences import (
     AR_OT_preferences_directory_selector,
     AR_OT_preferences_recover_directory
 )

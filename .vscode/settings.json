@@ -36,7 +36,7 @@
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
         "--max-line-length=120",
-        "--ignore=F722,F821,W503"
+        "--ignore=E121,E123,E126,E226,E24,E704,F722,F821,F401,W503,W504"
     ],
     "python.formatting.autopep8Args": [
         "--max-line-length",

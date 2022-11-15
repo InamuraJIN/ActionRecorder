@@ -21,7 +21,7 @@ class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
     addon_directory: StringProperty(
         name="addon directory",
-        default=os.path.dirname(os.path.dirname(__file__)),
+        default=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
     )  # get the base addon directory
 
@@ -63,7 +63,7 @@ class AR_preferences(AddonPreferences):
             origin_path (str): path of the new icon folder
         """
         self['icon_path'] = origin_path
-        if not(os.path.exists(origin_path) and os.path.isdir(origin_path)):
+        if not (os.path.exists(origin_path) and os.path.isdir(origin_path)):
             os.makedirs(origin_path)
 
     icon_path: StringProperty(
@@ -219,7 +219,7 @@ class AR_preferences(AddonPreferences):
             origin_path (str): path of the new storage file
         """
         self['storage_path'] = origin_path
-        if not(os.path.exists(origin_path) and os.path.isfile(origin_path)):
+        if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
             os.makedirs(os.path.dirname(origin_path))
             with open(origin_path, 'w') as storage_file:
                 storage_file.write('{}')
@@ -279,14 +279,14 @@ class AR_preferences(AddonPreferences):
                 text="Select Action Button's Storage Folder",
                 icon='FILEBROWSER'
             )
-            ops.pref_property = "storage_path"
+            ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
             ops = row.operator(
                 "ar.preferences_recover_directory",
                 text="Recover Default Folder",
                 icon='FOLDER_REDIRECT'
             )
-            ops.pref_property = "storage_path"
+            ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
             box = col.box()
             box.label(text=self.storage_path)
@@ -306,14 +306,14 @@ class AR_preferences(AddonPreferences):
                 text="Select Icon Storage Folder",
                 icon='FILEBROWSER'
             )
-            ops.pref_property = "icon_path"
+            ops.preference_name = "icon_path"
             ops.path_extension = ""
             ops = row.operator(
                 "ar.preferences_recover_directory",
                 text="Recover Default Folder",
                 icon='FOLDER_REDIRECT'
             )
-            ops.pref_property = "icon_path"
+            ops.preference_name = "icon_path"
             ops.path_extension = ""
             box = col.box()
             box.label(text=self.icon_path)

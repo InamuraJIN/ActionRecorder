@@ -138,8 +138,8 @@ def update(
         else:
             Update_manager.update_respond = requests.get(
                 config.repo_source_url % path, stream=True)
-        ActRec_pref.update_progress = 100 * (progress / (length * download_length) + (
-            download_length - len(Update_manager.download_list)) / download_length)
+        ActRec_pref.update_progress = int(100 * (progress / (length * download_length) + (
+            download_length - len(Update_manager.download_list)) / download_length))
         if finished_downloaded:
             Update_manager.download_list.pop(0)
         return finished_downloaded
@@ -399,7 +399,7 @@ class AR_OT_update(Operator):
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        if not(Update_manager.version_file and Update_manager.update_data_chunks):
+        if not (Update_manager.version_file and Update_manager.update_data_chunks):
             return {'CANCELLED'}
         ActRec_pref = get_preferences(context)
         ActRec_pref.update = False
