@@ -49,7 +49,6 @@ if __name__ == "__main__":
                 data_files[file] = version
         data_remove = data["remove"]
         for file in args.removed:
-            print(file)
             if file not in data_remove:
                 data_remove.append(file)
         data["version"] = version

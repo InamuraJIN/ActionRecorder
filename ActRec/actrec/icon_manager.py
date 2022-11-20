@@ -74,7 +74,6 @@ def load_icons(ActRec_pref: bpy.types.Preferences):
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
         filepath = os.path.join(directory, icon)
-        print(filepath)
         if os.path.exists(filepath) and os.path.isfile(filepath):
             register_icon(
                 preview_collections['ar_custom'],
