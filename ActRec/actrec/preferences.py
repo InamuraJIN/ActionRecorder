@@ -21,7 +21,7 @@ class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
     addon_directory: StringProperty(
         name="addon directory",
-        default=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        default=os.path.dirname(os.path.dirname(__file__)),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
     )  # get the base addon directory
 
@@ -49,7 +49,7 @@ class AR_preferences(AddonPreferences):
         else:
             path = os.path.join(self.addon_directory, "Icons")
             if origin_path != 'Fallback':
-                logger.error("ActRec ERROR: Storage Path \"%s\" don't exist, fallback to %s" % (origin_path, path))
+                logger.error("ActRec ERROR: Icon Path \"%s\" don't exist, fallback to %s" % (origin_path, path))
             self['icon_path'] = path
             if not os.path.exists(path):
                 os.makedirs(path)

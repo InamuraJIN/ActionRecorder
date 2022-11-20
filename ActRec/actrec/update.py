@@ -159,14 +159,16 @@ def install_update(ActRec_pref: bpy.types.AddonPreferences, download_chunks: dic
         version_file (dict): contains data about the addon version, the version of each file and the open request
     """
     for path in download_chunks:
-        absolute_path = os.path.join(ActRec_pref.addon_directory, path)
+        relative_path = os.path.join(path).split(os.path.sep, 1)[1]
+        absolute_path = os.path.join(ActRec_pref.addon_directory, relative_path)
         absolute_directory = os.path.dirname(absolute_path)
         if not os.path.exists(absolute_directory):
             os.makedirs(absolute_directory)
         with open(absolute_path, 'w', encoding='utf-8') as ar_file:
             ar_file.write(download_chunks[path]["chunks"].decode('utf-8'))
     for path in version_file['remove']:
-        remove_path = os.path.join(ActRec_pref.addon_directory, path)
+        relative_path = os.path.join(path).split(os.path.sep, 1)[1]
+        remove_path = os.path.join(ActRec_pref.addon_directory, relative_path)
         if os.path.exists(remove_path):
             for root, dirs, files in os.walk(remove_path, topdown=False):
                 for name in files:
