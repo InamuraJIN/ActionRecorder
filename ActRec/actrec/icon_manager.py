@@ -20,25 +20,46 @@ preview_collections = {}
 # region functions
 
 
-def get_icons_values() -> list[int]:
+def get_icons_name_map() -> dict:
     """
-    get all default icons of Blender as values except the icon 'NONE' (value: 0)
+    get all default icons of Blender as dict with {name: value} except the icon 'NONE' (value: 0)
 
     Returns:
-        list[int]: list of icon values
+        dict: {name of icon: value of icon}
     """
-    return [icon.value for icon in
-            bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.values()[1:]]
+    return {item.name: item.value
+            for item in bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items[1:]}
 
 
-def get_icons_names() -> list[str]:
+def get_icons_value_map() -> dict:
     """
-    get all default icon of Blender as name except the icon 'NONE' (value: 0)
+    get all default icons of Blender as dict with {value: name} except the icon 'NONE' (value: 0)
 
     Returns:
-        list[str]: list of icon names
+        dict: {value of icon: name of icon}
     """
-    return bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.keys()[1:]
+    return {item.value: item.name
+            for item in bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items[1:]}
+
+
+def get_custom_icon_name_map() -> dict:
+    """
+    get all custom icons as dict with {name: value} except the icon 'NONE' (value: 0)
+
+    Returns:
+        dict: {name of icon: value of icon}
+    """
+    return {key: item.icon_id for key, item in preview_collections['ar_custom'].items()}
+
+
+def get_custom_icons_value_map() -> dict:
+    """
+    get all custom icons as dict with {value: name} except the icon 'NONE' (value: 0)
+
+    Returns:
+        dict: {value of icon: name of icon}
+    """
+    return {item.icon_id: key for key, item in preview_collections['ar_custom'].items()}
 
 
 def load_icons(ActRec_pref: bpy.types.Preferences):
@@ -53,6 +74,7 @@ def load_icons(ActRec_pref: bpy.types.Preferences):
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
         filepath = os.path.join(directory, icon)
+        print(filepath)
         if os.path.exists(filepath) and os.path.isfile(filepath):
             register_icon(
                 preview_collections['ar_custom'],
@@ -147,12 +169,11 @@ class Icontable(Operator):
         box = layout.box()
         grid_flow = box.grid_flow(row_major=True, columns=35,
                                   even_columns=True, even_rows=True, align=True)
-        icon_values = get_icons_values()
-        for i, icon_name in enumerate(get_icons_names()):
+        for icon_name, value in get_icons_name_map().items():
             human_name = icon_name.lower().replace("_", " ")
             if self.search == '' or self.search.lower() in human_name:
                 grid_flow.operator('ar.icon_selector', text="",
-                                   icon_value=icon_values[i]).icon = icon_values[i]
+                                   icon_value=value).icon = value
         box = layout.box()
         row = box.row().split(factor=0.5)
         row.label(text="Custom Icons")
@@ -162,13 +183,11 @@ class Icontable(Operator):
         row2.operator('ar.delete_custom_icon', text="Delete", icon='TRASH')
         grid_flow = box.grid_flow(row_major=True, columns=35,
                                   even_columns=True, even_rows=True, align=True)
-        custom_icon_values = [
-            icon.icon_id for icon in preview_collections['ar_custom'].values()]
-        for i, ic in enumerate(list(preview_collections['ar_custom'])):
-            human_name = ic.lower().replace("_", " ")
+        for icon_name, value in get_custom_icon_name_map().items():
+            human_name = icon_name.lower().replace("_", " ")
             if self.search == '' or self.search.lower() in human_name:
                 grid_flow.operator('ar.icon_selector', text="",
-                                   icon_value=custom_icon_values[i]).icon = custom_icon_values[i]
+                                   icon_value=value).icon = value
 
     def check(self, context):
         return True
@@ -214,7 +233,6 @@ class AR_OT_add_custom_icon(Operator, ImportHelper):
         if self.activate_pop_up != "":
             exec("bpy.ops.%s%s" % (".".join(self.activate_pop_up.split(
                 "_OT_")).lower(), "('INVOKE_DEFAULT', reuse= True)"))
-        super().cancel(context)
 
 
 class AR_OT_delete_custom_icon(Operator):

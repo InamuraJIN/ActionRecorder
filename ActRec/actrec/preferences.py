@@ -69,7 +69,7 @@ class AR_preferences(AddonPreferences):
     icon_path: StringProperty(
         name="Icons Path",
         description="The Path to the Storage for the added Icons",
-        default=os.path.join(os.path.dirname(os.path.dirname(__file__)), "Storage.json"),
+        default=os.path.join(os.path.dirname(os.path.dirname(__file__)), "Icons"),
         get=get_icon_path,
         set=set_icon_path
     )
@@ -280,7 +280,8 @@ class AR_preferences(AddonPreferences):
                 icon='FILEBROWSER'
             )
             ops.preference_name = "storage_path"
-            ops.path_extension = "Storage.json"
+            ops.path_extension = ""
+
             ops = row.operator(
                 "ar.preferences_recover_directory",
                 text="Recover Default Folder",
@@ -288,6 +289,7 @@ class AR_preferences(AddonPreferences):
             )
             ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
+
             box = col.box()
             box.label(text=self.storage_path)
             col.separator(factor=1.5)
@@ -308,13 +310,15 @@ class AR_preferences(AddonPreferences):
             )
             ops.preference_name = "icon_path"
             ops.path_extension = ""
+
             ops = row.operator(
                 "ar.preferences_recover_directory",
                 text="Recover Default Folder",
                 icon='FOLDER_REDIRECT'
             )
             ops.preference_name = "icon_path"
-            ops.path_extension = ""
+            ops.path_extension = "Icons"
+
             box = col.box()
             box.label(text=self.icon_path)
             col.separator(factor=1.5)
