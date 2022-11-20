@@ -10,6 +10,7 @@ from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolPrope
 # relative imports
 from .. import functions
 from ..functions.shared import get_preferences
+from ..icon_manager import get_icons_name_map, get_icons_value_map, get_custom_icon_name_map, get_custom_icons_value_map
 # endregion
 
 # region PropertyGroups
@@ -87,7 +88,29 @@ class Alert_system:
                         get=get_alert, set=set_alert, update=update_alert)
 
 
-class AR_macro(Id_based, Alert_system, PropertyGroup):
+class Icon_system:
+    def get_icon(self):
+        icons = get_icons_name_map()
+        icons.update(get_custom_icon_name_map())
+        return icons.get(self.icon_name, self.get("icon", 0))
+
+    def set_icon(self, value):
+        icons = get_icons_value_map()
+        icons.update(get_custom_icons_value_map())
+        self["icon"] = value
+        self["icon_name"] = icons.get(value, "NONE")
+
+    def get_icon_name(self):
+        return self.get("icon_name", "NONE")
+
+    def set_icon_name(self, value):
+        self["icon_name"] = value
+    # Icon NONE: Global: BLANK1 (101), Local: MESH_PLANE (286)
+    icon: IntProperty(default=0, set=set_icon, get=get_icon)
+    icon_name: StringProperty(default='NONE', set=set_icon_name, get=get_icon_name)
+
+
+class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
     def get_active(self) -> bool:
         """
         default Blender property getter with extra check if the macro is available
@@ -147,17 +170,13 @@ class AR_macro(Id_based, Alert_system, PropertyGroup):
     command: StringProperty(get=get_command, set=set_command)
     active: BoolProperty(
         default=True, description='Toggles Macro on and off.', get=get_active, set=set_active)
-    # Icon NONE: Global: BLANK1 (101), Local: MESH_PLANE (286)
-    icon: IntProperty(default=0)
     is_available: BoolProperty(default=True, get=get_is_available)
     ui_type: StringProperty(default="")
 
 
-class AR_action(Id_based, Alert_system):
+class AR_action(Id_based, Alert_system, Icon_system):
     label: StringProperty()
     macros: CollectionProperty(type=AR_macro)
-    # Icon NONE: Global: BLANK1 (101), Local: MESH_PLANE (286)
-    icon: IntProperty(default=0)
 
 
 class AR_scene_data(PropertyGroup):  # as Scene PointerProperty

@@ -39,6 +39,7 @@ def clear_load_global(request):
             "command": "bpy.ops.object.delete(use_global=False)",
             "active": True,
             "icon": 0,
+            "icon_name": "NONE",
             "is_available": True,
             "ui_type": "",
             "alert": False
@@ -55,6 +56,7 @@ def clear_load_global(request):
                      "command": "bpy.ops.object.subdivision_set(level=1, relative=False)",
                      "active": True,
                      "icon": 0,
+                     "icon_name": "NONE",
                      "ui_type": ""
                  },
                  {
@@ -63,6 +65,7 @@ def clear_load_global(request):
                      "command": "bpy.ops.object.shade_smooth()",
                      "active": True,
                      "icon": 0,
+                     "icon_name": "NONE",
                      "ui_type": ""
                  },
                  {
@@ -71,6 +74,7 @@ def clear_load_global(request):
                      "command": "bpy.context.object.data.use_auto_smooth = True",
                      "active": True,
                      "icon": 0,
+                     "icon_name": "NONE",
                      "ui_type": ""
                  },
                  {
@@ -79,10 +83,12 @@ def clear_load_global(request):
                      "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
                      "active": True,
                      "icon": 0,
+                     "icon_name": "NONE",
                      "ui_type": ""
                  }
              ],
-             "icon": 127
+             "icon": 127,
+             "icon_name": "NODE_MATERIAL"
          })],
     indirect=["clear_load_global"]
 )

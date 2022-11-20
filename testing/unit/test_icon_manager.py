@@ -17,12 +17,20 @@ from ActRec.actrec.functions.shared import get_preferences
 )"""
 
 
-def test_get_icons_values():
-    assert 0 not in icon_manager.get_icons_values()
+def test_get_icons_value_map():
+    assert 0 not in icon_manager.get_icons_value_map().keys()
 
 
-def test_get_icons_names():
-    assert 'NONE' not in icon_manager.get_icons_names()
+def test_get_icons_name_map():
+    assert 'NONE' not in icon_manager.get_icons_name_map().keys()
+
+
+def test_get_custom_icon_name_map():
+    icon_manager.get_custom_icon_name_map()
+
+
+def test_get_custom_icons_value_map():
+    icon_manager.get_custom_icons_value_map()
 
 
 @pytest.mark.parametrize(
