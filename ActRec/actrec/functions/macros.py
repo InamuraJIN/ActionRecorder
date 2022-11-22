@@ -536,11 +536,11 @@ def improve_context_report(context: bpy.types.Context, copy_dict: dict, source_p
     for attr in context.__dir__():
         # exclude Buttons Context https://docs.blender.org/api/current/bpy.context.html#buttons-context
         if (attr not in
-                set(
+                set([
                     "button_pointer", "id", "texture_slot", "mesh", "armature", "lattice", "curve", "meta_ball",
                     "speaker", "lightprobe", "camera", "material_slot", "texture", "texture_user",
                     "texture_user_property", "bone", "edit_bone", "pose_bone",
-                ) and isinstance(getattr(bpy.context, attr), object_class)):
+                ]) and isinstance(getattr(bpy.context, attr), object_class)):
             res[0] = attr
             break
     return "bpy.context.%s.%s = %s" % tuple(res)
