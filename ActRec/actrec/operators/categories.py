@@ -92,14 +92,14 @@ class AR_OT_category_interface(Operator):
         ('ShaderNodeTree', 'Shader Editor', '', 'NODE_MATERIAL', 6),
         ('SEQUENCE_EDITOR', 'Video Sequencer', '', 'SEQUENCE', 7),
         ('CLIP_EDITOR', 'Movie Clip Editor', '', 'TRACKER', 8),
-        
+
         ('', 'Animation', ''),
         ('DOPESHEET', 'Dope Sheet', '', 'ACTION', 9),
         ('TIMELINE', 'Timeline', '', 'TIME', 10),
         ('FCURVES', 'Graph Editor', '', 'GRAPH', 11),
         ('DRIVERS', 'Drivers', '', 'DRIVER', 12),
         ('NLA_EDITOR', 'Nonlinear Animation', '', 'NLA', 13),
-        
+
         ('', 'Scripting', ''),
         ('TEXT_EDITOR', 'Text Editor', '', 'TEXT', 14)
     ]
