@@ -17,6 +17,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 from .. import functions, properties, icon_manager, ui_functions, keymap
 from . import shared
 from ..functions.shared import get_preferences
+from ..log import logger
 # endregion
 
 
@@ -148,14 +149,14 @@ class AR_OT_global_import(Operator, ImportHelper):
             elif ActRec_pref.import_extension == ".json":
                 with open(self.filepath, 'r', encoding='utf-8') as file:
                     data = json.loads(file.read())
-                category_ids = set(category.identifier for category in ActRec_pref.import_settings)
+                category_ids = set(category.identifier for category in ActRec_pref.import_settings if category.use)
                 action_ids = []
                 for category in ActRec_pref.import_settings:
-                    action_ids += [action.identifier for action in category.actions]
+                    action_ids += [action.identifier for action in category.actions if action.use]
                 action_ids = set(action_ids)
 
-                data['categories'] = [category for category in data['categories'] if category['id'] not in category_ids]
-                data['actions'] = [action for action in data['actions'] if action['id'] not in action_ids]
+                data['categories'] = [category for category in data['categories'] if category['id'] in category_ids]
+                data['actions'] = [action for action in data['actions'] if action['id'] in action_ids]
                 functions.import_global_from_dict(ActRec_pref, data)
         else:
             self.report({'ERROR'}, "Select a .json or .zip file {%s}" % self.filepath)
@@ -300,18 +301,25 @@ class AR_OT_global_import_settings(Operator):
                 return {"FINISHED"}
             elif self.filepath.endswith(".json"):
                 ActRec_pref.import_extension = ".json"
-                with open(self.filepath, 'r') as file:
-                    data = json.loads(file.read())
-                actions = {action['id']: action for action in data['actions']}
-                for category in data['categories']:
-                    new_category = ActRec_pref.import_settings.add()
-                    new_category.identifier = category['id']
-                    new_category.label = category['label']
-                    for id in category['actions']:
-                        action = actions[id['id']]
-                        new_action = new_category.actions.add()
-                        new_action.identifier = action['id']
-                        new_action.label = action['label']
+                try:
+                    with open(self.filepath, 'r', encoding='utf-8') as file:
+                        data = json.loads(file.read())
+                    actions = {action['id']: action for action in data['actions']}
+                    for category in data['categories']:
+                        new_category = ActRec_pref.import_settings.add()
+                        new_category.identifier = category['id']
+                        new_category.label = category['label']
+                        for id in category['actions']:
+                            action = actions[id['id']]
+                            new_action = new_category.actions.add()
+                            new_action.identifier = action['id']
+                            new_action.label = action['label']
+                    return {"FINISHED"}
+                except Exception as err:
+                    logger.error("selected .json file not compatible (%s)" % err)
+                    self.report({'ERROR'}, "The selected file is not compatible (%s)" % self.filepath)
+                    return {'CANCELLED'}
+
         if not self.from_operator:
             self.report({'ERROR'}, "You need to select a .json or .zip file")
         self.from_operator = False
