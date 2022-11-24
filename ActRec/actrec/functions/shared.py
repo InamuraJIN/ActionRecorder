@@ -349,7 +349,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         context_copy (dict): copy of the active context (bpy.context.copy())
         action_type (str): "global_actions" or "local_actions"
         action_id (str): id of the action with the macros to execute
-        start (int): macros to start with in the macro collection
+        start (int): macro to start with in the macro collection
     """
     ActRec_pref = context_copy['preferences'].addons[__module__].preferences
     action = getattr(ActRec_pref, action_type)[action_id]
@@ -369,7 +369,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
         action_type (str): action type of the given action
 
     Returns:
-        _type_: _description_
+        Exception, str: error
     """
     macros = [macro for macro in macros if macro.active]
 
