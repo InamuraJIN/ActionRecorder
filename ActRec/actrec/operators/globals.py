@@ -671,11 +671,13 @@ class AR_OT_global_icon(icon_manager.Icontable, shared.Id_based, Operator):
 class AR_OT_add_ar_shortcut(Operator):
     bl_idname = "ar.add_ar_shortcut"
     bl_label = "Add Shortcut"
-    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+    bl_options = {'INTERNAL'}
+    bl_description = "Add a Shortcut to the selected Action"
 
     id: StringProperty()
 
     def draw(self, context: bpy.types.Context):
+        self.layout.label(text=self.bl_label)
         for kmi in keymap.keymaps['default'].keymap_items:
             if kmi.idname == "ar.global_execute_action" and kmi.properties.id == self.id:
                 self.layout.prop(kmi, "type", text="", full_event=True)
@@ -683,32 +685,37 @@ class AR_OT_add_ar_shortcut(Operator):
                 break
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        if functions.get_action_keymap(self.id) is None:
+        if self.id and functions.get_action_keymap(self.id) is None:
             functions.add_empty_action_keymap(self.id)
-        return context.window_manager.invoke_props_popup(self, event)
+        return context.window_manager.invoke_popup(self)
 
     def execute(self, context: bpy.types.Context):
-        ActRec_pref = get_preferences(context)
-        if functions.is_action_keymap_empty(functions.get_action_keymap(self.id)):
-            return {"CANCELLED"}
-        functions.global_runtime_save(ActRec_pref)
         return {"FINISHED"}
 
     def cancel(self, context: bpy.types.Context):
-        functions.remove_action_keymap(self.id)
+        #  Use cancel as execution of changed keymap (not indented use of invoke_popup)
+        ActRec_pref = get_preferences(context)
+        kmi = functions.get_action_keymap(self.id)
+        if self.id == '' or functions.is_action_keymap_empty(kmi):
+            functions.remove_action_keymap(self.id)
+            return
+        functions.global_runtime_save(ActRec_pref)
 
 
 class AR_OT_remove_ar_shortcut(Operator):
     bl_idname = "ar.remove_ar_shortcut"
     bl_label = "Remove Shortcut"
-    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+    bl_options = {'INTERNAL'}
+    bl_description = "Remove the Shortcut from the selected Action"
 
     id: StringProperty()
 
     def execute(self, context: bpy.types.Context):
+        ActRec_pref = get_preferences(context)
         if functions.get_action_keymap(self.id) is None:
             return {"CANCELLED"}
         functions.remove_action_keymap(self.id)
+        functions.global_runtime_save(ActRec_pref)
         return {"FINISHED"}
 
 # endregion
