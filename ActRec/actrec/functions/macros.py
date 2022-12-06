@@ -32,6 +32,7 @@ def get_local_macro_index(action: 'AR_local_actions', id: str, index: int) -> in
     Returns:
         int: found macro index or active macro index if not found
     """
+    # REFACTOR indentation
     macro = action.macros.find(id)
     if macro == -1:
         if len(action.macros) > index and index >= 0:  # fallback to input index
@@ -97,6 +98,7 @@ def track_scene(dummy: bpy.types.Scene = None):
     Args:
         dummy (bpy.types.Scene, optional): unused. Defaults to None.
     """
+    # REFACTOR indentation
     context = bpy.context
     ActRec_pref = get_preferences(context)
     operators = context.window_manager.operators
@@ -226,6 +228,7 @@ def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     Returns:
         bool: equal compare result
     """
+    # REFACTOR indentation
     for key, str_value in op1_props.items():
         value = op2_props.get(key, None)
         if value is None:
@@ -268,6 +271,7 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
             list with elements format (Type, Register, Undo, type, name, value[s])
             Type: 0 - Context, 1 Operator
     """
+    # REFACTOR indentation
     # create numpy.array for efficient access
     reports = numpy.array(reports)
     tracked_actions = numpy.array(tracked_actions)
@@ -445,6 +449,7 @@ def get_copy_of_object(data: dict, obj: 'blender_object', attribute: str, depth=
     Returns:
         dict: copied blender object
     """
+    # REFACTOR indentation
     if depth and obj:
         if hasattr(obj, attribute):
             return {attribute: getattr(obj, attribute)}
@@ -497,6 +502,7 @@ def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: l
             tuple: format (object class, source_path as str, attribute, value)
             None: object couldn't be compared
     """
+    # REFACTOR indentation
     if hasattr(obj, attribute) and getattr(obj, attribute) != copy_dict[attribute]:
         return (obj.__class__, ".".join(source_path), attribute, value)
     for key in copy_dict:
@@ -556,6 +562,7 @@ def split_operator_report(operator_str: str) -> Tuple[str, str, dict]:
     Returns:
         Tuple[str, str, dict]: format (ops_type, ops_name, ops_values)
     """
+    # REFACTOR indentation
     ops_type, ops_name = operator_str.replace("bpy.ops.", "").split("(")[0].split(".")
     ops_values = {}
     key = ""
@@ -620,6 +627,7 @@ def improve_operator_report(
     Returns:
         str: format bpy.ops.<type>.<name>(values)
     """
+    # REFACTOR indentation, use dict
     if ops_evaluation:
         if ops_type == "outliner":
             if ops_name == "collection_drop":

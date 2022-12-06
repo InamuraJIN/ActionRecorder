@@ -39,6 +39,7 @@ def category_visible(ActRec_pref: bpy.types.AddonPreferences,
     Returns:
         bool: true if category is visible
     """
+    # REFACTOR indentation
     if ActRec_pref.show_all_categories or not len(category.areas):
         return True
     area_type = context.area.ui_type

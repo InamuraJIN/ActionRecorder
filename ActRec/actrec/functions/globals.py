@@ -82,6 +82,7 @@ def load(ActRec_pref: bpy.types.AddonPreferences) -> bool:
     Returns:
         bool: success
     """
+    # REFACTOR indentation
     if os.path.exists(ActRec_pref.storage_path):
         with open(ActRec_pref.storage_path, 'r', encoding='utf-8') as storage_file:
             text = storage_file.read()
@@ -136,6 +137,7 @@ def get_global_action_id(ActRec_pref: bpy.types.AddonPreferences, id: str, index
     Returns:
         Union[str, None]: str: action id; None: fail
     """
+    # REFACTOR indentation
     if ActRec_pref.global_actions.find(id) == -1:
         if index >= 0 and len(ActRec_pref.global_actions) > index:
             return ActRec_pref.global_actions[index].id

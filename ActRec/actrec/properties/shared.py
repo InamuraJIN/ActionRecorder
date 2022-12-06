@@ -84,8 +84,13 @@ class Alert_system:
         if hasattr(context, 'area') and context.area:
             context.area.tag_redraw()
 
-    alert: BoolProperty(default=False, description="Internal use",
-                        get=get_alert, set=set_alert, update=update_alert)
+    alert: BoolProperty(
+        default=False,
+        description="Internal use",
+        get=get_alert,
+        set=set_alert,
+        update=update_alert
+    )
 
 
 class Icon_system:
@@ -128,6 +133,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         Args:
             value (bool): state of macro
         """
+        # REFACTOR indentation
         if self.is_available:
             context = bpy.context
             ActRec_pref = get_preferences(context)
@@ -169,7 +175,11 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
     label: StringProperty()
     command: StringProperty(get=get_command, set=set_command)
     active: BoolProperty(
-        default=True, description='Toggles Macro on and off.', get=get_active, set=set_active)
+        default=True,
+        description='Toggles Macro on and off.',
+        get=get_active,
+        set=set_active
+    )
     is_available: BoolProperty(default=True, get=get_is_available)
     ui_type: StringProperty(default="")
 

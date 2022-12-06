@@ -64,6 +64,7 @@ def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: l
     Returns:
         dict: python dict based on property
     """
+    # REFACTOR indentation
     data = {}  # PointerProperty
     main_exclude = []
     sub_exclude = defaultdict(list)
@@ -103,6 +104,7 @@ def property_to_python(property: bpy.types.Property, exclude: list = [], depth: 
     Returns:
         Union[list, dict, str]: converts Collection, Arrays to lists and PointerProperty to dict
     """
+    # REFACTOR indentation
     # CollectionProperty are a list of PointerProperties
     if depth <= 0:
         return "max depth"
@@ -251,6 +253,7 @@ def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[st
     Returns:
         Optional[str]: name or none if name not found
     """
+    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         try:
             return eval("%s.get_rna_type().name" % command.split("(")[0])
@@ -320,6 +323,7 @@ def update_command(command: str) -> Union[str, bool]:
     Returns:
         Union[str, bool, None]: update string, return False if command doesn't exists anymore
     """
+    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         command, values = command.split("(", 1)
         values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
@@ -371,6 +375,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
     Returns:
         Exception, str: error
     """
+    # REFACTOR indentation
     macros = [macro for macro in macros if macro.active]
 
     # non-realtime events, execute before macros get executed
@@ -587,6 +592,7 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     Returns:
         list[str]: multiline text
     """
+    # REFACTOR indentation
     if text == "" or not font.use_dynamic_text:
         return [text]
     characters_width = font.get_width_of_text(text)

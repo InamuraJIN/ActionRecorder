@@ -218,6 +218,7 @@ class AR_preferences(AddonPreferences):
         Args:
             origin_path (str): path of the new storage file
         """
+        # REFACTOR indentation
         self['storage_path'] = origin_path
         if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
             os.makedirs(os.path.dirname(origin_path))
@@ -252,6 +253,7 @@ class AR_preferences(AddonPreferences):
         Args:
             context (bpy.types.Context): active blender context
         """
+        # REFACTOR indentation ?
         ActRec_pref = get_preferences(context)
         layout = self.layout
         col = layout.column()

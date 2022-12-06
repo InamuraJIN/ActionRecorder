@@ -142,6 +142,7 @@ class AR_OT_category_interface(Operator):
             category_visibility (list): list of pattern (area, mode) where the category should be visible
             id (str): id of the category to select
         """
+        # REFACTOR indentation
         category = ActRec_pref.categories[id]
         visibility = defaultdict(list)
         for area, mode in category_visibility:
@@ -164,6 +165,7 @@ class AR_OT_category_interface(Operator):
         ops.area = self.area
         ops.mode = self.mode
         cls = AR_OT_category_interface
+        # REFACTOR indentation
         if len(cls.category_visibility) > 0:
             box = layout.box()
             row = box.row()
@@ -307,6 +309,7 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
         self.clear()
         category = categories.get(id, None)
+        # REFACTOR indentation
         if category:
             category = categories[id]
             for id_action in category.actions:
@@ -346,7 +349,8 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
         self.clear()
         categories = ActRec_pref.categories
         i = categories.find(id)
-        y = i - 1
+        y = i - 1  # upper index
+        # REFACTOR indentation
         if i >= 0 and y >= 0 and ui_functions.category_visible(ActRec_pref, context, categories[i]):
             swap_category = categories[y]
             # get next visible category
@@ -391,7 +395,7 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
         self.clear()
         categories = ActRec_pref.categories
         i = categories.find(id)
-        y = i + 1
+        y = i + 1  # lower index
         if i >= 0 and y < len(categories) and ui_functions.category_visible(ActRec_pref, context, categories[i]):
             swap_category = categories[y]
             # get next visible category

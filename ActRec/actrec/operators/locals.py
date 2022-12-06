@@ -97,7 +97,10 @@ class AR_OT_local_add(Operator):
     bl_description = "Add a New Action"
 
     name: StringProperty(
-        name="Name", description="Name of the Action", default="Untitled")
+        name="Name",
+        description="Name of the Action",
+        default="Untitled"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -237,6 +240,7 @@ class AR_OT_local_load(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
+        # REFACTOR indentation
         layout = self.layout
         layout.prop(self, 'source', expand=True)
         if self.source == 'text':
@@ -249,6 +253,7 @@ class AR_OT_local_load(Operator):
                     row.prop(text, 'apply', text='')
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         logger.info("Load Local Actions")
         if self.source == 'scene':
@@ -371,6 +376,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
         return len(ActRec_pref.local_actions)
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)

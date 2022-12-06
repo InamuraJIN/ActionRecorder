@@ -9,8 +9,10 @@ from .log import logger
 # endregion
 
 keymaps = {}
-keymap_path = os.path.join(os.path.dirname(
-    os.path.dirname(__file__)), "keymap.json")
+keymap_path = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "keymap.json"
+)
 
 # region functions
 
@@ -25,6 +27,7 @@ def load_action_keymap(items: bpy.types.KeyMapItems):
     Args:
         items (bpy.types.KeyMapItems): "Keymap items to register loaded keymap to"
     """
+    # REFACTOR indentation
     if not os.path.exists(keymap_path):
         return
     with open(keymap_path, 'r', encoding='utf-8') as keymap_file:
@@ -108,6 +111,7 @@ def register():
 
 def unregister():
     addon = bpy.context.window_manager.keyconfigs.addon
+    # REFACTOR indentation
     if addon:
         default_km = keymaps.get('default')
         if default_km:

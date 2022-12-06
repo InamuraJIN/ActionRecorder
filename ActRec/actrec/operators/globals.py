@@ -103,6 +103,7 @@ class AR_OT_global_import(Operator, ImportHelper):
         return macros
 
     def execute(self, context: bpy.types.Context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
         # Try to load import settings and check if file is valid
@@ -279,6 +280,7 @@ class AR_OT_global_import_settings(Operator):
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
 
+        # REFACTOR indentation
         if os.path.exists(self.filepath):
             if self.filepath.endswith(".zip"):
                 # Only used because old Version used .zip to export and directory and file structure
@@ -445,6 +447,7 @@ class AR_OT_global_export(Operator, ExportHelper):
                 category, 'show', icon="TRIA_DOWN" if category.show else "TRIA_RIGHT", text="", emboss=False)
             row.label(text=category.label)
             row.prop(category, 'use', text="")
+            # REFACTOR indentation ?
             if category.show:
                 col2 = box.column(align=False)
                 for action in category.actions:
@@ -508,6 +511,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
             self.global_to_local(ActRec_pref, ActRec_pref.global_actions[id])
+            # REFACTOR indentation ?
             if ActRec_pref.global_to_local_mode == 'move':
                 ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
                 for category in ActRec_pref.categories:
@@ -560,6 +564,7 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
             for id_action in category.actions:
+                # REFACTOR indentation
                 if id_action.id in ids:
                     index = category.actions.find(id_action.id)
                     category.actions.move(index, index - 1)
@@ -584,6 +589,7 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
             for id_action in reversed(list(category.actions)):
+                # REFACTOR indentation
                 if id_action.id in ids:
                     index = category.actions.find(id_action.id)
                     category.actions.move(index, index + 1)
@@ -612,6 +618,7 @@ class AR_OT_global_rename(shared.Id_based, Operator):
         label = self.label
         self.label = ""
 
+        # REFACTOR indentation
         if len(ids) == 1:
             id = ids[0]
             action = ActRec_pref.global_actions.get(id, None)
@@ -677,6 +684,7 @@ class AR_OT_add_ar_shortcut(Operator):
     id: StringProperty()
 
     def draw(self, context: bpy.types.Context):
+        # REFACTOR indentation
         self.layout.label(text=self.bl_label)
         for kmi in keymap.keymaps['default'].keymap_items:
             if kmi.idname == "ar.global_execute_action" and kmi.properties.id == self.id:

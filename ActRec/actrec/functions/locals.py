@@ -107,6 +107,7 @@ def get_local_action_index(ActRec_pref: bpy.types.AddonPreferences, id: str, ind
     Returns:
         int: valid index of a local actions or active local action index on fallback
     """
+    # REFACTOR indentation
     action = ActRec_pref.local_actions.find(id)
     if action == -1:
         if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index

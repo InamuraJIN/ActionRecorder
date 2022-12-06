@@ -58,6 +58,7 @@ def get_category_id(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int
     Returns:
         str: id of the category, fallback to selected category if not found
     """
+    # REFACTOR indentation
     if ActRec_pref.categories.find(id) == -1:
         if index >= 0 and len(ActRec_pref.categories) > index:
             return ActRec_pref.categories[index].id
@@ -78,6 +79,7 @@ def read_category_visibility(ActRec_pref: bpy.types.AddonPreferences, id: str) -
     Returns:
         Optional[list]: dict on success, None on fail
     """
+    # REFACTOR indentation
     visibility = []
     category = ActRec_pref.categories.get(id, None)
     if category:
