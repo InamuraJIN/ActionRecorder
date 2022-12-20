@@ -31,7 +31,7 @@
         "ActRec/actrec/uilist/__init__.py": [4, 0, 0],
         "ActRec/actrec/uilist/locals.py": [4, 0, 2],
         "ActRec/actrec/uilist/macros.py": [4, 0, 0],
-        "ActRec/actrec/__init__.py": [4, 0, 0],
+        "ActRec/actrec/__init__.py": [4, 0, 2],
         "ActRec/actrec/config.py": [4, 0, 2],
         "ActRec/actrec/icon_manager.py": [4, 0, 2],
         "ActRec/actrec/keymap.py": [4, 0, 2],
