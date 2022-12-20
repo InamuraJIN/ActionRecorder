@@ -58,6 +58,7 @@ def on_load(dummy=None):
 
 
 def register():
+    log.log_sys.append_file()
     properties.register()
     menus.register()
     operators.register()
@@ -109,4 +110,5 @@ def unregister():
 
     del bpy.types.Scene.ar
     log.logger.info("Unregistered Action Recorder")
+    log.log_sys.detach_file()
 # endregion
