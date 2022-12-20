@@ -1,6 +1,7 @@
 # region Imports
 # external modules
 import os
+import importlib
 
 # blender modules
 import bpy
@@ -173,6 +174,14 @@ class AR_preferences(AddonPreferences):
 
     operators_list_length: IntProperty(name="INTERNAL")
 
+    multiline_support_installing: BoolProperty(name="INTERNAL", default=False)
+    multiline_support_dont_ask: BoolProperty(
+        name="Don't Ask Again",
+        description="""Turns off the request for multiline support.
+Can also be installed under Preferences > Add-ons > Action Recorder > Settings""",
+        default=False
+    )
+
     # globals
     global_actions: CollectionProperty(type=properties.AR_global_actions)
 
@@ -339,6 +348,12 @@ class AR_preferences(AddonPreferences):
             row = col.row()
             row.prop(self, 'hide_local_text')
             row.prop(self, 'local_create_empty')
+            if importlib.util.find_spec('fontTools') is None:
+                row = col.row()
+                if self.multiline_support_installing:
+                    row.label(text="Installing fontTools...")
+                else:
+                    row.operator('ar.macro_install_multiline_support')
             col.separator(factor=1.5)
             row = col.row()
             row.operator('wm.url_open', text="Manual", icon='ASSET_MANAGER').url = config.manual_url

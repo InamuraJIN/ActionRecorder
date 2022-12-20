@@ -4,6 +4,7 @@ import importlib
 import json
 import time
 import numpy
+import threading
 
 # blender modules
 import bpy
@@ -43,6 +44,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         return not ActRec_pref.local_record_macros
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
         if not len(ActRec_pref.local_actions):
@@ -360,20 +362,10 @@ class AR_OT_macro_move_down(Macro_based, Operator):
 
 
 class Font_analysis():
-
     def __init__(self, font_path):
         self.path = font_path
-        # TODO add asking panel for multiline support because an installation ist required
-        # install the fonttools to blender modules if not installed
-        if importlib.util.find_spec('fontTools') is None:
-            success, output = functions.install_package('fontTools')
-            if success:
-                logger.info(output)
-            else:
-                logger.warning(output)
 
         if importlib.util.find_spec('fontTools') is None:
-            logger.warning("For some reason fontTools couldn't be installed :(")
             self.use_dynamic_text = False
             return
 
@@ -384,6 +376,30 @@ class Font_analysis():
         self.t = font['cmap'].getcmap(3, 1).cmap
         self.s = font.getGlyphSet()
         self.width_in_pixels = 10 / font['head'].unitsPerEm
+
+    @classmethod
+    def is_installed(cls) -> bool:
+        return importlib.util.find_spec('fontTools') is not None
+
+    @classmethod
+    def install(cls, logger) -> bool:
+        """
+        install fonttools to blender modules if not installed
+
+        Returns:
+            bool: success
+        """
+        if importlib.util.find_spec('fontTools') is None:
+            success, output = functions.install_package('fontTools')
+            if success:
+                logger.info(output)
+            else:
+                logger.warning(output)
+
+        if importlib.util.find_spec('fontTools') is None:
+            logger.warning("For some reason fontTools couldn't be installed :(")
+            return False
+        return True
 
     def get_width_of_text(self, text: str) -> list[float]:
         """
@@ -400,6 +416,90 @@ class Font_analysis():
         for c in text:
             total.append(self.s[self.t[ord(c)]].width * self.width_in_pixels)
         return total
+
+
+class AR_OT_macro_multiline_support(Operator):
+    bl_idname = "ar.macro_multiline_support"
+    bl_label = "Multiline Support"
+    bl_options = {'INTERNAL'}
+    bl_description = "Adds multiline support the edit macro dialog"
+
+    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, context: bpy.types.Context):
+        ActRec_pref = get_preferences(context)
+        layout = self.layout
+
+        if Font_analysis.is_installed():
+            layout.label(text="Support Enabled")
+            return
+
+        layout.label(text="Do you want to install multiline support?")
+        layout.label(text="This requires the fontTools package to be installed.")
+        row = layout.row()
+        if ActRec_pref.multiline_support_installing:
+            row.label(text="Installing fontTools...")
+        else:
+            row.operator('ar.macro_install_multiline_support', text="Install")
+            row.prop(ActRec_pref, 'multiline_support_dont_ask')
+
+    def execute(self, context: bpy.types.Context):
+        bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
+        return {'FINISHED'}
+
+    def cancel(self, context: bpy.types.Context):
+        # Also recall when done is not clicked
+        bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
+
+
+class AR_OT_macro_install_multiline_support(Operator):
+    """
+    Try's to install the package fonttools
+    to get the width of the given command and split it into multiple lines
+    """
+    bl_idname = "ar.macro_install_multiline_support"
+    bl_label = "Install Multiline Support"
+    bl_options = {'INTERNAL'}
+
+    success = []
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        ActRec_pref = get_preferences(context)
+        return not ActRec_pref.multiline_support_installing
+
+    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+        def install(success: list, logger):
+            success.append(Font_analysis.install(logger))
+
+        self.success.clear()
+        ActRec_pref = get_preferences(context)
+        context.window_manager.modal_handler_add(self)
+        self.timer = context.window_manager.event_timer_add(0.1, window=context.window)
+        self.thread = threading.Thread(target=install, args=(self.success, logger), daemon=True)
+        self.thread.start()
+        ActRec_pref.multiline_support_installing = True
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context: bpy.types.Context, event: bpy.types.Event):
+
+        if event.type != 'TIMER':
+            return {'PASS_THROUGH'}
+
+        if not self.thread.is_alive():
+            return self.execute(context)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context: bpy.types.Context):
+        ActRec_pref = get_preferences(context)
+        self.thread.join()
+        ActRec_pref.multiline_support_installing = False
+        if context and context.area:
+            context.area.tag_redraw()
+        if len(self.success) and self.success[0]:
+            return {'FINISHED'}
+        return {'CANCELLED'}
 
 
 class AR_OT_macro_edit(Macro_based, Operator):
@@ -447,6 +547,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
             value (str): command as single line
         """
         self['command'] = value
+        # REFACTOR indentation
         if not self.use_last_command:
             self.lines.clear()
             for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
@@ -474,6 +575,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
             value (str): last command as single line
         """
         self['last_command'] = value
+        # REFACTOR indentation
         if self.use_last_command:
             self.lines.clear()
             for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
@@ -508,6 +610,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     last_command: StringProperty(name="Last Command", get=get_last_command, set=set_last_command)
     last_id: StringProperty(name="Last Id")
     edit: BoolProperty(default=False)
+    multiline_asked: BoolProperty(default=False)
     clear_operator: BoolProperty(
         name="Clear Operator Command",
         description="Delete the parameters of an operator command. Otherwise the complete command is cleared",
@@ -531,11 +634,18 @@ class AR_OT_macro_edit(Macro_based, Operator):
         return not ActRec_pref.local_record_macros
 
     def invoke(self, context, event):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         action_index = self.action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
         index = self.index = functions.get_local_macro_index(action, self.id, self.index)
         macro = action.macros[index]
+
+        if not self.multiline_asked and not Font_analysis.is_installed() and not ActRec_pref.multiline_support_dont_ask:
+            bpy.ops.ar.macro_multiline_support("INVOKE_DEFAULT")
+            self.cancel(context)
+            self.multiline_asked = True
+            return {'CANCELLED'}  # Recall this Operator when handled
 
         font_path = functions.get_font_path()
         if AR_OT_macro_edit.font is None or AR_OT_macro_edit.font.path != font_path:
@@ -632,6 +742,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
 
     def cancel(self, context):
         self.edit = False
+        self.multiline_asked = False
         self.use_last_command = False
         self.clear()
 
@@ -645,15 +756,18 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
 
     @classmethod
     def poll(cls, context):
-        ActRec_pref = get_preferences(context)
-        return (
-            len(ActRec_pref.local_actions)
-            and (bpy.ops.ui.copy_python_command_button.poll()
-                 or getattr(context, "button_pointer", None)
-                 and getattr(context, "button_prop", None))
-        )
+
+        return (getattr(context, "button_operator", None)
+                or getattr(context, "button_pointer", None)
+                and getattr(context, "button_prop", None)
+                )
 
     def execute(self, context):
+        # REFACTOR indentation
+        ActRec_pref = get_preferences(context)
+        if not len(ActRec_pref.local_actions):
+            bpy.ops.ar.local_add()
+
         # referring to https://docs.blender.org/api/current/bpy.types.Menu.html?menu#extending-the-button-context-menu
         button_pointer = getattr(context, "button_pointer", None)
         button_prop = getattr(context, "button_prop", None)
@@ -707,10 +821,14 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
 
         button_operator = getattr(context, "button_operator", None)
         if button_operator is not None:
-            clipboard = context.window_manager.clipboard
-            bpy.ops.ui.copy_python_command_button(context.copy())
-            bpy.ops.ar.macro_add('EXEC_DEFAULT', command=context.window_manager.clipboard)
-            context.window_manager.clipboard = clipboard
+            op_property_identifiers = [
+                prop.identifier for prop in button_operator.bl_rna.properties[1:]]  # not include rna_type
+            op_properties = {}
+            for attr in op_property_identifiers:
+                op_properties[attr] = getattr(button_operator, attr)
+            op_type, op_idname = button_operator.bl_rna.identifier.split("_OT_")
+            bpy.ops.ar.macro_add('EXEC_DEFAULT', command="bpy.ops.%s.%s(%s)" %
+                                 (op_type.lower(), op_idname.lower(), functions.dict_to_kwarg_str(op_properties)))
             for area in context.screen.areas:
                 area.tag_redraw()
             return {"FINISHED"}
@@ -725,7 +843,9 @@ classes = [
     AR_OT_macro_move_up,
     AR_OT_macro_move_down,
     AR_OT_macro_edit,
-    AR_OT_copy_to_actrec
+    AR_OT_copy_to_actrec,
+    AR_OT_macro_multiline_support,
+    AR_OT_macro_install_multiline_support
 ]
 
 # region Registration

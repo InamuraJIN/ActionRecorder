@@ -264,7 +264,7 @@ class AR_OT_delete_custom_icon(Operator):
         icon_id: IntProperty()
         icon_name: StringProperty()
         selected: BoolProperty(default=False, name='Select', get=get_selected, set=set_selected)
-        
+
     icons: CollectionProperty(type=AR_icon)
     select_all: BoolProperty(
         name="All Icons",
