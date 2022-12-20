@@ -272,6 +272,7 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
             Type: 0 - Context, 1 Operator
     """
     # REFACTOR indentation
+    # REFACTOR rework this function because it's a mess
     # create numpy.array for efficient access
     reports = numpy.array(reports)
     tracked_actions = numpy.array(tracked_actions)
@@ -318,29 +319,21 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
                         )
                     )
                     report_i += 1
-                elif tracked[2] != 'CONTEXT':
-                    tracked_type, tracked_name = tracked[2].split("_OT_")
-                    data.append(
-                        (1, tracked[0], tracked[1], tracked_type.lower(), tracked_name, tracked[3]))
                 tracked_i += 1
         elif report.startswith('bpy.context.'):
+            if continue_report:
+                source_path, attribute, value = split_context_report(
+                    report)
+                undo = not (any(x in source_path for x in ("screen", "area", "space_data"))
+                            or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
+                data.append((0, True, undo, source_path, attribute, value))
+                report_i += 1
             if tracked[2] == 'CONTEXT':
-                if continue_report:
-                    source_path, attribute, value = split_context_report(
-                        report)
-                    undo = not (any(x in source_path for x in ("screen", "area", "space_data"))
-                                or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
-                    data.append((0, True, undo, source_path, attribute, value))
-                    report_i += 1
                 tracked[3] -= 1
                 if tracked[3] == 0:
                     tracked_i += 1
             elif not continue_report or not tracked[0]:
-                tracked_type, tracked_name = tracked[2].split("_OT_")
-                data.append((1, tracked[0], tracked[1], tracked_type.lower(), tracked_name, tracked[3]))
                 tracked_i += 1
-            else:
-                report_i += 1
         else:
             report_i += 1
             if not continue_report:

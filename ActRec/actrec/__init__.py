@@ -109,5 +109,4 @@ def unregister():
 
     del bpy.types.Scene.ar
     log.logger.info("Unregistered Action Recorder")
-    log.log_sys.unregister()
 # endregion

@@ -85,6 +85,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                         i += 1
                     tracked_actions = tracked_actions[:i + 1]
                 reports = functions.merge_report_tracked([command], tracked_actions)
+                logger.info("Record Report: %s" % reports)
 
                 # tries to recover more data of changed Properties
                 # by creating a copy of former data and try to match and complete it with the active data
@@ -122,6 +123,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                             tracked = tracked_actions[i]
                             i += 1
                     reports = functions.merge_report_tracked([command], tracked_actions[:i + 1])
+                    logger.info("Record Report: %s" % reports)
                 else:  # convert command to simple incase the command was passthrough with the operator
                     bl_options = getattr(getattr(bpy.ops, ops_type), ops_name).bl_options
                     reports = [(1, "REGISTER" in bl_options, "UNDO" in bl_options, ops_type, ops_name, ops_values)]
