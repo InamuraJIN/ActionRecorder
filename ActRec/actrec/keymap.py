@@ -22,7 +22,7 @@ def load_action_keymap(items: bpy.types.KeyMapItems):
     reads the global action keymap from file located inside the addon folder.
 
     Needed because shortcut of global actions can be added dynamically
-    and therefore needed to be know before Blender starts.
+    and therefore needed to be known while Blender register.
 
     Args:
         items (bpy.types.KeyMapItems): "Keymap items to register loaded keymap to"
@@ -60,7 +60,7 @@ def save_action_keymap(items: bpy.types.KeyMapItems):
     writes the global action keymap to a file located inside the addon folder.
 
     Needed because shortcut of global actions can be added dynamically
-    and therefore needed to be know before Blender starts.
+    and therefore needed to be known while Blender register.
 
     Args:
         items (bpy.types.KeyMapItems): "Keymap items to unregister loaded global keymaps from"

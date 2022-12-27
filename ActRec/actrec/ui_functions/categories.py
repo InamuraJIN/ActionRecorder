@@ -6,11 +6,11 @@ from contextlib import suppress
 import bpy
 from bpy.types import Panel
 
-
 # relative imports
 from . import globals
 from .. import panels
 from ..functions.shared import get_preferences
+from ..log import logger
 # endregion
 
 classes = []
@@ -142,8 +142,11 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
                     globals.draw_global_action(col, ActRec_pref, id)
         AR_PT_category.__name__ = "AR_PT_category_%s_%s" % (index, spaceType)
         if register:
-            bpy.utils.register_class(AR_PT_category)
-            classes.append(AR_PT_category)
+            try:
+                bpy.utils.register_class(AR_PT_category)
+                classes.append(AR_PT_category)
+            except RuntimeError as err:
+                logger.error("Couldn't register Panel :(\n(%s)", err)
         else:
             with suppress(Exception):
                 if hasattr(bpy.types, AR_PT_category.__name__):
