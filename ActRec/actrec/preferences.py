@@ -10,7 +10,7 @@ from bpy.types import AddonPreferences
 import rna_keymap_ui
 
 # relative imports
-from . import properties, functions, config, update, keymap
+from . import properties, functions, config, update, keymap, log
 from .log import logger, log_sys
 from .functions.shared import get_preferences
 # endregion
@@ -20,6 +20,7 @@ from .functions.shared import get_preferences
 
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
+
     addon_directory: StringProperty(
         name="addon directory",
         default=os.path.dirname(os.path.dirname(__file__)),
@@ -33,6 +34,15 @@ class AR_preferences(AddonPreferences):
                ('update', "Update", "")],
         name="Tab",
         description="Switch between preference tabs"
+    )
+
+    # log
+    log_amount: IntProperty(
+        name="Log Amount",
+        description="Number of log files kept\nChanges apply on the next launch of Blender",
+        default=5,
+        min=1,
+        soft_max=100
     )
 
     # icon manager
@@ -333,7 +343,9 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             box = col.box()
             box.label(text=self.icon_path)
             col.separator(factor=1.5)
-            col.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
+            row2 = col.row(align=True).split(factor=0.7, align=True)
+            row2.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
+            row2.prop(self, 'log_amount')
         elif ActRec_pref.preference_tab == 'keymap':
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
@@ -377,6 +389,8 @@ def register():
 
 
 def unregister():
+    ActRec_pref = functions.get_preferences(bpy.context)
+    log.update_log_amount_in_config(ActRec_pref.log_amount)
     for cls in classes:
         bpy.utils.unregister_class(cls)
 # endregion

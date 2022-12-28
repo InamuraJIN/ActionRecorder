@@ -89,7 +89,31 @@ class Log_system:
         self.file_handler = file_handler
 
 
+def update_log_amount_in_config(amount: int):
+    """
+    writes given amount as log amount into the config file
+
+    Args:
+        amount (int): log amount
+    """
+    path = os.path.join(os.path.dirname(__file__), "config.py")
+    with open(path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    for i, line in enumerate(lines):
+        if not line.startswith('log_amount'):
+            continue
+        lines[i] = "log_amount = %i" % amount
+        break
+
+    with open(path, 'w', encoding='utf-8') as file:
+        file.writelines(lines)
+
+
 # creates logger
-log_sys = Log_system(5)
+log_amount = 5
+if hasattr(config, 'log_amount'):
+    log_amount = config.log_amount
+log_sys = Log_system(log_amount)
 logger = log_sys.logger
 # endregion
