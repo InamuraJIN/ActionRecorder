@@ -46,11 +46,11 @@ def on_load(dummy=None):
         except json.JSONDecodeError as err:
             log.logger.info("old scene-data couldn't be parsed (%s)" % err)
     functions.load_local_action(ActRec_pref, json.loads(context.scene.ar.local))
-    
+
     # update paths
     ActRec_pref.storage_path
     ActRec_pref.icon_path
-    
+
     functions.load(ActRec_pref)
     icon_manager.load_icons(ActRec_pref)
 
