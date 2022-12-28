@@ -105,6 +105,8 @@ def update_log_amount_in_config(amount: int):
             continue
         lines[i] = "log_amount = %i" % amount
         break
+    else:
+        lines.append("log_amount = %i\n" % amount)
 
     with open(path, 'w', encoding='utf-8') as file:
         file.writelines(lines)

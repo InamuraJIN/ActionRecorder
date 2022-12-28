@@ -5,3 +5,4 @@ check_source_url = 'https://raw.githubusercontent.com/InamuraJIN/ActionRecorder/
 repo_source_url = 'https://raw.githubusercontent.com/InamuraJIN/ActionRecorder/master/%s'
 release_notes_url = 'https://github.com/InamuraJIN/ActionRecorder/wiki'
 version = (4, 0, 2)
+log_amount = 5
