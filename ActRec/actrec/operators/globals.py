@@ -18,6 +18,7 @@ from .. import functions, properties, icon_manager, ui_functions, keymap
 from . import shared
 from ..functions.shared import get_preferences
 from ..log import logger
+from ..keymap import keymaps
 # endregion
 
 
@@ -78,6 +79,11 @@ class AR_OT_global_import(Operator, ImportHelper):
             ("add", "Add", "Add to the current Global data"),
             ("overwrite", "Overwrite", "Remove the current Global data")
         ]
+    )
+    include_keymap: BoolProperty(
+        name="Include Shortcuts",
+        description="Include the added Shortcuts of the actions",
+        default=True
     )
 
     def get_macros_from_file(self, context: bpy.types.Context, zip_file: zipfile.ZipFile, path: str) -> list:
@@ -159,6 +165,9 @@ class AR_OT_global_import(Operator, ImportHelper):
                 data['categories'] = [category for category in data['categories'] if category['id'] in category_ids]
                 data['actions'] = [action for action in data['actions'] if action['id'] in action_ids]
                 functions.import_global_from_dict(ActRec_pref, data)
+                if self.include_keymap:
+                    default_km = keymaps.get('default')
+                    keymap.load_action_keymap_data(data, default_km.keymap_items)
         else:
             self.report({'ERROR'}, "Select a .json or .zip file {%s}" % self.filepath)
         ActRec_pref = get_preferences(context)
@@ -178,6 +187,7 @@ class AR_OT_global_import(Operator, ImportHelper):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(self, 'mode', expand=True)
+        col.prop(self, 'include_keymap')
         for category in ActRec_pref.import_settings:
             box = col.box()
             sub_col = box.column()
@@ -188,12 +198,19 @@ class AR_OT_global_import(Operator, ImportHelper):
                 row.prop(category, 'show', icon="TRIA_RIGHT", text="", emboss=False)
             row.prop(category, 'use', text="")
             row.label(text=category.label)
-            if category.show:
-                sub_col = box.column()
-                for action in category.actions:
-                    row = sub_col.row()
-                    row.prop(action, 'use', text="")
-                    row.label(text=action.label)
+            if not category.show:
+                continue
+            sub_col = box.column()
+            for action in category.actions:
+                row = sub_col.row()
+                row.prop(action, 'use', text="")
+                row.label(text=action.label)
+                if not self.include_keymap:
+                    continue
+                sub2_col = row.column()
+                sub2_col.alignment = 'RIGHT'
+                sub2_col.enabled = False
+                sub2_col.label(text=action.shortcut)
 
     def cancel(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
@@ -276,6 +293,24 @@ class AR_OT_global_import_settings(Operator):
             item.sort(key=lambda x: int(x.split("/")[-1].split('~')[0]))
         return categories
 
+    def map_shortcut_to_actions(self, context: bpy.types.Context, keymap_data: dict) -> dict:
+        """
+        maps the keymap to the corresponding action id
+
+        Args:
+            keymap_data (str): JSON Format
+
+        Returns:
+            dict: key (str): id; value (str): shortcut
+        """
+        km = context.window_manager.keyconfigs.addon.keymaps.new(name="AR_IMPORT_TEMP")
+        keymap.load_action_keymap_data(keymap_data, km.keymap_items)
+        shortcut_map = {}
+        for kmi in km.keymap_items:
+            shortcut_map[kmi.properties.id] = kmi.to_string()
+        context.window_manager.keyconfigs.addon.keymaps.remove(km)
+        return shortcut_map
+
     def execute(self, context):
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
@@ -307,6 +342,7 @@ class AR_OT_global_import_settings(Operator):
                     with open(self.filepath, 'r', encoding='utf-8') as file:
                         data = json.loads(file.read())
                     actions = {action['id']: action for action in data['actions']}
+                    shortcut_map = self.map_shortcut_to_actions(context, data)
                     for category in data['categories']:
                         new_category = ActRec_pref.import_settings.add()
                         new_category.identifier = category['id']
@@ -316,6 +352,7 @@ class AR_OT_global_import_settings(Operator):
                             new_action = new_category.actions.add()
                             new_action.identifier = action['id']
                             new_action.label = action['label']
+                            new_action.shortcut = shortcut_map.get(action['id'], "")
                     return {"FINISHED"}
                 except Exception as err:
                     logger.error("selected .json file not compatible (%s)" % err)
@@ -328,6 +365,8 @@ class AR_OT_global_import_settings(Operator):
         return {'CANCELLED'}
 
 # FIXME Add Keymap option
+
+
 class AR_OT_global_export(Operator, ExportHelper):
     bl_idname = "ar.global_export"
     bl_label = "Export"
@@ -375,6 +414,31 @@ class AR_OT_global_export(Operator, ExportHelper):
     )
     export_categories: CollectionProperty(type=properties.AR_global_export_categories)
 
+    include_keymap: BoolProperty(
+        name="Include Shortcuts",
+        description="Include the added Shortcuts of the actions",
+        default=True
+    )
+
+    def append_keymap(self, data, export_action_ids):
+        default_km = keymaps.get('default')
+        for kmi in default_km.keymap_items:
+            if kmi.idname == "ar.global_execute_action" and kmi.properties['id'] in export_action_ids:
+                data['keymap'].append({
+                    'id': kmi.properties['id'],
+                    'active': kmi.active,
+                    'type': kmi.type,
+                    'value': kmi.value,
+                    'any': kmi.any,
+                    'shift': kmi.shift,
+                    'ctrl': kmi.ctrl,
+                    'alt': kmi.alt,
+                    'oskey': kmi.oskey,
+                    'key_modifier': kmi.key_modifier,
+                    'repeat': kmi.repeat,
+                    'map_type': kmi.map_type
+                })
+
     @classmethod
     def poll(cls, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
@@ -395,6 +459,9 @@ class AR_OT_global_export(Operator, ExportHelper):
                 new_action = new_category.actions.add()
                 new_action.id = action.id
                 new_action.label = action.label
+                action_keymap = functions.get_action_keymap(action.id)
+                if action_keymap:
+                    new_action.shortcut = action_keymap.to_string()
         return ExportHelper.invoke(self, context, event)
 
     def execute(self, context: bpy.types.Context):
@@ -416,16 +483,20 @@ class AR_OT_global_export(Operator, ExportHelper):
             )
         for category in ActRec_pref.categories:
             if category.id in export_category_ids:
-                data['categories'] = functions.property_to_python(
-                    ActRec_pref.categories,
+                data['categories'].append(functions.property_to_python(
+                    category,
                     exclude=["name", "selected", "actions.name", "areas.name", "areas.modes.name"]
-                )
+                ))
         for action in ActRec_pref.global_actions:
             if action.id in export_action_ids:
-                data['actions'] = functions.property_to_python(
-                    ActRec_pref.global_actions,
+                data['actions'].append(functions.property_to_python(
+                    action,
                     exclude=["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"]
-                )
+                ))
+
+        if self.include_keymap:
+            self.append_keymap(data, export_action_ids)
+
         with open(self.filepath, 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
         self.cancel(context)
@@ -437,6 +508,7 @@ class AR_OT_global_export(Operator, ExportHelper):
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
+        layout.prop(self, 'include_keymap')
         layout.prop(self, 'export_all', text="All")
         col = layout.column(align=True)
         for category in self.export_categories:
@@ -447,13 +519,19 @@ class AR_OT_global_export(Operator, ExportHelper):
                 category, 'show', icon="TRIA_DOWN" if category.show else "TRIA_RIGHT", text="", emboss=False)
             row.label(text=category.label)
             row.prop(category, 'use', text="")
-            # REFACTOR indentation ?
-            if category.show:
-                col2 = box.column(align=False)
-                for action in category.actions:
-                    sub_row = col2.row()
-                    sub_row.prop(action, 'use', text='')
-                    sub_row.label(text=action.label)
+
+            if not category.show:
+                continue
+            col2 = box.column(align=False)
+            for action in category.actions:
+                sub_row = col2.row()
+                sub_row.prop(action, 'use', text='')
+                sub_row.label(text=action.label)
+                if self.include_keymap:
+                    sub_col = sub_row.column()
+                    sub_col.alignment = 'RIGHT'
+                    sub_col.enabled = False
+                    sub_col.label(text=action.shortcut)
 
 
 class AR_OT_global_save(Operator):
@@ -485,7 +563,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     bl_label = "Global Action to Local"
     bl_description = "Transfer the selected Action to Local-actions"
 
-    @classmethod
+    @ classmethod
     def poll(cls, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))

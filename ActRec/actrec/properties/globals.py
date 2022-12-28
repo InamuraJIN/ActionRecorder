@@ -93,6 +93,7 @@ class AR_global_import_action(PropertyGroup):
         get=get_use,
         set=set_use
     )
+    shortcut: StringProperty()
 
 
 class AR_global_import_category(PropertyGroup):
@@ -159,6 +160,7 @@ class AR_global_export_action(shared.Id_based, PropertyGroup):
         get=get_use,
         set=set_use
     )
+    shortcut: StringProperty()
 
 
 class AR_global_export_categories(shared.Id_based, PropertyGroup):
