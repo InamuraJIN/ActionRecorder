@@ -364,7 +364,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
 
 
 class Font_analysis():
-    def __init__(self, font_path):
+    def __init__(self, font_path: str):
         self.path = font_path
 
         if importlib.util.find_spec('fontTools') is None:
@@ -372,16 +372,26 @@ class Font_analysis():
             return
 
         self.use_dynamic_text = True
+
+        if not (self.path.endswith(".ttf") or self.path.endswith(".woff2")):
+            self.use_dynamic_text = False
+            logger.error("Couldn't use selected font because it's not a .ttf or .woff2\nFILE: %s" % self.path)
+            return
+
         from fontTools.ttLib import TTFont
 
-        font = TTFont(font_path)
+        font = TTFont(self.path)
         self.t = font['cmap'].getcmap(3, 1).cmap
         self.s = font.getGlyphSet()
         self.width_in_pixels = 10 / font['head'].unitsPerEm
 
     @classmethod
     def is_installed(cls) -> bool:
-        return importlib.util.find_spec('fontTools') is not None
+
+        return (
+            importlib.util.find_spec('fontTools') is not None
+            and (bpy.app.version < (3, 4, 0) or importlib.util.find_spec('brotli'))
+        )
 
     @classmethod
     def install(cls, logger) -> bool:
@@ -391,6 +401,7 @@ class Font_analysis():
         Returns:
             bool: success
         """
+        # FIXME install multiple packages with one request
         if importlib.util.find_spec('fontTools') is None:
             success, output = functions.install_package('fontTools')
             if success:
@@ -401,7 +412,21 @@ class Font_analysis():
         if importlib.util.find_spec('fontTools') is None:
             logger.warning("For some reason fontTools couldn't be installed :(")
             return False
-        return True
+
+        if bpy.app.version < (3, 4, 0):
+            return True
+
+        # Blender 3.4 uses woff2 therefore the package brotli is required
+        if importlib.util.find_spec('brotli') is None:
+            success, output = functions.install_package('brotli')
+            if success:
+                logger.info(output)
+            else:
+                logger.warning(output)
+
+        if importlib.util.find_spec('brotli') is None:
+            logger.warning("For some reason brotli couldn't be installed :(")
+            return False
 
     def get_width_of_text(self, text: str) -> list[float]:
         """
@@ -438,10 +463,16 @@ class AR_OT_macro_multiline_support(Operator):
             return
 
         layout.label(text="Do you want to install multiline support?")
-        layout.label(text="This requires the fontTools package to be installed.")
+        if bpy.app.version >= (3, 4, 0):
+            layout.label(text="This requires the fontTools, brotli package to be installed.")
+        else:
+            layout.label(text="This requires the fontTools package to be installed.")
         row = layout.row()
         if ActRec_pref.multiline_support_installing:
-            row.label(text="Installing fontTools...")
+            if bpy.app.version >= (3, 4, 0):
+                row.label(text="Installing fontTools, brotli...")
+            else:
+                row.label(text="Installing fontTools...")
         else:
             row.operator('ar.macro_install_multiline_support', text="Install")
             row.prop(ActRec_pref, 'multiline_support_dont_ask')

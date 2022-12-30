@@ -556,6 +556,8 @@ def get_font_path() -> str:
     """
     if bpy.context.preferences.view.font_path_ui == '':
         dirc = "\\".join(sys.executable.split("\\")[:-3])
+        if bpy.app.version >= (3, 4, 0):
+            return os.path.join(dirc, "datafiles", "fonts", "DejaVuSans.woff2")
         return os.path.join(dirc, "datafiles", "fonts", "droidsans.ttf")
     else:
         return bpy.context.preferences.view.font_path_ui
@@ -674,6 +676,7 @@ def install_package(package_name: str) -> tuple[bool, str]:
             return (False, err)
     except subprocess.CalledProcessError as err:
         return (False, err.output)
+    return (False, ":(")
 
 
 def get_preferences(context: bpy.types.Context) -> bpy.types.AddonPreferences:
