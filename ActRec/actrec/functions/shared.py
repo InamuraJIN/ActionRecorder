@@ -667,7 +667,7 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
             logger.info(output)
             output = subprocess.check_output(
                 ['powershell.exe', '-WindowStyle', 'hidden', '-Command',
-                    """& { Start-Process \'%s\' -Wait -ArgumentList \'-m\',
+                    """& { Start-Process -WindowStyle hidden \'%s\' -Wait -ArgumentList \'-m\',
                     \'pip\', \'install\', %s -Verb RunAs}"""
                     % (sys.executable, ",".join("\'%s\'" % p for p in package_names))],
                 stderr=subprocess.STDOUT
