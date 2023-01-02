@@ -103,7 +103,7 @@ def update_log_amount_in_config(amount: int):
     for i, line in enumerate(lines):
         if not line.startswith('log_amount'):
             continue
-        lines[i] = "log_amount = %i" % amount
+        lines[i] = "log_amount = %i\n" % amount
         break
     else:
         lines.append("log_amount = %i\n" % amount)

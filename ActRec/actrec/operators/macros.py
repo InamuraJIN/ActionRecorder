@@ -401,32 +401,29 @@ class Font_analysis():
         Returns:
             bool: success
         """
-        # FIXME install multiple packages with one request
-        if importlib.util.find_spec('fontTools') is None:
-            success, output = functions.install_package('fontTools')
-            if success:
-                logger.info(output)
-            else:
-                logger.warning(output)
+        if bpy.app.version >= (3, 4, 0):
+            # Blender 3.4 uses woff2 therefore the package brotli is required
+            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
+                success, output = functions.install_packages('fontTools', 'brotli')
+                if success:
+                    logger.info(output)
+                else:
+                    logger.warning(output)
 
-        if importlib.util.find_spec('fontTools') is None:
-            logger.warning("For some reason fontTools couldn't be installed :(")
-            return False
+            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
+                logger.warning("For some reason fontTools or brotli couldn't be installed :(")
+                return False
+        else:
+            if importlib.util.find_spec('fontTools') is None:
+                success, output = functions.install_packages('fontTools')
+                if success:
+                    logger.info(output)
+                else:
+                    logger.warning(output)
 
-        if bpy.app.version < (3, 4, 0):
-            return True
-
-        # Blender 3.4 uses woff2 therefore the package brotli is required
-        if importlib.util.find_spec('brotli') is None:
-            success, output = functions.install_package('brotli')
-            if success:
-                logger.info(output)
-            else:
-                logger.warning(output)
-
-        if importlib.util.find_spec('brotli') is None:
-            logger.warning("For some reason brotli couldn't be installed :(")
-            return False
+            if importlib.util.find_spec('fontTools') is None:
+                logger.warning("For some reason fontTools couldn't be installed :(")
+                return False
 
     def get_width_of_text(self, text: str) -> list[float]:
         """

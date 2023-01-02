@@ -634,12 +634,12 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     return lines
 
 
-def install_package(package_name: str) -> tuple[bool, str]:
+def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     """
-    install a package and ask for user permission if needed
+    install the listed packages and ask for user permission if needed
 
     Args:
-        package_name (str): name of the package
+        package_names list[str]: name of the package
 
     Returns:
         tuple[bool, str]: (success, installation output)
@@ -652,22 +652,24 @@ def install_package(package_name: str) -> tuple[bool, str]:
         os.mkdir(path)
         os.rmdir(path)
         output = subprocess.check_output(
-            [sys.executable, '-m', 'pip', 'install', package_name, '--no-color']
+            [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
         ).decode('utf-8').replace("\r", "")
         return (True, output)
     except PermissionError as err:
         if sys.platform == "win32":
+            logger.info(err)
             logger.info("Need Admin Permissions to write to %s" % path)
             logger.info("Try again to install fontTools as admin")
             output = subprocess.check_output(
-                [sys.executable, '-m', 'pip', 'uninstall', '-y', package_name, '--no-color'],
+                [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
                 stderr=subprocess.STDOUT
             ).decode('utf-8').replace("\r", "")
             logger.info(output)
             output = subprocess.check_output(
-                ['powershell.exe', '-Command',
+                ['powershell.exe', '-WindowStyle', 'hidden', '-Command',
                     """& { Start-Process \'%s\' -Wait -ArgumentList \'-m\',
-                    \'pip\', \'install\', \'%s\'-Verb RunAs}""" % (sys.executable, package_name)],
+                    \'pip\', \'install\', %s -Verb RunAs}"""
+                    % (sys.executable, ",".join("\'%s\'" % p for p in package_names))],
                 stderr=subprocess.STDOUT
             ).decode('unicode_escape').replace("\r", "")
             if output != '':

@@ -364,8 +364,6 @@ class AR_OT_global_import_settings(Operator):
         self.from_operator = False
         return {'CANCELLED'}
 
-# FIXME Add Keymap option
-
 
 class AR_OT_global_export(Operator, ExportHelper):
     bl_idname = "ar.global_export"
