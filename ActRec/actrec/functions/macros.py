@@ -580,7 +580,12 @@ def dict_to_kwarg_str(value_dict: dict) -> str:
     Returns:
         str: format "<key1>=<value1>, <key2>=<value2>, ..."
     """
-    return ", ".join(f"{key}={value}" for key, value in value_dict.items())
+    property_str_list = []
+    for key, value in value_dict.items():
+        if isinstance(value, str):
+            value = "\'%s\'" % value
+        property_str_list.append(f"{key}={value}")
+    return ", ".join(property_str_list)
 
 
 def evaluate_operator(ops_type: str, ops_name: str, ops_values: dict) -> bool:
