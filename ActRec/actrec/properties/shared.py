@@ -5,7 +5,7 @@ import uuid
 # blender modules
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty
+from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty, EnumProperty
 
 # relative imports
 from .. import functions
@@ -187,6 +187,19 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
 class AR_action(Id_based, Alert_system, Icon_system):
     label: StringProperty()
     macros: CollectionProperty(type=AR_macro)
+    execution_mode: EnumProperty(
+        items=[
+            ("INDIVIDUAL", "Individual",
+             "Performs the current action on all selected objects individually",
+             "STICKY_UVS_DISABLE", 0),
+            ("GROUP", "Group",
+             "Performs the current action on all selected objects without separating them (Default Behavior)",
+             "STICKY_UVS_LOC", 1)
+        ],
+        name="Execution Mode",
+        description="Choses to perform the current actions on the selected objects individually or as a group",
+        default="GROUP"
+    )
 
 
 class AR_scene_data(PropertyGroup):  # as Scene PointerProperty

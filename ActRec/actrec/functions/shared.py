@@ -375,6 +375,50 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
     Returns:
         Exception, str: error
     """
+    if action.execution_mode == "GROUP":
+        return execute_action(context_copy, macros, action, action_type)
+
+    error_list = []
+    old_selected_objects = context_copy['selected_objects']
+    old_active_object = context_copy['active_object']
+    for object in old_selected_objects:
+        object.select_set(False)
+
+    for object in old_selected_objects:
+        context_copy['selected_objects'] = [object]
+        context_copy['active_object'] = object
+        context_copy['view_layer'].objects.active = object
+        object.select_set(True)
+        err = execute_action(context_copy, macros, action, action_type)
+        error_list.append(err)
+        with suppress(ReferenceError):
+            object.select_set(False)
+
+    for object in old_selected_objects:
+        with suppress(ReferenceError):
+            object.select_set(True)
+
+    with suppress(ReferenceError):
+        context_copy['view_layer'].objects.active = old_active_object
+
+    return "\n\n".join(str(item) for item in error_list if item)
+
+
+def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
+                   ) -> Union[Exception, str]:
+    """
+    execute all given macros in the given context.
+    action, action_type are used to run the macros of the given action with delay to the execution
+
+    Args:
+        context_copy (dict): copy of the active context (bpy.context.copy())
+        macros (bpy.types.CollectionProperty): macros to execute
+        action (AR_action): action to track
+        action_type (str): action type of the given action
+
+    Returns:
+        Exception, str: error
+    """
     # REFACTOR indentation
     macros = [macro for macro in macros if macro.active]
 

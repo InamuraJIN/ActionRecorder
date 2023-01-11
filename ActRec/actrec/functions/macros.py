@@ -83,7 +83,6 @@ def operator_to_dict(ops: bpy.types.Operator) -> dict:
     else:
         props = ops.properties
         if not hasattr(props, 'bl_rna'):
-            logger.info(props)
             return props
         for key in props.bl_rna.properties.keys()[1:]:
             data[key] = convert_value_to_python(getattr(props, key))

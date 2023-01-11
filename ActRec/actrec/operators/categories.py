@@ -244,7 +244,8 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
         category = ActRec_pref.categories[self.id]
         category.areas.clear()
         self.apply_visibility(
-            ActRec_pref, AR_OT_category_interface.category_visibility, self.id)
+            ActRec_pref, AR_OT_category_interface.category_visibility, self.id
+        )
         functions.category_runtime_save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()

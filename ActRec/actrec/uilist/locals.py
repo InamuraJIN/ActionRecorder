@@ -24,6 +24,7 @@ class AR_UL_locals(UIList):
         col = row.column()
         col.ui_units_x = 0.5
         row.prop(item, 'label', text='', emboss=False)
+        row.prop(item, 'execution_mode', text="", icon_only=True)
 # endregion
 
 

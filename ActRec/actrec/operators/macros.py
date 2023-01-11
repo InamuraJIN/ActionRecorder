@@ -449,7 +449,7 @@ class AR_OT_macro_multiline_support(Operator):
     bl_description = "Adds multiline support the edit macro dialog"
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        return context.window_manager.invoke_props_dialog(self)
+        return context.window_manager.invoke_props_dialog(self, width=350)
 
     def draw(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)

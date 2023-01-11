@@ -35,4 +35,5 @@ def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonP
     op.id = id
     op = row.operator("ar.global_execute_action", text=action.label)
     op.id = id
+    row.prop(action, 'execution_mode', text="", icon_only=True)
 # endregion

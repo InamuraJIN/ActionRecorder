@@ -65,7 +65,7 @@ def save(ActRec_pref: bpy.types.AddonPreferences):
     )
     data['actions'] = shared.property_to_python(
         ActRec_pref.global_actions,
-        exclude=["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"]
+        exclude=["name", "selected", "alert", "execution_mode", "macros.name", "macros.is_available", "macros.alert"]
     )
     with open(ActRec_pref.storage_path, 'w', encoding='utf-8') as storage_file:
         json.dump(data, storage_file, ensure_ascii=False, indent=2)
