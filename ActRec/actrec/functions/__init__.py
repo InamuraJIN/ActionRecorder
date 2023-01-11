@@ -27,7 +27,8 @@ from .locals import (
     save_local_to_scene,
     get_local_action_index,
     load_local_action,
-    local_action_to_text
+    local_action_to_text,
+    remove_local_action_from_text
 )
 
 from .macros import (

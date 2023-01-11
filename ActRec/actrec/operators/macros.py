@@ -74,7 +74,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         # improve command by comparing to tracked_actions
         # tracked actions is written by the function track_scene in functions.macros
         # which keeps track of all executed Operator in detail but none information about changed Properties
-        if command and (ActRec_pref.last_macro_command != command if new_report else True):
+        if command and (True if new_report else ActRec_pref.last_macro_command != command):
             if command.startswith("bpy.context."):
                 tracked_actions = []
                 if not self.command:
@@ -153,6 +153,8 @@ class AR_OT_macro_add(shared.Id_based, Operator):
             if ActRec_pref.local_create_empty:
                 bpy.ops.ar.macro_add_event("EXEC_DEFAULT", id=action.id, index=index, type="Empty")
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         bpy.context.area.tag_redraw()
         shared_data.tracked_actions.clear()
         self.command = ""
@@ -292,6 +294,8 @@ class AR_OT_macro_remove(Macro_based, Operator):
         index = functions.get_local_macro_index(action, self.id, self.index)
         action.macros.remove(index)
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -326,6 +330,8 @@ class AR_OT_macro_move_up(Macro_based, Operator):
             action.macros.move(index, index - 1)
             action.active_macro_index = index - 1
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -359,6 +365,8 @@ class AR_OT_macro_move_down(Macro_based, Operator):
             action.macros.move(index, index + 1)
             action.active_macro_index = index + 1
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -766,6 +774,8 @@ class AR_OT_macro_edit(Macro_based, Operator):
             macro.label = self.label
             macro.command = self.command
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         context.area.tag_redraw()
         self.cancel(context)
         return {"FINISHED"}
