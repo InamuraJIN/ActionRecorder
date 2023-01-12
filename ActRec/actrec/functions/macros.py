@@ -412,7 +412,7 @@ def get_id_object(context: bpy.types.Context, source_path: list, attribute: str)
     return trace_object(context, source_path)
 
 
-def trace_object(base: 'blender_object', path: list) -> 'blender_object':
+def trace_object(base: 'blender_object', path: list[str]) -> 'blender_object':
     """
     trace the base with the given path to a Blender object
 
@@ -424,6 +424,14 @@ def trace_object(base: 'blender_object', path: list) -> 'blender_object':
         blender_object: traced object
     """
     for x in path:
+        if x.endswith("]"):  # attribute is collection
+            x, index_str = x.rsplit("[", 1)
+            index = int(index_str.replace("]", ""))
+            base = getattr(base, x)
+            if len(base) <= index:
+                return None
+            base = base[index]
+            continue
         base = getattr(base, x)
     return base
 
@@ -471,9 +479,7 @@ def create_object_copy(context: bpy.types.Context, source_path: list, attribute:
     data = {}
     id_object = get_id_object(context, source_path, attribute)
     res = get_copy_of_object(data, id_object, attribute)
-    if res and not isinstance(res, dict):
-        data[attribute] = res
-    return data
+    return res
 
 
 def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: list, attribute: str, value

@@ -416,31 +416,32 @@ class AR_OT_local_record(shared.Id_based, Operator):
             len_reports = len(reports)
             while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
                 bpy_type, register, undo, parent, name, value = reports[i]
-                if bpy_type == 0:
+                if bpy_type == 0:  # Context Reports
                     # register, undo are always True for Context reports
                     copy_dict = functions.create_object_copy(context, parent, name)
-                    second_undo = False
-
-                    bpy.ops.ed.redo()
-                    if undo:
-                        redo_steps -= 1
-                    context = bpy.context
-                    if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
+                    if bpy.ops.ed.redo.poll():
                         bpy.ops.ed.redo()
-                        if undo:
-                            redo_steps -= 1
+                        redo_steps -= 1
                         context = bpy.context
-                        second_undo = True
+
+                    new_copy_dict = functions.create_object_copy(context, parent, name)
+                    print(1, copy_dict, new_copy_dict, parent, name, value, redo_steps, bpy.ops.ed.redo.poll())
+                    if bpy.ops.ed.redo.poll() and copy_dict == new_copy_dict:
+                        bpy.ops.ed.redo()
+                        redo_steps -= 1
+                        context = bpy.context
+                        new_copy_dict = functions.create_object_copy(context, parent, name)
+                        print("R", copy_dict, new_copy_dict, parent, name, value, redo_steps, bpy.ops.ed.redo.poll())
+                    print(2, copy_dict, new_copy_dict, parent, name, value, redo_steps)
 
                     data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
 
-                    if not (undo or skip_op_redo):
+                    if not skip_op_redo and bpy.ops.ed.undo.poll():
                         bpy.ops.ed.undo()
-                        if bpy.ops.ed.undo.poll() and second_undo and not skip_op_redo:
-                            bpy.ops.ed.undo()
+                        redo_steps += 1
                         context = bpy.context
 
-                elif bpy_type == 1:
+                elif bpy_type == 1:  # Operator Reports
                     if register:
                         evaluation = functions.evaluate_operator(parent, name, value)
 
@@ -448,7 +449,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
                         skip_op_redo = reports[i + 1][0] == 1
                     else:
                         skip_op_redo = True
-                    if undo and skip_op_redo:
+                    if undo and skip_op_redo and bpy.ops.ed.redo.poll():
                         bpy.ops.ed.redo()
                         redo_steps -= 1
                         context = bpy.context

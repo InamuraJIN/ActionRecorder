@@ -115,7 +115,7 @@ def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = N
         if text.lines[0].body.strip().startswith("###ActRec_pref### id: '%s'" % id):
             texts.remove(text)
             return
-            
+
 
 def get_local_action_index(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int) -> int:
     """

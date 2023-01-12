@@ -271,9 +271,10 @@ def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[st
                     else:
                         break
                 else:
-                    props = obj.bl_rna.properties
-                    if prop in props:
-                        prop = props[prop].name
+                    if obj:
+                        props = obj.bl_rna.properties
+                        if prop in props:
+                            prop = props[prop].name
 
             value = split[1]
             if value.startswith("bpy.data."):
