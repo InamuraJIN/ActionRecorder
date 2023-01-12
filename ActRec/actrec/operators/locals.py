@@ -424,15 +424,10 @@ class AR_OT_local_record(shared.Id_based, Operator):
                         redo_steps -= 1
                         context = bpy.context
 
-                    new_copy_dict = functions.create_object_copy(context, parent, name)
-                    print(1, copy_dict, new_copy_dict, parent, name, value, redo_steps, bpy.ops.ed.redo.poll())
-                    if bpy.ops.ed.redo.poll() and copy_dict == new_copy_dict:
+                    if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
                         bpy.ops.ed.redo()
                         redo_steps -= 1
                         context = bpy.context
-                        new_copy_dict = functions.create_object_copy(context, parent, name)
-                        print("R", copy_dict, new_copy_dict, parent, name, value, redo_steps, bpy.ops.ed.redo.poll())
-                    print(2, copy_dict, new_copy_dict, parent, name, value, redo_steps)
 
                     data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
 
