@@ -66,12 +66,12 @@ def convert_value_to_python(value) -> tuple:
     return value
 
 
-def operator_to_dict(ops: bpy.types.Operator) -> dict:
+def executed_operator_to_dict(ops: bpy.types.Operator) -> dict:
     """
-    converts an operator properties to a dictionary
+    converts an executed operator properties to a dictionary
 
     Args:
-        ops (bpy.types.Operator): operator to extract data from
+        ops (bpy.types.Operator): executed operator to extract data from
 
     Returns:
         dict: properties of operator
@@ -79,7 +79,7 @@ def operator_to_dict(ops: bpy.types.Operator) -> dict:
     data = {}
     if hasattr(ops, 'macros') and ops.macros:
         for key, item in ops.macros.items():
-            data[key] = operator_to_dict(item)
+            data[key] = executed_operator_to_dict(item)
     else:
         props = ops.properties
         if not hasattr(props, 'bl_rna'):
@@ -107,7 +107,7 @@ def track_scene(dummy: bpy.types.Scene = None):
             ActRec_pref.operators_list_length = length
             op = operators[-1]
             shared_data.tracked_actions.append(
-                ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, operator_to_dict(op)]
+                ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, executed_operator_to_dict(op)]
             )
         else:
             len_tracked = len(shared_data.tracked_actions)
@@ -124,7 +124,7 @@ def track_scene(dummy: bpy.types.Scene = None):
             while last_register_op[2] != op.bl_idname and len_tracked > i:
                 i += 1
                 last_register_op = shared_data.tracked_actions[-i]
-            props = operator_to_dict(op)
+            props = executed_operator_to_dict(op)
             if last_register_op[2] == op.bl_idname and props != last_register_op[3]:
                 last_register_op[3] = props
             else:
@@ -218,7 +218,7 @@ def str_dict_to_dict(obj: str) -> dict:
 def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     """
     compares two operator dict
-    (op_dict can be created with operator_to_dict)
+    (op_dict can be created with executed_operator_to_dict)
 
     Args:
         op1_props (dict): first operator dict
@@ -588,8 +588,6 @@ def dict_to_kwarg_str(value_dict: dict) -> str:
     """
     property_str_list = []
     for key, value in value_dict.items():
-        if isinstance(value, str):
-            value = "\'%s\'" % value
         property_str_list.append(f"{key}={value}")
     return ", ".join(property_str_list)
 

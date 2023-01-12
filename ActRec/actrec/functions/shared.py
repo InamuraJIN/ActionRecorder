@@ -509,7 +509,7 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
             command = macro.command
             if (command.startswith("bpy.ops.ar.local_play")
                     and set(extract_properties(command.split("(")[1][: -1])) == {"id=\"\"", "index=-1"}):
-                err = "Don't run Local Play with default properties, this can leads to a recursion"
+                err = "Don't run Local Play with default properties, this may cause recursion"
                 logger.error(err)
                 action.alert = macro.alert = True
                 return err
@@ -531,7 +531,7 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
                         area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
-                command = "%s(context_copy, %s" % (
+                command = "%s(context_copy, \"INVOKE_DEFAULT\", %s" % (
                     split[0], "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 split = command.replace("bpy.context.", "").split(".")
@@ -547,7 +547,8 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
                 context_copy['space_data'] = base_space_data
                 area.ui_type = area_type
 
-            if bpy.context:
+            if bpy.context:  # Refresh the context
+                bpy.context.area.tag_redraw()
                 context_copy = bpy.context.copy()
 
         except Exception as err:

@@ -861,11 +861,13 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
 
         button_operator = getattr(context, "button_operator", None)
         if button_operator is not None:
-            op_property_identifiers = [
-                prop.identifier for prop in button_operator.bl_rna.properties[1:]]  # not include rna_type
             op_properties = {}
-            for attr in op_property_identifiers:
-                op_properties[attr] = getattr(button_operator, attr)
+            for prop in button_operator.bl_rna.properties[1:]:  # not include rna_type
+                attribute = prop.identifier
+                value = getattr(button_operator, attribute)
+                if isinstance(value, str):
+                    value = "\'%s\'" % value
+                op_properties[attribute] = functions.convert_value_to_python(value)
             op_type, op_idname = button_operator.bl_rna.identifier.split("_OT_")
             bpy.ops.ar.macro_add('EXEC_DEFAULT', command="bpy.ops.%s.%s(%s)" %
                                  (op_type.lower(), op_idname.lower(), functions.dict_to_kwarg_str(op_properties)))
