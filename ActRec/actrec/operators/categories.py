@@ -255,7 +255,8 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
 class AR_OT_category_apply_visibility(Operator):
     bl_idname = "ar.category_apply_visibility"
     bl_label = "Apply Visibility"
-    bl_description = ""
+    bl_description = """Applies the configured visibility to the category.
+If the category has no applied visibilities it will be shown in all available panels"""
     bl_options = {"INTERNAL"}
 
     mode: StringProperty()
@@ -269,7 +270,7 @@ class AR_OT_category_apply_visibility(Operator):
 class AR_OT_category_delete_visibility(Operator):
     bl_idname = "ar.category_delete_visibility"
     bl_label = "Delete Visibility"
-    bl_description = ""
+    bl_description = "Removes this visibility from the category"
     bl_options = {"INTERNAL"}
 
     index: IntProperty()

@@ -190,7 +190,8 @@ class AR_action(Id_based, Alert_system, Icon_system):
     execution_mode: EnumProperty(
         items=[
             ("INDIVIDUAL", "Individual",
-             "Performs the current action on all selected objects individually",
+             """Performs the current action on all selected objects individually.
+Therefore, the action is executed as many times as there are selected objects.""",
              "STICKY_UVS_DISABLE", 0),
             ("GROUP", "Group",
              "Performs the current action on all selected objects without separating them (Default Behavior)",
