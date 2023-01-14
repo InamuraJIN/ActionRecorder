@@ -276,7 +276,7 @@ def stringify_values(values: dict) -> dict:
 
 
 """
-import bpy 
+import bpy
 import json
 from collections import defaultdict
 d = defaultdict(list)
