@@ -531,8 +531,8 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
                         area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
-                command = "%s(context_copy, \"INVOKE_DEFAULT\", %s" % (
-                    split[0], "(".join(split[1:]))
+                command = "%s(context_copy, \"%s\", %s" % (
+                    split[0], macro.operator_execution_context, "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 split = command.replace("bpy.context.", "").split(".")
                 command = "context_copy['%s'].%s" % (

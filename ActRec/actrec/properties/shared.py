@@ -182,6 +182,18 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
     )
     is_available: BoolProperty(default=True, get=get_is_available)
     ui_type: StringProperty(default="")
+    operator_execution_context: EnumProperty(
+        items=[  # https://docs.blender.org/api/current/bpy.ops.html#execution-context
+            ("EXEC_DEFAULT", "Execute", "The operator get executed immediately"),
+            ("INVOKE_DEFAULT", "Invoke", "The operator can wait for user input")
+        ],
+        default="EXEC_DEFAULT",
+        name="Execution Context",
+        description="""Choose the execution behavior of the operator (only applies to operator commands)
+The operator can be executed immediately or invoked where the operator can wait for user input
+
+HINT: Sometimes it helps to change to Invoke to get the expected behavior"""
+    )
 
 
 class AR_action(Id_based, Alert_system, Icon_system):
