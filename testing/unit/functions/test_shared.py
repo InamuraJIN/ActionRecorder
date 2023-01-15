@@ -42,7 +42,8 @@ def clear_load_global(request):
             "icon_name": "NONE",
             "is_available": True,
             "ui_type": "",
-            "alert": False
+            "alert": False,
+            "operator_execution_context": "EXEC_DEFAULT"
         }),
         ('global_actions["c7a40353164611ecbaad70c94ef23b30"]',
          ["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"],
@@ -57,7 +58,8 @@ def clear_load_global(request):
                      "active": True,
                      "icon": 0,
                      "icon_name": "NONE",
-                     "ui_type": ""
+                     "ui_type": "",
+                     "operator_execution_context": "EXEC_DEFAULT"
                  },
                  {
                      "id": "c7a40355164611ecb9cd70c94ef23b30",
@@ -66,7 +68,8 @@ def clear_load_global(request):
                      "active": True,
                      "icon": 0,
                      "icon_name": "NONE",
-                     "ui_type": ""
+                     "ui_type": "",
+                     "operator_execution_context": "EXEC_DEFAULT"
                  },
                  {
                      "id": "c7a42aa4164611ecba6570c94ef23b30",
@@ -75,7 +78,8 @@ def clear_load_global(request):
                      "active": True,
                      "icon": 0,
                      "icon_name": "NONE",
-                     "ui_type": ""
+                     "ui_type": "",
+                     "operator_execution_context": "EXEC_DEFAULT"
                  },
                  {
                      "id": "c7a6be1e164611ec8ede70c94ef23b30",
@@ -84,7 +88,8 @@ def clear_load_global(request):
                      "active": True,
                      "icon": 0,
                      "icon_name": "NONE",
-                     "ui_type": ""
+                     "ui_type": "",
+                     "operator_execution_context": "EXEC_DEFAULT"
                  }
              ],
              "icon": 127,

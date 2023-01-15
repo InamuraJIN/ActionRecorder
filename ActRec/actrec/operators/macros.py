@@ -665,6 +665,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     width: IntProperty(default=500, name="width", description="Window width of the Popup")
     font = None
     time = 0
+    is_operator = False
 
     @classmethod
     def poll(cls, context):
@@ -737,6 +738,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
             self.command = macro.command
             self.last_label = ActRec_pref.last_macro_label
             self.last_command = ActRec_pref.last_macro_command
+            self.is_operator = self.command.startswith("bpy.ops")
             return context.window_manager.invoke_props_dialog(self, width=self.width)
         else:
             action.active_macro_index = index
@@ -747,6 +749,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
 
     def draw(self, context):
         layout = self.layout
+        ActRec_pref = functions.get_preferences(context)
 
         if self.use_last_command:
             layout.prop(self, 'last_label', text="Label")
@@ -759,7 +762,11 @@ class AR_OT_macro_edit(Macro_based, Operator):
         for line in self.lines:
             col.prop(line, 'text', text="")
 
-        row = layout.row().split(factor=0.65)
+        row = layout.row()
+        if self.is_operator:
+            action = ActRec_pref.local_actions[self.action_index]
+            macro = action.macros[self.index]
+            row.prop(macro, 'operator_execution_context', text="")
         row.prop(self, 'clear_operator', toggle=True)
         row.prop(self, 'use_last_command', toggle=True)
 
