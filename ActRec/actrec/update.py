@@ -50,6 +50,7 @@ def on_start(dummy: bpy.types.Scene = None):
         needed because blender handler inputs the scene as argument for a handler function. Defaults to None.
     """
     ActRec_pref = get_preferences(bpy.context)
+    # REFACTOR indentation
     if ActRec_pref.auto_update and Update_manager.version_file_thread is None:
         t = threading.Thread(target=no_stream_download_version_file, args=[__module__], daemon=True)
         t.start()
@@ -67,6 +68,7 @@ def on_scene_update(dummy: bpy.types.Scene = None):
         needed because blender handler inputs the scene as argument for a handler function. Defaults to None.
     """
     t = Update_manager.version_file_thread
+    # REFACTOR indentation
     if t and Update_manager.version_file.get("version", None):
         t.join()
         bpy.app.handlers.depsgraph_update_post.remove(on_scene_update)
@@ -96,8 +98,12 @@ def check_for_update(version_file: Optional[dict]) -> tuple[bool, Union[str, tup
 
 
 def update(
-        ActRec_pref: bpy.types.AddonPreferences, path: str, update_respond: Optional[requests.Response],
-        download_chunks: dict, download_length: int) -> Optional[bool]:
+    ActRec_pref: bpy.types.AddonPreferences,
+    path: str,
+    update_respond: Optional[requests.Response],
+    download_chunks: dict,
+    download_length: int
+) -> Optional[bool]:
     """
     runs the update process and shows the download process with a progress bar if possible
 
@@ -112,6 +118,7 @@ def update(
     Returns:
         Optional[bool]: the downloaded file or None if an error occurred
     """
+    # REFACTOR indentation
     finished_downloaded = False
     progress = 0
     length = 1
@@ -171,6 +178,7 @@ def install_update(ActRec_pref: bpy.types.AddonPreferences, download_chunks: dic
         # remove ActRec/ from path, because the Add-on is inside of another directory on GitHub
         relative_path = path.replace("\\", "/").split("/", 1)[1]
         remove_path = os.path.join(ActRec_pref.addon_directory, relative_path)
+        # REFACTOR indentation
         if os.path.exists(remove_path):
             for root, dirs, files in os.walk(remove_path, topdown=False):
                 for name in files:
@@ -214,6 +222,7 @@ def get_version_file(res: requests.Response) -> Union[bool, dict, None]:
         [True] needed to be called again;
         [dict] data of the version file in JSON-format
     """
+    # REFACTOR indentation
     try:
         total_length = res.headers.get('content-length', None)
         if total_length is None:

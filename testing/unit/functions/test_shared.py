@@ -88,7 +88,8 @@ def clear_load_global(request):
                  }
              ],
              "icon": 127,
-             "icon_name": "NODE_MATERIAL"
+             "icon_name": "NODE_MATERIAL",
+             "execution_mode": "GROUP"
          })],
     indirect=["clear_load_global"]
 )

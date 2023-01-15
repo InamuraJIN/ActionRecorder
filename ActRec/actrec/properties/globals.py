@@ -30,6 +30,7 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         Args:
             value (bool): state of selection
         """
+        # REFACTOR indentation
         ActRec_pref = get_preferences(bpy.context)
         selected_ids = list(ActRec_pref.get("global_actions.selected_ids", []))
         # implementation similar to a UIList (only one selection of all can be active),
@@ -85,12 +86,14 @@ class AR_global_import_action(PropertyGroup):
 
     label: StringProperty()
     identifier: StringProperty()
-    use: BoolProperty(default=True,
-                      name="Import Action",
-                      description="Decide whether to import the action",
-                      get=get_use,
-                      set=set_use
-                      )
+    use: BoolProperty(
+        default=True,
+        name="Import Action",
+        description="Decide whether to import the action",
+        get=get_use,
+        set=set_use
+    )
+    shortcut: StringProperty()
 
 
 class AR_global_import_category(PropertyGroup):
@@ -119,8 +122,13 @@ class AR_global_import_category(PropertyGroup):
     identifier: StringProperty()
     actions: CollectionProperty(type=AR_global_import_action)
     show: BoolProperty(default=True)
-    use: BoolProperty(default=True, name="Import Category",
-                      description="Decide whether to import the category", get=get_use, set=set_use)
+    use: BoolProperty(
+        default=True,
+        name="Import Category",
+        description="Decide whether to import the category",
+        get=get_use,
+        set=set_use
+    )
 
 
 class AR_global_export_action(shared.Id_based, PropertyGroup):
@@ -145,8 +153,14 @@ class AR_global_export_action(shared.Id_based, PropertyGroup):
             self['use'] = value
 
     label: StringProperty()
-    use: BoolProperty(default=True, name="Import Action",
-                      description="Decide whether to export the action", get=get_use, set=set_use)
+    use: BoolProperty(
+        default=True,
+        name="Import Action",
+        description="Decide whether to export the action",
+        get=get_use,
+        set=set_use
+    )
+    shortcut: StringProperty()
 
 
 class AR_global_export_categories(shared.Id_based, PropertyGroup):
@@ -166,6 +180,7 @@ class AR_global_export_categories(shared.Id_based, PropertyGroup):
         Args:
             value (bool): category export state
         """
+        # REFACTOR indentation
         if not self.get("export_all", False):
             self['use'] = value
             for action in self.actions:
@@ -174,8 +189,13 @@ class AR_global_export_categories(shared.Id_based, PropertyGroup):
     label: StringProperty()
     actions: CollectionProperty(type=AR_global_export_action)
     show: BoolProperty(default=True)
-    use: BoolProperty(default=True, name="Export Category",
-                      description="Decide whether to export the category", get=get_use, set=set_use)
+    use: BoolProperty(
+        default=True,
+        name="Export Category",
+        description="Decide whether to export the category",
+        get=get_use,
+        set=set_use
+    )
 # endregion
 
 

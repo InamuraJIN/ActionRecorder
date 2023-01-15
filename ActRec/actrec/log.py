@@ -8,6 +8,7 @@ from datetime import datetime
 
 # blender modules
 import bpy
+from bpy.app.handlers import persistent
 
 # relative imports
 from . import config
@@ -48,25 +49,18 @@ class Log_system:
         for arg in sys.argv:
             if arg.endswith(".blend"):
                 name = "%s_" % ".".join(os.path.basename(arg).split(".")[:-1])
-        path = self.path = os.path.join(dir, "ActRec_%s%s.log" % (name, datetime.today().strftime('%d-%m-%Y_%H-%M-%S')))
+        self.path = os.path.join(dir, "ActRec_%s%s.log" % (name, datetime.today().strftime('%d-%m-%Y_%H-%M-%S')))
 
         logger = logging.getLogger(__module__)
+        self.logger = logger
         logger.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter(
-            "%(levelname)s - %(relativeCreated)d - %(filename)s:%(funcName)s - %(message)s"
-        )
-        file_handler = logging.FileHandler(path, mode='w', encoding='utf-8', delay=True)
-        file_handler.setLevel(logger.level)
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
+
         logger.info(
             "Logging ActRec %s running on Blender %s"
             % (".".join([str(x) for x in config.version]), bpy.app.version_string)
         )
         for log_text in log_later:
             logger.info(log_text)
-        self.logger = logger
-        self.file_handler = file_handler
 
         sys.excepthook = self.exception_handler
 
@@ -74,15 +68,54 @@ class Log_system:
         traceback.print_exception(exc_type, exc_value, exc_tb)
         self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
 
-    def unregister(self):
+    def detach_file(self):
         """
-        unregister the logger, used when addon gets unregistered
+        remove file of the logger
         """
         self.file_handler.close()
         self.logger.removeHandler(self.file_handler)
 
+    def append_file(self):
+        """
+        adds a file to the logger
+        """
+        file_formatter = logging.Formatter(
+            "%(levelname)s - %(relativeCreated)d - %(filename)s:%(funcName)s - %(message)s"
+        )
+        file_handler = logging.FileHandler(self.path, mode='a', encoding='utf-8', delay=True)
+        file_handler.setLevel(self.logger.level)
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
+        self.file_handler = file_handler
+
+
+def update_log_amount_in_config(amount: int):
+    """
+    writes given amount as log amount into the config file
+
+    Args:
+        amount (int): log amount
+    """
+    path = os.path.join(os.path.dirname(__file__), "config.py")
+    with open(path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    for i, line in enumerate(lines):
+        if not line.startswith('log_amount'):
+            continue
+        lines[i] = "log_amount = %i\n" % amount
+        break
+    else:
+        lines.append("log_amount = %i\n" % amount)
+
+    with open(path, 'w', encoding='utf-8') as file:
+        file.writelines(lines)
+
 
 # creates logger
-log_sys = Log_system(5)
+log_amount = 5
+if hasattr(config, 'log_amount'):
+    log_amount = config.log_amount
+log_sys = Log_system(log_amount)
 logger = log_sys.logger
 # endregion

@@ -5,7 +5,7 @@ import uuid
 # blender modules
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty
+from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty, EnumProperty
 
 # relative imports
 from .. import functions
@@ -84,8 +84,13 @@ class Alert_system:
         if hasattr(context, 'area') and context.area:
             context.area.tag_redraw()
 
-    alert: BoolProperty(default=False, description="Internal use",
-                        get=get_alert, set=set_alert, update=update_alert)
+    alert: BoolProperty(
+        default=False,
+        description="Internal use",
+        get=get_alert,
+        set=set_alert,
+        update=update_alert
+    )
 
 
 class Icon_system:
@@ -128,6 +133,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         Args:
             value (bool): state of macro
         """
+        # REFACTOR indentation
         if self.is_available:
             context = bpy.context
             ActRec_pref = get_preferences(context)
@@ -169,7 +175,11 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
     label: StringProperty()
     command: StringProperty(get=get_command, set=set_command)
     active: BoolProperty(
-        default=True, description='Toggles Macro on and off.', get=get_active, set=set_active)
+        default=True,
+        description='Toggles Macro on and off.',
+        get=get_active,
+        set=set_active
+    )
     is_available: BoolProperty(default=True, get=get_is_available)
     ui_type: StringProperty(default="")
 
@@ -177,6 +187,20 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
 class AR_action(Id_based, Alert_system, Icon_system):
     label: StringProperty()
     macros: CollectionProperty(type=AR_macro)
+    execution_mode: EnumProperty(
+        items=[
+            ("INDIVIDUAL", "Individual",
+             """Performs the current action on all selected objects individually.
+Therefore, the action is executed as many times as there are selected objects.""",
+             "STICKY_UVS_DISABLE", 0),
+            ("GROUP", "Group",
+             "Performs the current action on all selected objects without separating them (Default Behavior)",
+             "STICKY_UVS_LOC", 1)
+        ],
+        name="Execution Mode",
+        description="Choses to perform the current actions on the selected objects individually or as a group",
+        default="GROUP"
+    )
 
 
 class AR_scene_data(PropertyGroup):  # as Scene PointerProperty

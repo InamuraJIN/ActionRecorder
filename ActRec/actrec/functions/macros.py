@@ -32,6 +32,7 @@ def get_local_macro_index(action: 'AR_local_actions', id: str, index: int) -> in
     Returns:
         int: found macro index or active macro index if not found
     """
+    # REFACTOR indentation
     macro = action.macros.find(id)
     if macro == -1:
         if len(action.macros) > index and index >= 0:  # fallback to input index
@@ -65,12 +66,12 @@ def convert_value_to_python(value) -> tuple:
     return value
 
 
-def operator_to_dict(ops: bpy.types.Operator) -> dict:
+def executed_operator_to_dict(ops: bpy.types.Operator) -> dict:
     """
-    converts an operator properties to a dictionary
+    converts an executed operator properties to a dictionary
 
     Args:
-        ops (bpy.types.Operator): operator to extract data from
+        ops (bpy.types.Operator): executed operator to extract data from
 
     Returns:
         dict: properties of operator
@@ -78,11 +79,10 @@ def operator_to_dict(ops: bpy.types.Operator) -> dict:
     data = {}
     if hasattr(ops, 'macros') and ops.macros:
         for key, item in ops.macros.items():
-            data[key] = operator_to_dict(item)
+            data[key] = executed_operator_to_dict(item)
     else:
         props = ops.properties
         if not hasattr(props, 'bl_rna'):
-            logger.info(props)
             return props
         for key in props.bl_rna.properties.keys()[1:]:
             data[key] = convert_value_to_python(getattr(props, key))
@@ -97,6 +97,7 @@ def track_scene(dummy: bpy.types.Scene = None):
     Args:
         dummy (bpy.types.Scene, optional): unused. Defaults to None.
     """
+    # REFACTOR indentation
     context = bpy.context
     ActRec_pref = get_preferences(context)
     operators = context.window_manager.operators
@@ -106,7 +107,7 @@ def track_scene(dummy: bpy.types.Scene = None):
             ActRec_pref.operators_list_length = length
             op = operators[-1]
             shared_data.tracked_actions.append(
-                ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, operator_to_dict(op)]
+                ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, executed_operator_to_dict(op)]
             )
         else:
             len_tracked = len(shared_data.tracked_actions)
@@ -123,7 +124,7 @@ def track_scene(dummy: bpy.types.Scene = None):
             while last_register_op[2] != op.bl_idname and len_tracked > i:
                 i += 1
                 last_register_op = shared_data.tracked_actions[-i]
-            props = operator_to_dict(op)
+            props = executed_operator_to_dict(op)
             if last_register_op[2] == op.bl_idname and props != last_register_op[3]:
                 last_register_op[3] = props
             else:
@@ -217,7 +218,7 @@ def str_dict_to_dict(obj: str) -> dict:
 def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     """
     compares two operator dict
-    (op_dict can be created with operator_to_dict)
+    (op_dict can be created with executed_operator_to_dict)
 
     Args:
         op1_props (dict): first operator dict
@@ -226,6 +227,7 @@ def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     Returns:
         bool: equal compare result
     """
+    # REFACTOR indentation
     for key, str_value in op1_props.items():
         value = op2_props.get(key, None)
         if value is None:
@@ -255,6 +257,83 @@ def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     return True
 
 
+def stringify_values(values: dict) -> dict:
+    """
+    converts all values in the dict to stringed version
+
+    Args:
+        values (dict): values to convert
+
+    Returns:
+        dict: convert dict with string values
+    """
+    stringified_values = {}
+    for key, item in values.items():
+        if isinstance(item, str):
+            item = "\'%s\'" % item
+        stringified_values[key] = "%s" % convert_value_to_python(item)
+    return stringified_values
+
+
+"""
+import bpy
+import json
+from collections import defaultdict
+d = defaultdict(list)
+for str_type in dir(bpy.ops):
+    op_type = getattr(bpy.ops, str_type)
+    for str_name in dir(op_type):
+        op = getattr(op_type, str_name)
+        options = op.bl_options
+        if 'REGISTER' in options:
+            continue
+        d[", ".join(options)].append(f"{op.idname_py()}             {op.idname()}")
+print(json.dumps(d, ensure_ascii=False, indent=2))
+"""
+# Programm to get all operators divided by bl_options
+
+
+def check_tracked_needed(tracked: list) -> bool:
+    """
+    checks if the tracked Operator is needed in the report but was not reported by Blender
+
+    Args:
+        tracked (list): tracked action to check;
+            format: [isRegistered: bool, isUndo: bool, Operator(_OT_): str, parameters: dict]
+
+    Returns:
+        bool: is needed ?
+    """
+    needed_operators = {
+        # UNDO
+        "IMAGE_OT_new",
+        "IMPORT_CURVE_OT_svg",
+        "IMPORT_MESH_OT_ply",
+        "IMPORT_MESH_OT_stl",
+        "MESH_OT_separate",
+        "OBJECT_OT_hook_assign",
+        "OBJECT_OT_hook_remove",
+        "OBJECT_OT_vertex_group_assign",
+        "OBJECT_OT_vertex_group_assign_new",
+        "OBJECT_OT_vertex_group_remove",
+        "OBJECT_OT_vertex_group_remove_from",
+        # UNDO, PRESET
+        "EXPORT_SCENE_OT_fbx",
+        "IMPORT_SCENE_OT_fbx",
+        "IMPORT_SCENE_OT_obj",
+        "IMPORT_SCENE_OT_x3d",
+        # PRESET
+        "EXPORT_SCENE_OT_gltf",
+        "EXPORT_SCENE_OT_obj",
+        "EXPORT_SCENE_OT_x3d",
+        # BLOCKING
+        "NODE_OT_backimage_fit",
+        "NODE_OT_resize",
+    }
+
+    return tracked[2] in needed_operators
+
+
 def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
     """
     merge reports together with the tracked actions to provide better data for macro creation
@@ -262,12 +341,15 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
     Args:
         reports (list): reports from Blender
         tracked_actions (list): tracked actions from scene
+            Element format: [isRegistered: bool, isUndo: bool, Operator(_OT_): str, parameters: dict]
 
     Returns:
         list[tuple]:
-            list with elements format (Type, Register, Undo, type, name, value[s])
+            list with elements format (Type: int, Registered: bool, Undo: bool, type: str, name: str, value[s]: dict)
             Type: 0 - Context, 1 Operator
     """
+    # REFACTOR indentation
+    # REFACTOR rework this function because it's a mess
     # create numpy.array for efficient access
     reports = numpy.array(reports)
     tracked_actions = numpy.array(tracked_actions)
@@ -289,54 +371,61 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
         if report.startswith('bpy.ops.'):
             if last_i != report_i:
                 # clean up reports first before merge with tracked actions!!!
-                ops_type, ops_name, ops_values = split_operator_report(report)
+                op_type, op_name, op_values = split_operator_report(report)
             last_i = report_i
-            if tracked[2] == "%s_OT_%s" % (ops_type.upper(), ops_name):
-                if compare_op_dict(ops_values, tracked[3]):
+            if tracked[2] == "%s_OT_%s" % (op_type.upper(), op_name):
+                if compare_op_dict(op_values, tracked[3]):
                     if continue_report:
-                        data.append((1, True, tracked[1], ops_type, ops_name, ops_values))
+                        data.append((1, True, tracked[1], op_type, op_name, op_values))
                     tracked_i += 1
                 elif not continue_report:  # no reports left use latest report
-                    data.append((1, True, 'UNDO' in getattr(getattr(
-                        bpy.ops, ops_type), ops_name).bl_options, ops_type, ops_name, ops_values))
+                    data.append((
+                        1,
+                        True,
+                        'UNDO' in getattr(getattr(bpy.ops, op_type), op_name).bl_options,
+                        op_type,
+                        op_name,
+                        op_values
+                    ))
                     break
                 report_i += 1
             else:
                 if len_tracked <= tracked_i:  # no tracked left but report operator exists
-                    data.append(
-                        (
-                            1,
-                            True,
-                            'UNDO' in getattr(getattr(bpy.ops, ops_type), ops_name).bl_options,
-                            ops_type,
-                            ops_name,
-                            ops_values
-                        )
-                    )
+                    data.append((
+                        1,
+                        True,
+                        'UNDO' in getattr(getattr(bpy.ops, op_type), op_name).bl_options,
+                        op_type,
+                        op_name,
+                        op_values
+                    ))
                     report_i += 1
-                elif tracked[2] != 'CONTEXT':
+                elif check_tracked_needed(tracked):  # unreported tracked operators to add to reports
                     tracked_type, tracked_name = tracked[2].split("_OT_")
-                    data.append(
-                        (1, tracked[0], tracked[1], tracked_type.lower(), tracked_name, tracked[3]))
+                    tracked_type = tracked_type.lower()
+                    data.append((
+                        1,
+                        True,
+                        tracked[1],
+                        tracked_type,
+                        tracked_name,
+                        stringify_values(tracked[3])
+                    ))  # Fake Registered
                 tracked_i += 1
         elif report.startswith('bpy.context.'):
+            if continue_report:
+                source_path, attribute, value = split_context_report(
+                    report)
+                undo = not (any(x in source_path for x in ("screen", "area", "space_data"))
+                            or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
+                data.append((0, True, undo, source_path, attribute, value))
+                report_i += 1
             if tracked[2] == 'CONTEXT':
-                if continue_report:
-                    source_path, attribute, value = split_context_report(
-                        report)
-                    undo = not (any(x in source_path for x in ("screen", "area", "space_data"))
-                                or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
-                    data.append((0, True, undo, source_path, attribute, value))
-                    report_i += 1
                 tracked[3] -= 1
                 if tracked[3] == 0:
                     tracked_i += 1
             elif not continue_report or not tracked[0]:
-                tracked_type, tracked_name = tracked[2].split("_OT_")
-                data.append((1, tracked[0], tracked[1], tracked_type.lower(), tracked_name, tracked[3]))
                 tracked_i += 1
-            else:
-                report_i += 1
         else:
             report_i += 1
             if not continue_report:
@@ -416,7 +505,7 @@ def get_id_object(context: bpy.types.Context, source_path: list, attribute: str)
     return trace_object(context, source_path)
 
 
-def trace_object(base: 'blender_object', path: list) -> 'blender_object':
+def trace_object(base: 'blender_object', path: list[str]) -> 'blender_object':
     """
     trace the base with the given path to a Blender object
 
@@ -428,6 +517,14 @@ def trace_object(base: 'blender_object', path: list) -> 'blender_object':
         blender_object: traced object
     """
     for x in path:
+        if x.endswith("]"):  # attribute is collection
+            x, index_str = x.rsplit("[", 1)
+            index = int(index_str.replace("]", ""))
+            base = getattr(base, x)
+            if len(base) <= index:
+                return None
+            base = base[index]
+            continue
         base = getattr(base, x)
     return base
 
@@ -445,6 +542,7 @@ def get_copy_of_object(data: dict, obj: 'blender_object', attribute: str, depth=
     Returns:
         dict: copied blender object
     """
+    # REFACTOR indentation
     if depth and obj:
         if hasattr(obj, attribute):
             return {attribute: getattr(obj, attribute)}
@@ -474,9 +572,7 @@ def create_object_copy(context: bpy.types.Context, source_path: list, attribute:
     data = {}
     id_object = get_id_object(context, source_path, attribute)
     res = get_copy_of_object(data, id_object, attribute)
-    if res and not isinstance(res, dict):
-        data[attribute] = res
-    return data
+    return res
 
 
 def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: list, attribute: str, value
@@ -497,6 +593,7 @@ def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: l
             tuple: format (object class, source_path as str, attribute, value)
             None: object couldn't be compared
     """
+    # REFACTOR indentation
     if hasattr(obj, attribute) and getattr(obj, attribute) != copy_dict[attribute]:
         return (obj.__class__, ".".join(source_path), attribute, value)
     for key in copy_dict:
@@ -536,11 +633,11 @@ def improve_context_report(context: bpy.types.Context, copy_dict: dict, source_p
     for attr in context.__dir__():
         # exclude Buttons Context https://docs.blender.org/api/current/bpy.context.html#buttons-context
         if (attr not in
-                set(
+                set([
                     "button_pointer", "id", "texture_slot", "mesh", "armature", "lattice", "curve", "meta_ball",
                     "speaker", "lightprobe", "camera", "material_slot", "texture", "texture_user",
                     "texture_user_property", "bone", "edit_bone", "pose_bone",
-                ) and isinstance(getattr(bpy.context, attr), object_class)):
+                ]) and isinstance(getattr(bpy.context, attr), object_class)):
             res[0] = attr
             break
     return "bpy.context.%s.%s = %s" % tuple(res)
@@ -548,26 +645,27 @@ def improve_context_report(context: bpy.types.Context, copy_dict: dict, source_p
 
 def split_operator_report(operator_str: str) -> Tuple[str, str, dict]:
     """
-    split apart the given operator string to ops_type, ops_name, ops_values
+    split apart the given operator string to op_type, op_name, op_values
 
     Args:
         operator_str (str): str starting with "bpy.ops."
 
     Returns:
-        Tuple[str, str, dict]: format (ops_type, ops_name, ops_values)
+        Tuple[str, str, dict]: format (op_type, op_name, op_values)
     """
-    ops_type, ops_name = operator_str.replace("bpy.ops.", "").split("(")[0].split(".")
-    ops_values = {}
+    # REFACTOR indentation
+    op_type, op_name = operator_str.replace("bpy.ops.", "").split("(")[0].split(".")
+    op_values = {}
     key = ""
     for x in "(".join(operator_str.split("(")[1:])[:-1].split(", "):
         if x:
             split = x.split("=")
             if split[0].strip().isidentifier() and len(split) > 1:
                 key = split[0]
-                ops_values[key] = split[1]
+                op_values[key] = split[1]
             else:
-                ops_values[key] += ", %s" % (split[0])
-    return ops_type, ops_name, ops_values
+                op_values[key] += ", %s" % (split[0])
+    return op_type, op_name, op_values
 
 
 def dict_to_kwarg_str(value_dict: dict) -> str:
@@ -581,49 +679,53 @@ def dict_to_kwarg_str(value_dict: dict) -> str:
     Returns:
         str: format "<key1>=<value1>, <key2>=<value2>, ..."
     """
-    return ", ".join(f"{key}={value}" for key, value in value_dict.items())
+    property_str_list = []
+    for key, value in value_dict.items():
+        property_str_list.append(f"{key}={value}")
+    return ", ".join(property_str_list)
 
 
-def evaluate_operator(ops_type: str, ops_name: str, ops_values: dict) -> bool:
+def evaluate_operator(op_type: str, op_name: str, op_values: dict) -> bool:
     """
     evaluate weather a operator need to be improved or not
     bpy.ops.<type>.<name>(values)
 
     Args:
-        ops_type (str): type of the operator
-        ops_name (str): name of the operator
-        ops_values (dict): values of the operator
+        op_type (str): type of the operator
+        op_name (str): name of the operator
+        op_values (dict): values of the operator
 
     Returns:
         bool: need to be improved
     """
-    if ops_type == "outliner":
-        if ops_name in {"item_activate", "item_rename"}:
+    if op_type == "outliner":
+        if op_name in {"item_activate", "item_rename"}:
             return False
-        elif ops_name in {"collection_drop"}:
+        elif op_name in {"collection_drop"}:
             return True
 
 
 def improve_operator_report(
-        context: bpy.types.Context, ops_type: str, ops_name: str, ops_values: dict, ops_evaluation: bool) -> str:
+        context: bpy.types.Context, op_type: str, op_name: str, op_values: dict, op_evaluation: bool) -> str:
     """
     improve the operator if needed
     bpy.ops.<type>.<name>(values)
 
     Args:
         context (bpy.types.Context): active blender context
-        ops_type (str): type of the operator
-        ops_name (str): name of the operator
-        ops_values (dict): values of the operator
-        ops_evaluation (bool): need improvement
+        op_type (str): type of the operator
+        op_name (str): name of the operator
+        op_values (dict): values of the operator
+        op_evaluation (bool): need improvement
 
     Returns:
         str: format bpy.ops.<type>.<name>(values)
     """
-    if ops_evaluation:
-        if ops_type == "outliner":
-            if ops_name == "collection_drop":
+    # REFACTOR indentation, use dict
+    if op_evaluation:
+        if op_type == "outliner":
+            if op_name == "collection_drop":
                 return "bpy.ops.ar.helper_object_to_collection()"
-    return "bpy.ops.%s.%s(%s)" % (ops_type, ops_name, dict_to_kwarg_str(ops_values))
+    return "bpy.ops.%s.%s(%s)" % (op_type, op_name, dict_to_kwarg_str(op_values))
 
 # endregion

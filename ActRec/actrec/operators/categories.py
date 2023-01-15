@@ -82,6 +82,7 @@ class AR_OT_category_interface(Operator):
     mode_dict = {area: functions.enum_list_id_to_name_dict(data) for area, data in modes.items()}
 
     area_items = [  # (identifier, name, description, icon, value)
+        ('', 'General', ''),
         ('VIEW_3D', '3D Viewport', '', 'VIEW3D', 0),
         ('IMAGE_EDITOR', 'Image Editor', '', 'IMAGE', 1),
         ('UV', 'UV Editor', '', 'UV', 2),
@@ -91,11 +92,15 @@ class AR_OT_category_interface(Operator):
         ('ShaderNodeTree', 'Shader Editor', '', 'NODE_MATERIAL', 6),
         ('SEQUENCE_EDITOR', 'Video Sequencer', '', 'SEQUENCE', 7),
         ('CLIP_EDITOR', 'Movie Clip Editor', '', 'TRACKER', 8),
+
+        ('', 'Animation', ''),
         ('DOPESHEET', 'Dope Sheet', '', 'ACTION', 9),
         ('TIMELINE', 'Timeline', '', 'TIME', 10),
         ('FCURVES', 'Graph Editor', '', 'GRAPH', 11),
         ('DRIVERS', 'Drivers', '', 'DRIVER', 12),
         ('NLA_EDITOR', 'Nonlinear Animation', '', 'NLA', 13),
+
+        ('', 'Scripting', ''),
         ('TEXT_EDITOR', 'Text Editor', '', 'TEXT', 14)
     ]
     area_dict = functions.enum_list_id_to_name_dict(area_items)
@@ -137,6 +142,7 @@ class AR_OT_category_interface(Operator):
             category_visibility (list): list of pattern (area, mode) where the category should be visible
             id (str): id of the category to select
         """
+        # REFACTOR indentation
         category = ActRec_pref.categories[id]
         visibility = defaultdict(list)
         for area, mode in category_visibility:
@@ -159,6 +165,7 @@ class AR_OT_category_interface(Operator):
         ops.area = self.area
         ops.mode = self.mode
         cls = AR_OT_category_interface
+        # REFACTOR indentation
         if len(cls.category_visibility) > 0:
             box = layout.box()
             row = box.row()
@@ -237,7 +244,8 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
         category = ActRec_pref.categories[self.id]
         category.areas.clear()
         self.apply_visibility(
-            ActRec_pref, AR_OT_category_interface.category_visibility, self.id)
+            ActRec_pref, AR_OT_category_interface.category_visibility, self.id
+        )
         functions.category_runtime_save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
@@ -247,7 +255,8 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
 class AR_OT_category_apply_visibility(Operator):
     bl_idname = "ar.category_apply_visibility"
     bl_label = "Apply Visibility"
-    bl_description = ""
+    bl_description = """Applies the configured visibility to the category.
+If the category has no applied visibilities it will be shown in all available panels"""
     bl_options = {"INTERNAL"}
 
     mode: StringProperty()
@@ -261,7 +270,7 @@ class AR_OT_category_apply_visibility(Operator):
 class AR_OT_category_delete_visibility(Operator):
     bl_idname = "ar.category_delete_visibility"
     bl_label = "Delete Visibility"
-    bl_description = ""
+    bl_description = "Removes this visibility from the category"
     bl_options = {"INTERNAL"}
 
     index: IntProperty()
@@ -302,6 +311,7 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
         self.clear()
         category = categories.get(id, None)
+        # REFACTOR indentation
         if category:
             category = categories[id]
             for id_action in category.actions:
@@ -341,7 +351,8 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
         self.clear()
         categories = ActRec_pref.categories
         i = categories.find(id)
-        y = i - 1
+        y = i - 1  # upper index
+        # REFACTOR indentation
         if i >= 0 and y >= 0 and ui_functions.category_visible(ActRec_pref, context, categories[i]):
             swap_category = categories[y]
             # get next visible category
@@ -386,7 +397,7 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
         self.clear()
         categories = ActRec_pref.categories
         i = categories.find(id)
-        y = i + 1
+        y = i + 1  # lower index
         if i >= 0 and y < len(categories) and ui_functions.category_visible(ActRec_pref, context, categories[i]):
             swap_category = categories[y]
             # get next visible category

@@ -20,9 +20,9 @@
 	"AR_preferences": {
 		"prefix":["AR_preferences"],
 		"body": [
-		 	"ActRec_pref = bpy.functions.get_preferences(context)"
+		 	"ActRec_pref = functions.get_preferences(context)"
 		],
-		"description": "Instert ActRec_pref Prefeneces with __module__"
+		"description": "Instert ActRec_pref Prefeneces from functions"
 	},
 
 	"Registration": {
@@ -38,6 +38,6 @@
 			"        bpy.utils.unregister_class(cls)",
 			"# endregion"
 		],
-		"description": "Instert Standart classes registration"
+		"description": "Insert Standart classes registration"
 	}
 }

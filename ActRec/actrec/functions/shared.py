@@ -64,6 +64,7 @@ def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: l
     Returns:
         dict: python dict based on property
     """
+    # REFACTOR indentation
     data = {}  # PointerProperty
     main_exclude = []
     sub_exclude = defaultdict(list)
@@ -103,6 +104,7 @@ def property_to_python(property: bpy.types.Property, exclude: list = [], depth: 
     Returns:
         Union[list, dict, str]: converts Collection, Arrays to lists and PointerProperty to dict
     """
+    # REFACTOR indentation
     # CollectionProperty are a list of PointerProperties
     if depth <= 0:
         return "max depth"
@@ -251,6 +253,7 @@ def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[st
     Returns:
         Optional[str]: name or none if name not found
     """
+    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         try:
             return eval("%s.get_rna_type().name" % command.split("(")[0])
@@ -268,9 +271,10 @@ def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[st
                     else:
                         break
                 else:
-                    props = obj.bl_rna.properties
-                    if prop in props:
-                        prop = props[prop].name
+                    if obj:
+                        props = obj.bl_rna.properties
+                        if prop in props:
+                            prop = props[prop].name
 
             value = split[1]
             if value.startswith("bpy.data."):
@@ -320,6 +324,7 @@ def update_command(command: str) -> Union[str, bool]:
     Returns:
         Union[str, bool, None]: update string, return False if command doesn't exists anymore
     """
+    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         command, values = command.split("(", 1)
         values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
@@ -349,7 +354,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         context_copy (dict): copy of the active context (bpy.context.copy())
         action_type (str): "global_actions" or "local_actions"
         action_id (str): id of the action with the macros to execute
-        start (int): macros to start with in the macro collection
+        start (int): macro to start with in the macro collection
     """
     ActRec_pref = context_copy['preferences'].addons[__module__].preferences
     action = getattr(ActRec_pref, action_type)[action_id]
@@ -369,8 +374,53 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
         action_type (str): action type of the given action
 
     Returns:
-        _type_: _description_
+        Exception, str: error
     """
+    if action.execution_mode == "GROUP":
+        return execute_action(context_copy, macros, action, action_type)
+
+    error_list = []
+    old_selected_objects = context_copy['selected_objects']
+    old_active_object = context_copy['active_object']
+    for object in old_selected_objects:
+        object.select_set(False)
+
+    for object in old_selected_objects:
+        context_copy['selected_objects'] = [object]
+        context_copy['active_object'] = object
+        context_copy['view_layer'].objects.active = object
+        object.select_set(True)
+        err = execute_action(context_copy, macros, action, action_type)
+        error_list.append(err)
+        with suppress(ReferenceError):
+            object.select_set(False)
+
+    for object in old_selected_objects:
+        with suppress(ReferenceError):
+            object.select_set(True)
+
+    with suppress(ReferenceError):
+        context_copy['view_layer'].objects.active = old_active_object
+
+    return "\n\n".join(str(item) for item in error_list if item)
+
+
+def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
+                   ) -> Union[Exception, str]:
+    """
+    execute all given macros in the given context.
+    action, action_type are used to run the macros of the given action with delay to the execution
+
+    Args:
+        context_copy (dict): copy of the active context (bpy.context.copy())
+        macros (bpy.types.CollectionProperty): macros to execute
+        action (AR_action): action to track
+        action_type (str): action type of the given action
+
+    Returns:
+        Exception, str: error
+    """
+    # REFACTOR indentation
     macros = [macro for macro in macros if macro.active]
 
     # non-realtime events, execute before macros get executed
@@ -459,7 +509,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
             command = macro.command
             if (command.startswith("bpy.ops.ar.local_play")
                     and set(extract_properties(command.split("(")[1][: -1])) == {"id=\"\"", "index=-1"}):
-                err = "Don't run Local Play with default properties, this can leads to a recursion"
+                err = "Don't run Local Play with default properties, this may cause recursion"
                 logger.error(err)
                 action.alert = macro.alert = True
                 return err
@@ -481,7 +531,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                         area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
-                command = "%s(context_copy, %s" % (
+                command = "%s(context_copy, \"INVOKE_DEFAULT\", %s" % (
                     split[0], "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 split = command.replace("bpy.context.", "").split(".")
@@ -497,7 +547,8 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 context_copy['space_data'] = base_space_data
                 area.ui_type = area_type
 
-            if bpy.context:
+            if bpy.context:  # Refresh the context
+                bpy.context.area.tag_redraw()
                 context_copy = bpy.context.copy()
 
         except Exception as err:
@@ -551,6 +602,8 @@ def get_font_path() -> str:
     """
     if bpy.context.preferences.view.font_path_ui == '':
         dirc = "\\".join(sys.executable.split("\\")[:-3])
+        if bpy.app.version >= (3, 4, 0):
+            return os.path.join(dirc, "datafiles", "fonts", "DejaVuSans.woff2")
         return os.path.join(dirc, "datafiles", "fonts", "droidsans.ttf")
     else:
         return bpy.context.preferences.view.font_path_ui
@@ -587,6 +640,7 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     Returns:
         list[str]: multiline text
     """
+    # REFACTOR indentation
     if text == "" or not font.use_dynamic_text:
         return [text]
     characters_width = font.get_width_of_text(text)
@@ -626,12 +680,12 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     return lines
 
 
-def install_package(package_name: str) -> tuple[bool, str]:
+def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     """
-    install a package and ask for user permission if needed
+    install the listed packages and ask for user permission if needed
 
     Args:
-        package_name (str): name of the package
+        package_names list[str]: name of the package
 
     Returns:
         tuple[bool, str]: (success, installation output)
@@ -644,22 +698,24 @@ def install_package(package_name: str) -> tuple[bool, str]:
         os.mkdir(path)
         os.rmdir(path)
         output = subprocess.check_output(
-            [sys.executable, '-m', 'pip', 'install', package_name, '--no-color']
+            [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
         ).decode('utf-8').replace("\r", "")
         return (True, output)
     except PermissionError as err:
         if sys.platform == "win32":
+            logger.info(err)
             logger.info("Need Admin Permissions to write to %s" % path)
             logger.info("Try again to install fontTools as admin")
             output = subprocess.check_output(
-                [sys.executable, '-m', 'pip', 'uninstall', '-y', package_name, '--no-color'],
+                [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
                 stderr=subprocess.STDOUT
             ).decode('utf-8').replace("\r", "")
             logger.info(output)
             output = subprocess.check_output(
-                ['powershell.exe', '-Command',
-                    """& { Start-Process \'%s\' -Wait -ArgumentList \'-m\',
-                    \'pip\', \'install\', \'%s\'-Verb RunAs}""" % (sys.executable, package_name)],
+                ['powershell.exe', '-WindowStyle', 'hidden', '-Command',
+                    """& { Start-Process -WindowStyle hidden \'%s\' -Wait -ArgumentList \'-m\',
+                    \'pip\', \'install\', %s -Verb RunAs}"""
+                    % (sys.executable, ",".join("\'%s\'" % p for p in package_names))],
                 stderr=subprocess.STDOUT
             ).decode('unicode_escape').replace("\r", "")
             if output != '':
@@ -668,6 +724,7 @@ def install_package(package_name: str) -> tuple[bool, str]:
             return (False, err)
     except subprocess.CalledProcessError as err:
         return (False, err.output)
+    return (False, ":(")
 
 
 def get_preferences(context: bpy.types.Context) -> bpy.types.AddonPreferences:

@@ -71,7 +71,7 @@ def load_local_action(ActRec_pref: bpy.types.AddonPreferences, data: list):
 
 def local_action_to_text(action: 'AR_local_actions', text_name: str = None):
     """
-    write the local action and it's macro the the TextEditor
+    write the local action and it's macro to the TextEditor
 
     Args:
         action (AR_local_actions): action to write
@@ -95,6 +95,28 @@ def local_action_to_text(action: 'AR_local_actions', text_name: str = None):
     )
 
 
+def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = None):
+    """
+    remove the local action from the TextEditro
+
+    Args:
+        action (AR_local_actions): action to remove
+        text_name (str, optional): name of the text to remove. Defaults to None.
+    """
+    if text_name is None:
+        text_name = action.label
+    texts = bpy.data.texts
+    text_index = texts.find(text_name)
+    if text_index != -1:
+        texts.remove(texts[text_index])
+        return
+    id = action.id
+    for text in texts:
+        if text.lines[0].body.strip().startswith("###ActRec_pref### id: '%s'" % id):
+            texts.remove(text)
+            return
+
+
 def get_local_action_index(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int) -> int:
     """
     get local action index based on the given id or index (checks if index is in range)
@@ -107,6 +129,7 @@ def get_local_action_index(ActRec_pref: bpy.types.AddonPreferences, id: str, ind
     Returns:
         int: valid index of a local actions or active local action index on fallback
     """
+    # REFACTOR indentation
     action = ActRec_pref.local_actions.find(id)
     if action == -1:
         if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index

@@ -13,13 +13,18 @@ class AR_UL_locals(UIList):
         self.use_filter_sort_lock = True
         row = layout.row(align=True)
         row.alert = item.alert
-        ops = row.operator("ar.local_icon", text="",
-                           icon_value=item.icon if item.icon else 286, emboss=False)
+        ops = row.operator(
+            "ar.local_icon",
+            text="",
+            icon_value=item.icon if item.icon else 286,
+            emboss=False
+        )
         ops.id = item.id
         ops.index = index
         col = row.column()
         col.ui_units_x = 0.5
         row.prop(item, 'label', text='', emboss=False)
+        row.prop(item, 'execution_mode', text="", icon_only=True)
 # endregion
 
 

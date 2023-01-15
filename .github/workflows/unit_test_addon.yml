@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        blender-version: ["3.3", "2.93"]
+        blender-version: ["3.4", "3.3", "2.93"]
         #os: [ubuntu-latest, windows-latest, macos-latest]
         # FIXME Addon doesn't work on Ubuntu (don't know why)
         os: [windows-latest]

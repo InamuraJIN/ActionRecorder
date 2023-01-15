@@ -74,6 +74,7 @@ def load_icons(ActRec_pref: bpy.types.Preferences):
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
         filepath = os.path.join(directory, icon)
+        # REFACTOR indentation
         if os.path.exists(filepath) and os.path.isfile(filepath):
             register_icon(
                 preview_collections['ar_custom'],
@@ -224,14 +225,18 @@ class AR_OT_add_custom_icon(Operator, ImportHelper):
             self.report(
                 {'ERROR'}, 'The selected File is not an Image or an Image Format supported by Blender')
         if self.activate_pop_up != "":
-            exec("bpy.ops.%s%s" % (".".join(self.activate_pop_up.split(
-                "_OT_")).lower(), "('INVOKE_DEFAULT', reuse= True)"))
+            exec("bpy.ops.%s%s" % (
+                ".".join(self.activate_pop_up.split("_OT_")).lower(),
+                "('INVOKE_DEFAULT', reuse= True)"
+            ))
         return {"FINISHED"}
 
     def cancel(self, context):
         if self.activate_pop_up != "":
-            exec("bpy.ops.%s%s" % (".".join(self.activate_pop_up.split(
-                "_OT_")).lower(), "('INVOKE_DEFAULT', reuse= True)"))
+            exec("bpy.ops.%s%s" % (
+                ".".join(self.activate_pop_up.split("_OT_")).lower(),
+                "('INVOKE_DEFAULT', reuse= True)"
+            ))
 
 
 class AR_OT_delete_custom_icon(Operator):
@@ -252,15 +257,21 @@ class AR_OT_delete_custom_icon(Operator):
             return self.get("selected", False) or self.get("select_all", False)
 
         def set_selected(self, value):
+            # REFACTOR indentation
             if not self.get("select_all", False):
                 self["selected"] = value
 
         icon_id: IntProperty()
         icon_name: StringProperty()
         selected: BoolProperty(default=False, name='Select', get=get_selected, set=set_selected)
+
     icons: CollectionProperty(type=AR_icon)
     select_all: BoolProperty(
-        name="All Icons", description="Select all Icons", get=get_select_all, set=set_select_all)
+        name="All Icons",
+        description="Select all Icons",
+        get=get_select_all,
+        set=set_select_all
+    )
 
     @classmethod
     def poll(cls, context):
@@ -279,6 +290,7 @@ class AR_OT_delete_custom_icon(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         for ele in self.icons:
             if ele.selected or self.select_all:

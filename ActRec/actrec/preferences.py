@@ -1,6 +1,7 @@
 # region Imports
 # external modules
 import os
+import importlib
 
 # blender modules
 import bpy
@@ -9,7 +10,7 @@ from bpy.types import AddonPreferences
 import rna_keymap_ui
 
 # relative imports
-from . import properties, functions, config, update, keymap
+from . import properties, functions, config, update, keymap, log
 from .log import logger, log_sys
 from .functions.shared import get_preferences
 # endregion
@@ -19,6 +20,7 @@ from .functions.shared import get_preferences
 
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
+
     addon_directory: StringProperty(
         name="addon directory",
         default=os.path.dirname(os.path.dirname(__file__)),
@@ -32,6 +34,15 @@ class AR_preferences(AddonPreferences):
                ('update', "Update", "")],
         name="Tab",
         description="Switch between preference tabs"
+    )
+
+    # log
+    log_amount: IntProperty(
+        name="Log Amount",
+        description="Number of log files kept\nChanges apply on the next launch of Blender",
+        default=5,
+        min=1,
+        soft_max=100
     )
 
     # icon manager
@@ -173,6 +184,14 @@ class AR_preferences(AddonPreferences):
 
     operators_list_length: IntProperty(name="INTERNAL")
 
+    multiline_support_installing: BoolProperty(name="INTERNAL", default=False)
+    multiline_support_dont_ask: BoolProperty(
+        name="Don't Ask Again",
+        description="""Turns off the request for multiline support.
+Can also be installed under Preferences > Add-ons > Action Recorder > Settings""",
+        default=False
+    )
+
     # globals
     global_actions: CollectionProperty(type=properties.AR_global_actions)
 
@@ -218,6 +237,7 @@ class AR_preferences(AddonPreferences):
         Args:
             origin_path (str): path of the new storage file
         """
+        # REFACTOR indentation
         self['storage_path'] = origin_path
         if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
             os.makedirs(os.path.dirname(origin_path))
@@ -252,6 +272,7 @@ class AR_preferences(AddonPreferences):
         Args:
             context (bpy.types.Context): active blender context
         """
+        # REFACTOR indentation ?
         ActRec_pref = get_preferences(context)
         layout = self.layout
         col = layout.column()
@@ -322,14 +343,18 @@ class AR_preferences(AddonPreferences):
             box = col.box()
             box.label(text=self.icon_path)
             col.separator(factor=1.5)
-            col.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
+            row2 = col.row(align=True).split(factor=0.7, align=True)
+            row2.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
+            row2.prop(self, 'log_amount')
         elif ActRec_pref.preference_tab == 'keymap':
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
-            km = kc.keymaps['Screen']
-            for item in keymap.keymaps['default'].keymap_items:
-                kmi = km.keymap_items[item.idname]
-                rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
+            km = kc.keymaps['Screen'].active()
+            layout.context_pointer_set("keymap", km)
+            for kmi in km.keymap_items:
+                if not any(item.compare(kmi) for item in keymap.keymaps['default'].keymap_items):
+                    continue
+                rna_keymap_ui.draw_kmi([], kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()
             row.prop(self, 'auto_update')
@@ -337,6 +362,12 @@ class AR_preferences(AddonPreferences):
             row = col.row()
             row.prop(self, 'hide_local_text')
             row.prop(self, 'local_create_empty')
+            if importlib.util.find_spec('fontTools') is None:
+                row = col.row()
+                if self.multiline_support_installing:
+                    row.label(text="Installing fontTools...")
+                else:
+                    row.operator('ar.macro_install_multiline_support')
             col.separator(factor=1.5)
             row = col.row()
             row.operator('wm.url_open', text="Manual", icon='ASSET_MANAGER').url = config.manual_url
@@ -358,6 +389,8 @@ def register():
 
 
 def unregister():
+    ActRec_pref = functions.get_preferences(bpy.context)
+    log.update_log_amount_in_config(ActRec_pref.log_amount)
     for cls in classes:
         bpy.utils.unregister_class(cls)
 # endregion

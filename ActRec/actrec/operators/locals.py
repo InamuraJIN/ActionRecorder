@@ -84,6 +84,7 @@ class AR_OT_local_to_global(Operator):
                                      [ActRec_pref.active_local_action_index])
                 break
         if ActRec_pref.local_to_global_mode == 'move':
+            functions.remove_local_action_from_text(ActRec_pref.local_actions[ActRec_pref.active_local_action_index])
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
         functions.category_runtime_save(ActRec_pref)
         functions.global_runtime_save(ActRec_pref, False)
@@ -97,7 +98,10 @@ class AR_OT_local_add(Operator):
     bl_description = "Add a New Action"
 
     name: StringProperty(
-        name="Name", description="Name of the Action", default="Untitled")
+        name="Name",
+        description="Name of the Action",
+        default="Untitled"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -111,6 +115,8 @@ class AR_OT_local_add(Operator):
         new.label = functions.check_for_duplicates(map(lambda x: x.label, ActRec_pref.local_actions), self.name)
         ActRec_pref.active_local_action_index = -1  # set to last element, uses internal setter
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(new)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -133,6 +139,7 @@ class AR_OT_local_remove(shared.Id_based, Operator):
             self.report({'ERROR'}, "Selected Action couldn't be deleted")
             return {"CANCELLED"}
         else:
+            functions.remove_local_action_from_text(ActRec_pref.local_actions[index])
             ActRec_pref.local_actions.remove(index)
         functions.local_runtime_save(ActRec_pref, context.scene)
         context.area.tag_redraw()
@@ -237,6 +244,7 @@ class AR_OT_local_load(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
+        # REFACTOR indentation
         layout = self.layout
         layout.prop(self, 'source', expand=True)
         if self.source == 'text':
@@ -249,6 +257,7 @@ class AR_OT_local_load(Operator):
                     row.prop(text, 'apply', text='')
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         logger.info("Load Local Actions")
         if self.source == 'scene':
@@ -279,6 +288,9 @@ class AR_OT_local_load(Operator):
                     data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
         functions.load_local_action(ActRec_pref, data)
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            for action in ActRec_pref.local_actions:
+                functions.local_action_to_text(action)
         context.area.tag_redraw()
         self.cancel(context)
         return {"FINISHED"}
@@ -371,6 +383,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
         return len(ActRec_pref.local_actions)
 
     def execute(self, context):
+        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
@@ -403,31 +416,27 @@ class AR_OT_local_record(shared.Id_based, Operator):
             len_reports = len(reports)
             while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
                 bpy_type, register, undo, parent, name, value = reports[i]
-                if bpy_type == 0:
+                if bpy_type == 0:  # Context Reports
                     # register, undo are always True for Context reports
                     copy_dict = functions.create_object_copy(context, parent, name)
-                    second_undo = False
-
-                    bpy.ops.ed.redo()
-                    if undo:
+                    if bpy.ops.ed.redo.poll():
+                        bpy.ops.ed.redo()
                         redo_steps -= 1
-                    context = bpy.context
+                        context = bpy.context
+
                     if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
                         bpy.ops.ed.redo()
-                        if undo:
-                            redo_steps -= 1
+                        redo_steps -= 1
                         context = bpy.context
-                        second_undo = True
 
                     data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
 
-                    if not (undo or skip_op_redo):
+                    if not skip_op_redo and bpy.ops.ed.undo.poll():
                         bpy.ops.ed.undo()
-                        if bpy.ops.ed.undo.poll() and second_undo and not skip_op_redo:
-                            bpy.ops.ed.undo()
+                        redo_steps += 1
                         context = bpy.context
 
-                elif bpy_type == 1:
+                elif bpy_type == 1:  # Operator Reports
                     if register:
                         evaluation = functions.evaluate_operator(parent, name, value)
 
@@ -435,7 +444,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
                         skip_op_redo = reports[i + 1][0] == 1
                     else:
                         skip_op_redo = True
-                    if undo and skip_op_redo:
+                    if undo and skip_op_redo and bpy.ops.ed.redo.poll():
                         bpy.ops.ed.redo()
                         redo_steps -= 1
                         context = bpy.context
@@ -455,7 +464,8 @@ class AR_OT_local_record(shared.Id_based, Operator):
             if error_reports:
                 self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
             functions.local_runtime_save(ActRec_pref, bpy.context.scene)
-            functions.local_action_to_text(action)
+            if not ActRec_pref.hide_local_text:
+                functions.local_action_to_text(action)
             context.area.tag_redraw()
             self.clear()
         return {"FINISHED"}
@@ -481,10 +491,13 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
 
     def execute(self, context):
         ActRec_pref = get_preferences(context)
-        ActRec_pref.local_actions[self.id].icon = ActRec_pref.selected_icon
+        action = ActRec_pref.local_actions[self.id]
+        action.icon = ActRec_pref.selected_icon
         ActRec_pref.selected_icon = 0  # Icon: NONE
         self.reuse = False
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -511,8 +524,11 @@ class AR_OT_local_clear(shared.Id_based, Operator):
     def execute(self, context):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
-        ActRec_pref.local_actions[index].macros.clear()
+        action = ActRec_pref.local_actions[index]
+        action.macros.clear()
         functions.local_runtime_save(ActRec_pref, context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
         bpy.context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}

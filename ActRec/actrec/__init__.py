@@ -22,7 +22,10 @@ def on_load(dummy=None):
     ActRec_pref = get_preferences(context)
     # load local actions
     if bpy.data.filepath == "":
-        context.scene.ar.local = "{}"
+        try:
+            context.scene.ar.local = "{}"
+        except AttributeError as err:
+            log.logger.info(err)
     # load old local action data
     elif context.scene.ar.local == "{}" and context.scene.get('ar_local', None):
         try:
@@ -43,9 +46,11 @@ def on_load(dummy=None):
         except json.JSONDecodeError as err:
             log.logger.info("old scene-data couldn't be parsed (%s)" % err)
     functions.load_local_action(ActRec_pref, json.loads(context.scene.ar.local))
+
     # update paths
     ActRec_pref.storage_path
     ActRec_pref.icon_path
+
     functions.load(ActRec_pref)
     icon_manager.load_icons(ActRec_pref)
 
@@ -58,6 +63,7 @@ def on_load(dummy=None):
 
 
 def register():
+    log.log_sys.append_file()
     properties.register()
     menus.register()
     operators.register()
@@ -109,5 +115,5 @@ def unregister():
 
     del bpy.types.Scene.ar
     log.logger.info("Unregistered Action Recorder")
-    log.log_sys.unregister()
+    log.log_sys.detach_file()
 # endregion
