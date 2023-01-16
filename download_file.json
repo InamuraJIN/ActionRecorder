@@ -42,5 +42,5 @@
         "ActRec/__init__.py": [4, 0, 4],
         "ActRec/Storage.json": [4, 0, 3]
     },
-    "remove": [".github/workflows/generate_documentation.yml"]
+    "remove": []
 }
