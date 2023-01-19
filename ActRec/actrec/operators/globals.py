@@ -612,7 +612,8 @@ class AR_OT_global_remove(shared.Id_based, Operator):
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
-            functions.remove_action_keymap(id)
+            if functions.get_action_keymap(id) is not None:
+                functions.remove_action_keymap(id)
             ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))

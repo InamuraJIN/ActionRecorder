@@ -1,5 +1,5 @@
 {
-    "version": [4, 0, 4],
+    "version": [4, 0, 5],
     "files": {
         "ActRec/actrec/functions/__init__.py": [4, 0, 3],
         "ActRec/actrec/functions/categories.py": [4, 0, 3],
@@ -11,7 +11,7 @@
         "ActRec/actrec/menus/locals.py": [4, 0, 0],
         "ActRec/actrec/operators/__init__.py": [4, 0, 1],
         "ActRec/actrec/operators/categories.py": [4, 0, 3],
-        "ActRec/actrec/operators/globals.py": [4, 0, 3],
+        "ActRec/actrec/operators/globals.py": [4, 0, 4],
         "ActRec/actrec/operators/helper.py": [4, 0, 0],
         "ActRec/actrec/operators/locals.py": [4, 0, 3],
         "ActRec/actrec/operators/macros.py": [4, 0, 4],
@@ -32,14 +32,14 @@
         "ActRec/actrec/uilist/locals.py": [4, 0, 3],
         "ActRec/actrec/uilist/macros.py": [4, 0, 0],
         "ActRec/actrec/__init__.py": [4, 0, 3],
-        "ActRec/actrec/config.py": [4, 0, 4],
+        "ActRec/actrec/config.py": [4, 0, 5],
         "ActRec/actrec/icon_manager.py": [4, 0, 3],
         "ActRec/actrec/keymap.py": [4, 0, 3],
         "ActRec/actrec/log.py": [4, 0, 3],
         "ActRec/actrec/preferences.py": [4, 0, 3],
         "ActRec/actrec/shared_data.py": [4, 0, 0],
         "ActRec/actrec/update.py": [4, 0, 3],
-        "ActRec/__init__.py": [4, 0, 4],
+        "ActRec/__init__.py": [4, 0, 5],
         "ActRec/Storage.json": [4, 0, 3]
     },
     "remove": []
