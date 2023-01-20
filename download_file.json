@@ -40,7 +40,7 @@
         "ActRec/actrec/shared_data.py": [4, 0, 0],
         "ActRec/actrec/update.py": [4, 0, 3],
         "ActRec/__init__.py": [4, 0, 5],
-        "ActRec/Storage.json": [4, 0, 3]
+        "ActRec/Storage.json": [4, 0, 5]
     },
     "remove": []
 }
