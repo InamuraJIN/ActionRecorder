@@ -8,13 +8,13 @@
           "id": "c7a1f271164611eca91770c94ef23b30"
         },
         {
-          "id": "c7a40353164611ecbaad70c94ef23b30"
-        },
-        {
-          "id": "c7a6be1f164611ec9a5570c94ef23b30"
+          "id": "146b8a47986011ed86faa8a1598ce02d"
         },
         {
           "id": "c7a6e49c164611ec8f2170c94ef23b30"
+        },
+        {
+          "id": "c7a6be1f164611ec9a5570c94ef23b30"
         },
         {
           "id": "c7a70b8f164611ec915d70c94ef23b30"
@@ -45,7 +45,7 @@
           "id": "c7a780f7164611ecb42870c94ef23b30"
         },
         {
-          "id": "c7a780fa164611ecb1ad70c94ef23b30"
+          "id": "c7a40353164611ecbaad70c94ef23b30"
         },
         {
           "id": "c7a7a7d9164611ecb20d70c94ef23b30"
@@ -98,6 +98,14 @@
         {
           "type": "UV",
           "modes": []
+        },
+        {
+          "type": "VIEW_3D",
+          "modes": [
+            {
+              "type": "EDIT"
+            }
+          ]
         }
       ]
     },
@@ -109,7 +117,7 @@
           "id": "c7a8b816164611ecab0970c94ef23b30"
         },
         {
-          "id": "c7a8b819164611ecb77b70c94ef23b30"
+          "id": "4275b287986211edb4bca8a1598ce02d"
         },
         {
           "id": "c7a8b81c164611eca23670c94ef23b30"
@@ -122,7 +130,7 @@
       "label": "External",
       "actions": [
         {
-          "id": "c7a90679164611ec880270c94ef23b30"
+          "id": "e07e26bb982411ed8c27a8a1598ce02d"
         },
         {
           "id": "c7a9067c164611ecb3fd70c94ef23b30"
@@ -148,51 +156,8 @@
           "label": "Delete",
           "command": "bpy.ops.object.delete(use_global=False)",
           "active": true,
-          "ui_type": ""
-        }
-      ]
-    },
-    {
-      "icon": 127,
-      "icon_name": "NODE_MATERIAL",
-      "id": "c7a40353164611ecbaad70c94ef23b30",
-      "label": "Subd Smooth",
-      "macros": [
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a40354164611ecb05c70c94ef23b30",
-          "label": "Subdivision Set",
-          "command": "bpy.ops.object.subdivision_set(level=1, relative=False)",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a40355164611ecb9cd70c94ef23b30",
-          "label": "Shade Smooth",
-          "command": "bpy.ops.object.shade_smooth()",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a42aa4164611ecba6570c94ef23b30",
-          "label": "Auto Smooth = True",
-          "command": "bpy.context.object.data.use_auto_smooth = True",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a6be1e164611ec8ede70c94ef23b30",
-          "label": "Auto Smooth Angle = 3.14159",
-          "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
-          "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -200,7 +165,7 @@
       "icon": 0,
       "icon_name": "NONE",
       "id": "c7a6be1f164611ec9a5570c94ef23b30",
-      "label": "Align_X",
+      "label": "Align_Y",
       "macros": [
         {
           "icon": 0,
@@ -209,7 +174,8 @@
           "label": "Only Locations = True",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = True",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -218,7 +184,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(1, 0, 1))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -227,7 +194,8 @@
           "label": "Only Locations = False",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = False",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -235,7 +203,7 @@
       "icon": 0,
       "icon_name": "NONE",
       "id": "c7a6e49c164611ec8f2170c94ef23b30",
-      "label": "Align_Y",
+      "label": "Align_X",
       "macros": [
         {
           "icon": 0,
@@ -244,7 +212,8 @@
           "label": "Only Locations = True",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = True",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -253,7 +222,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(0, 1, 1))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -262,7 +232,8 @@
           "label": "Only Locations = False",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = False",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -279,7 +250,8 @@
           "label": "Only Locations = True",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = True",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -288,7 +260,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(1, 1, 0))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -297,7 +270,8 @@
           "label": "Only Locations = False",
           "command": "bpy.context.scene.tool_settings.use_transform_pivot_point_align = False",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -314,7 +288,8 @@
           "label": "Add Cube",
           "command": "bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -323,7 +298,8 @@
           "label": "Subdivision Set",
           "command": "bpy.ops.object.subdivision_set(level=2, relative=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -332,7 +308,8 @@
           "label": "Convert To",
           "command": "bpy.ops.object.convert(target='MESH')",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -341,7 +318,8 @@
           "label": "Toggle Edit Mode",
           "command": "bpy.ops.object.editmode_toggle()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -350,7 +328,8 @@
           "label": "To Sphere",
           "command": "bpy.ops.transform.tosphere(value=1, mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -359,7 +338,8 @@
           "label": "Toggle Edit Mode",
           "command": "bpy.ops.object.editmode_toggle()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -376,7 +356,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(0, 0, 0))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -385,7 +366,8 @@
           "label": "Merge by Distance",
           "command": "bpy.ops.mesh.remove_doubles()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -402,7 +384,8 @@
           "label": "Checker Deselect",
           "command": "bpy.ops.mesh.select_nth()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -411,60 +394,8 @@
           "label": "Multi Select Loops",
           "command": "bpy.ops.mesh.loop_multi_select(ring=False)",
           "active": true,
-          "ui_type": ""
-        }
-      ]
-    },
-    {
-      "icon": 127,
-      "icon_name": "NODE_MATERIAL",
-      "id": "c7a780fa164611ecb1ad70c94ef23b30",
-      "label": "SubdSmooth",
-      "macros": [
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a780fb164611eca61470c94ef23b30",
-          "label": "Subdivision Set",
-          "command": "bpy.ops.object.subdivision_set(level=1, relative=False)",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a7a7d5164611ec896e70c94ef23b30",
-          "label": "(De)select All",
-          "command": "bpy.ops.mesh.select_all(action='SELECT')",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a7a7d6164611ec84c970c94ef23b30",
-          "label": "Shade Smooth",
-          "command": "bpy.ops.mesh.faces_shade_smooth()",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a7a7d7164611ecbfa570c94ef23b30",
-          "label": "Auto Smooth = True",
-          "command": "bpy.context.object.data.use_auto_smooth = True",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a7a7d8164611eca60170c94ef23b30",
-          "label": "Auto Smooth Angle = 3.14159",
-          "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
-          "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -481,7 +412,8 @@
           "label": "Edge Crease",
           "command": "bpy.ops.transform.edge_crease(value=1)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -490,7 +422,8 @@
           "label": "Mark Sharp",
           "command": "bpy.ops.mesh.mark_sharp()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -507,7 +440,8 @@
           "label": "Edge Crease",
           "command": "bpy.ops.transform.edge_crease(value=-1)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -516,7 +450,8 @@
           "label": "Mark Sharp",
           "command": "bpy.ops.mesh.mark_sharp(clear=True)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -533,7 +468,8 @@
           "label": "Blend from Shape",
           "command": "bpy.ops.mesh.blend_from_shape(add=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -550,7 +486,8 @@
           "label": "Snap Cursor to Selected",
           "command": "bpy.ops.view3d.snap_cursor_to_selected()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -559,7 +496,8 @@
           "label": "Toggle Edit Mode",
           "command": "bpy.ops.object.editmode_toggle()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -568,7 +506,8 @@
           "label": "Set Origin",
           "command": "bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -577,7 +516,8 @@
           "label": "Snap Cursor to World Origin",
           "command": "bpy.ops.view3d.snap_cursor_to_center()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -586,7 +526,8 @@
           "label": "Toggle Edit Mode",
           "command": "bpy.ops.object.editmode_toggle()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -603,7 +544,8 @@
           "label": "Mark Seam",
           "command": "bpy.ops.mesh.mark_seam(clear=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -612,7 +554,8 @@
           "label": "Select Linked All",
           "command": "bpy.ops.mesh.select_linked(delimit=set())",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -621,7 +564,8 @@
           "label": "Unwrap",
           "command": "bpy.ops.uv.unwrap()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -638,7 +582,8 @@
           "label": "Mark Seam",
           "command": "bpy.ops.mesh.mark_seam(clear=True)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -647,7 +592,8 @@
           "label": "Unwrap",
           "command": "bpy.ops.uv.unwrap()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -656,7 +602,8 @@
           "label": "Seams from Islands",
           "command": "bpy.ops.uv.seams_from_islands()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -665,7 +612,8 @@
           "label": "Select Linked All",
           "command": "bpy.ops.mesh.select_linked(delimit=set())",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -674,7 +622,8 @@
           "label": "Unwrap",
           "command": "bpy.ops.uv.unwrap()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -691,7 +640,8 @@
           "label": "Mark Seam",
           "command": "bpy.ops.mesh.mark_seam(clear=True)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -700,7 +650,8 @@
           "label": "Select Linked All",
           "command": "bpy.ops.mesh.select_linked(delimit=set())",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -709,7 +660,8 @@
           "label": "Unwrap",
           "command": "bpy.ops.uv.unwrap()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -726,7 +678,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(0, 1, 1))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -743,7 +696,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(1, 0, 1))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -760,7 +714,8 @@
           "label": "lock_bounds = True",
           "command": "bpy.context.space_data.uv_editor.lock_bounds = True",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -769,7 +724,8 @@
           "label": "pivot_point = 'CURSOR'",
           "command": "bpy.context.space_data.pivot_point = 'CURSOR'",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -778,7 +734,8 @@
           "label": "Select Linked",
           "command": "bpy.ops.uv.select_linked()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -787,7 +744,8 @@
           "label": "Move",
           "command": "bpy.ops.transform.translate(value=(-1000, -1000, 0))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -796,7 +754,8 @@
           "label": "Resize",
           "command": "bpy.ops.transform.resize(value=(1000, 1000, 1000))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -813,7 +772,8 @@
           "label": "Snap Cursor to Selected",
           "command": "bpy.ops.view3d.snap_cursor_to_selected()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -822,33 +782,8 @@
           "label": "Add Cube",
           "command": "bpy.ops.mesh.primitive_cube_add(size=2, location=bpy.context.scene.cursor.location)",
           "active": true,
-          "ui_type": ""
-        }
-      ]
-    },
-    {
-      "icon": 256,
-      "icon_name": "RESTRICT_SELECT_OFF",
-      "id": "c7a8b819164611ecb77b70c94ef23b30",
-      "label": "SelectCube",
-      "macros": [
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a8b81a164611ec8cca70c94ef23b30",
-          "label": "get(\"Cube\").select_set(True)",
-          "command": "bpy.context.scene.objects.get(\"Cube\").select_set(True)",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a8b81b164611eca09a70c94ef23b30",
-          "label": "Active Object = bpy.context.scene.objects.get(\"Cube\")",
-          "command": "bpy.context.view_layer.objects.active = bpy.context.scene.objects.get(\"Cube\")",
-          "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -865,7 +800,8 @@
           "label": "Add Plane",
           "command": "bpy.ops.mesh.primitive_plane_add(align='CURSOR', rotation=(-1.5708, 0, 0))",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -874,7 +810,8 @@
           "label": "Apply Object Transform",
           "command": "bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -883,7 +820,8 @@
           "label": "Name = 'Plane_Light'",
           "command": "bpy.context.active_object.name = 'Plane_Light'",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -892,7 +830,8 @@
           "label": "Select Pattern",
           "command": "bpy.ops.object.select_pattern(pattern=\"Empty\")",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -901,7 +840,8 @@
           "label": "Add Constraint (with Targets)",
           "command": "bpy.ops.object.constraint_add_with_targets(type='TRACK_TO')",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -910,33 +850,8 @@
           "label": "Disable in Renders = True",
           "command": "bpy.context.object.hide_render = True",
           "active": true,
-          "ui_type": ""
-        }
-      ]
-    },
-    {
-      "icon": 630,
-      "icon_name": "XRAY",
-      "id": "c7a90679164611ec880270c94ef23b30",
-      "label": "BackUP",
-      "macros": [
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a9067a164611ecb55570c94ef23b30",
-          "label": "Duplicate Objects",
-          "command": "bpy.ops.object.duplicate_move()",
-          "active": true,
-          "ui_type": ""
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a9067b164611ecb92370c94ef23b30",
-          "label": "Run Script",
-          "command": "bpy.ops.text.run_script()",
-          "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -953,7 +868,8 @@
           "label": "get(\"Passive\").select_set(True)",
           "command": "bpy.context.scene.objects.get(\"Passive\").select_set(True)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -962,7 +878,8 @@
           "label": "Active Object = bpy.context.scene.objects.get(\"Passive\")",
           "command": "bpy.context.view_layer.objects.active = bpy.context.scene.objects.get(\"Passive\")",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -971,7 +888,8 @@
           "label": "Join",
           "command": "bpy.ops.object.join()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -980,7 +898,8 @@
           "label": "Jump to Endpoint",
           "command": "bpy.ops.screen.frame_jump(end=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -989,7 +908,8 @@
           "label": "Select Pattern",
           "command": "bpy.ops.object.select_pattern(pattern=\"Cube*\", extend=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -998,7 +918,8 @@
           "label": "Duplicate Objects",
           "command": "bpy.ops.object.duplicate_move()",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -1007,7 +928,8 @@
           "label": "ScriptButton",
           "command": "bpy.ops.stb.scriptbutton(btn_name=\"Object Random Loc\")",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -1016,7 +938,8 @@
           "label": "ScriptButton",
           "command": "bpy.ops.stb.scriptbutton(btn_name=\"PlayAnim3\")",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     },
@@ -1033,7 +956,8 @@
           "label": "Multi Select Loops",
           "command": "bpy.ops.mesh.loop_multi_select(ring=False)",
           "active": true,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         },
         {
           "icon": 0,
@@ -1042,7 +966,160 @@
           "label": "bpy.ops.mesh.looptools_space(influence=100, input='selected', interpolation='cubic', lock_x=False, lock_y=False, lock_z=False)",
           "command": "bpy.ops.mesh.looptools_space(influence=100, input='selected', interpolation='cubic', lock_x=False, lock_y=False, lock_z=False)",
           "active": false,
-          "ui_type": ""
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 630,
+      "icon_name": "XRAY",
+      "id": "e07e26bb982411ed8c27a8a1598ce02d",
+      "label": "BackUP",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a9067a164611ecb55570c94ef23b30",
+          "label": "Duplicate Objects",
+          "command": "bpy.ops.object.duplicate_move()",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "6611798f972611ed8bb8a8a1598ce02d",
+          "label": "ScriptButton",
+          "command": "bpy.ops.stb.scriptbutton(btn_name='MakeBackUP')",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 127,
+      "icon_name": "NODE_MATERIAL",
+      "id": "146b8a47986011ed86faa8a1598ce02d",
+      "label": "Subd Smooth",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a40355164611ecb9cd70c94ef23b30",
+          "label": "Shade Smooth",
+          "command": "bpy.ops.object.shade_smooth()",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a42aa4164611ecba6570c94ef23b30",
+          "label": "Auto Smooth = True",
+          "command": "bpy.context.object.data.use_auto_smooth = True",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a6be1e164611ec8ede70c94ef23b30",
+          "label": "Auto Smooth Angle = 3.14159",
+          "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 127,
+      "icon_name": "NODE_MATERIAL",
+      "id": "c7a40353164611ecbaad70c94ef23b30",
+      "label": "Subd Smooth",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "4b16a834986011edadaea8a1598ce02d",
+          "label": "Set Object Mode",
+          "command": "bpy.ops.object.mode_set(mode='OBJECT', toggle=False)",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "35bf6e3e986011edb5cfa8a1598ce02d",
+          "label": "Shade Smooth",
+          "command": "bpy.ops.object.shade_smooth(use_auto_smooth=True)",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "3a683c50986011ed8535a8a1598ce02d",
+          "label": "Auto Smooth Angle = 3.14159",
+          "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "40d7290a986011edab59a8a1598ce02d",
+          "label": "Set Object Mode",
+          "command": "bpy.ops.object.mode_set(mode='EDIT', toggle=False)",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 256,
+      "icon_name": "RESTRICT_SELECT_OFF",
+      "id": "4275b287986211edb4bca8a1598ce02d",
+      "label": "SelectCube",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "e6e248bd986111edb57da8a1598ce02d",
+          "label": "(De)select All",
+          "command": "bpy.ops.object.select_all(action='DESELECT')",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a8b81a164611ec8cca70c94ef23b30",
+          "label": "get(\"Cube\").select_set(True)",
+          "command": "bpy.context.scene.objects.get(\"Cube\").select_set(True)",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "c7a8b81b164611eca09a70c94ef23b30",
+          "label": "Active Object = bpy.context.scene.objects.get(\"Cube\")",
+          "command": "bpy.context.view_layer.objects.active = bpy.data.objects[\"Cube\"]",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
         }
       ]
     }
