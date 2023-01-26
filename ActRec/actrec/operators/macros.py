@@ -68,6 +68,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                         command = report
                         break
         else:  # command was passed through with the operator parameter
+            new_report = True
             command = self.command
 
         undo_count = 0

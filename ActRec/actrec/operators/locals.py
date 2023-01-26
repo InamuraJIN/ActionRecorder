@@ -88,6 +88,7 @@ class AR_OT_local_to_global(Operator):
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
         functions.category_runtime_save(ActRec_pref)
         functions.global_runtime_save(ActRec_pref, False)
+        functions.local_runtime_save(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
