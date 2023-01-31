@@ -30,11 +30,30 @@ class Id_based(Operator):
     def clear(self):
         self.id = ""
         self.index = -1
+
+
+class AR_OT_copy_text(Operator):
+    bl_idname = "ar.copy_text"
+    bl_label = "Copy Text"
+    bl_description = "Loads the given text in the clipboard"
+    bl_options = {"INTERNAL"}
+
+    text: StringProperty(name="copy text", description="Text to copy to clipboard")
+
+    @classmethod
+    def poll(cls, context):
+        return context.window_manager is not None
+
+    def execute(self, context: bpy.types.Context):
+        context.window_manager.clipboard = self.text
+        return {"FINISHED"}
+
 # endregion
 
 
 classes = [
-    AR_OT_check_ctrl
+    AR_OT_check_ctrl,
+    AR_OT_copy_text
 ]
 
 # region Registration

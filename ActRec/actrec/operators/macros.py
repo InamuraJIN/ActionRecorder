@@ -768,8 +768,13 @@ class AR_OT_macro_edit(Macro_based, Operator):
             action = ActRec_pref.local_actions[self.action_index]
             macro = action.macros[self.index]
             row.prop(macro, 'operator_execution_context', text="")
-        row.prop(self, 'clear_operator', toggle=True)
+            row.prop(self, 'clear_operator', toggle=True)
         row.prop(self, 'use_last_command', toggle=True)
+        op = row.operator('ar.copy_text', text="", icon="COPYDOWN")
+        if self.use_last_command:
+            op.text = self.last_command
+        else:
+            op.text = self.command
 
     def execute(self, context):
         ActRec_pref = get_preferences(context)
