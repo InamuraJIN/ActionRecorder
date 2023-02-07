@@ -120,6 +120,8 @@ def panel_factory(space_type: str):
 
         def draw(self, context):
             ActRec_pref = get_preferences(context)
+            if not ActRec_pref.is_loaded:
+                ActRec_pref.is_loaded = True
             layout = self.layout
             if not ActRec_pref.global_hide_menu:
                 col = layout.column()

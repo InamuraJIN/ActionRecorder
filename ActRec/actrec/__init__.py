@@ -12,11 +12,25 @@ from bpy.props import PointerProperty
 from . import functions, menus, operators, panels, properties, ui_functions, uilist
 from . import config, icon_manager, keymap, log, preferences, update
 from .functions.shared import get_preferences
+from . import shared_data
 # endregion
 
 
 @persistent
+def check_on_load(dummy=None):
+    """
+    used to load global actions if on_load wasn't called
+    """
+    if check_on_load in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(check_on_load)
+    if shared_data.data_loaded:
+        return
+    on_load()
+
+
+@persistent
 def on_load(dummy=None):
+    shared_data.data_loaded = True
     log.logger.info("Start: Load ActRec Data")
     context = bpy.context
     ActRec_pref = get_preferences(context)
@@ -85,8 +99,11 @@ def register():
     handlers.render_complete.append(functions.execute_render_complete)
     handlers.depsgraph_update_post.append(functions.track_scene)
     handlers.load_post.append(on_load)
+    handlers.depsgraph_update_post.append(check_on_load)
 
     bpy.types.Scene.ar = PointerProperty(type=properties.AR_scene_data)
+
+    shared_data.data_loaded = False
     log.logger.info("Registered Action Recorder")
 
 
@@ -112,6 +129,8 @@ def unregister():
     handlers.render_complete.remove(functions.execute_render_complete)
     handlers.depsgraph_update_post.remove(functions.track_scene)
     handlers.load_post.remove(on_load)
+    if check_on_load in bpy.app.handlers.depsgraph_update_post:
+        handlers.depsgraph_update_post.remove(check_on_load)
 
     del bpy.types.Scene.ar
     log.logger.info("Unregistered Action Recorder")

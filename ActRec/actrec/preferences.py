@@ -21,6 +21,10 @@ from .functions.shared import get_preferences
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
 
+    def update_is_loaded(self, context: bpy.types.Context):
+        context.scene.name = context.scene.name
+    is_loaded: BoolProperty(name="INTERNAL", description="INTERNAL USE ONLY", default=False, update=update_is_loaded)
+
     addon_directory: StringProperty(
         name="addon directory",
         default=os.path.dirname(os.path.dirname(__file__)),
