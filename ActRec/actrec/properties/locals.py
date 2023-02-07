@@ -2,10 +2,12 @@
 # blender modules
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, StringProperty, IntProperty
+from bpy.props import BoolProperty, StringProperty, IntProperty, EnumProperty
 
 # relative Imports
 from . import shared
+from ..functions import get_preferences
+from .. import functions
 # endregion
 
 # region PropertyGroups
@@ -36,12 +38,18 @@ class AR_local_actions(shared.AR_action, PropertyGroup):
         value = value if value < macros_length else macros_length - 1
         self['active_macro_index'] = value if value >= 0 else macros_length - 1
 
+    def update_execution_mode(self, context: bpy.types.Context):
+        ActRec_pref = get_preferences(context)
+        functions.local_runtime_save(ActRec_pref, context.scene, False)
+
     active_macro_index: IntProperty(
         name="Select",
         min=0,
         get=get_active_macro_index,
         set=set_active_macro_index
     )
+
+    execution_mode: shared.AR_action.EnumProperty_execution_mode(update=update_execution_mode)
 
 
 class AR_local_load_text(PropertyGroup):
