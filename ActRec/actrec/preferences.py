@@ -356,7 +356,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             km = kc.keymaps['Screen'].active()
             layout.context_pointer_set("keymap", km)
             for kmi in km.keymap_items:
-                if not any(item.compare(kmi) for item in keymap.keymaps['default'].keymap_items):
+                if not any(kmi.idname == item.idname for item in keymap.keymaps['default'].keymap_items):
                     continue
                 rna_keymap_ui.draw_kmi([], kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
