@@ -361,37 +361,26 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
     play(context_copy, action.macros[start:], action, action_type)
 
 
-def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
-         ) -> Union[Exception, str]:
+def execute_individually(context_copy: dict, command: str):
     """
-    execute all given macros in the given context.
-    action, action_type are used to run the macros of the given action with delay to the execution
+    execute the given command on each selected object individually
 
     Args:
         context_copy (dict): copy of the active context (bpy.context.copy())
-        macros (bpy.types.CollectionProperty): macros to execute
-        action (AR_action): action to track
-        action_type (str): action type of the given action
-
-    Returns:
-        Exception, str: error
+        command (str): command to execute
     """
-    if action.execution_mode == "GROUP":
-        return execute_action(context_copy, macros, action, action_type)
-
-    error_list = []
-    old_selected_objects = context_copy['selected_objects']
+    old_selected_objects = context_copy['selected_objects'][:]
     old_active_object = context_copy['active_object']
     for object in old_selected_objects:
         object.select_set(False)
 
     for object in old_selected_objects:
+        object.select_set(True)
         context_copy['selected_objects'] = [object]
+        context_copy['object'] = object
         context_copy['active_object'] = object
         context_copy['view_layer'].objects.active = object
-        object.select_set(True)
-        err = execute_action(context_copy, macros, action, action_type)
-        error_list.append(err)
+        exec(command)
         with suppress(ReferenceError):
             object.select_set(False)
 
@@ -400,13 +389,14 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
             object.select_set(True)
 
     with suppress(ReferenceError):
+        context_copy['selected_objects'] = old_selected_objects
+        context_copy['object'] = old_active_object
+        context_copy['active_object'] = old_active_object
         context_copy['view_layer'].objects.active = old_active_object
 
-    return "\n\n".join(str(item) for item in error_list if item)
 
-
-def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
-                   ) -> Union[Exception, str]:
+def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
+         ) -> Union[Exception, str]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
@@ -441,6 +431,7 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
     base_space_data = context_copy['space_data']
 
     for i, macro in enumerate(macros):  # realtime events
+
         split = macro.command.split(":")
         if split[0] == 'ar.event':
             data = json.loads(":".join(split[1:]))
@@ -493,7 +484,7 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
             elif data['Type'] == 'Select Object':
                 obj = bpy.data.objects[data['Object']]
                 objs = context_copy['view_layer'].objects
-                if obj in [o for o in objs]:
+                if obj in objs.values():
                     objs.active = obj
                     for o in context_copy['selected_objects']:
                         o.select_set(False)
@@ -535,10 +526,12 @@ def execute_action(context_copy: dict, macros: bpy.types.CollectionProperty, act
                     split[0], macro.operator_execution_context, "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 split = command.replace("bpy.context.", "").split(".")
-                command = "context_copy['%s'].%s" % (
-                    split[0], ".".join(split[1:]))
+                command = "context_copy['%s'].%s" % (split[0], ".".join(split[1:]))
 
-            exec(command)
+            if action.execution_mode == "GROUP":
+                exec(command)
+            else:
+                execute_individually(context_copy, command)
 
             if area and macro.ui_type:
                 context_copy['window'] = base_window
@@ -738,4 +731,5 @@ def get_preferences(context: bpy.types.Context) -> bpy.types.AddonPreferences:
         bpy.types.AddonPreferences: preferences of this addon
     """
     return context.preferences.addons[__module__].preferences
+
 # endregion

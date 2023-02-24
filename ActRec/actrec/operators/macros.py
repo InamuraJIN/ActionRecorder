@@ -195,7 +195,11 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     end: FloatProperty(name="End", description="End of the Count statements", default=1)
     step: FloatProperty(name="Step", description="Step of the Count statements", default=1)
     python_statement: StringProperty(name="Statement", description="Statement for the Python Statement")
-    object: StringProperty(name="Object", description="Choose an Object which get select when this Event is played")
+    object: StringProperty(
+        name="Object",
+        description="Choose an Object which get select when this Event is played",
+        default=""
+    )
 
     macro_index: IntProperty(name="Macro Index", default=-1)
 
@@ -205,7 +209,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
     def invoke(self, context, event):
-        if context.object is not None:
+        if self.object == "" and context.object is not None:
             self.object = context.object.name
         return context.window_manager.invoke_props_dialog(self)
 
@@ -270,6 +274,10 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
+
+    def clear(self):
+        self.object = ""
+        super().clear()
 
 
 class AR_OT_macro_remove(Macro_based, Operator):
