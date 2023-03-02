@@ -169,8 +169,9 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
 
     types = [
         ('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
-        ('Render Complete', 'Render complete', 'Wait until the rendering has finished', 'IMAGE_RGB_ALPHA', 1),
-        ('Render Init', 'Render Init', 'Wait until the rendering has started', 'IMAGE_RGB', 2),
+        ('Render Complete', 'Render Complete',
+         'Waits for the render process to be completed and runs all macros below', 'IMAGE_RGB_ALPHA', 1),
+        ('Render Init', 'Render Init', 'Runs all macros below before the rendering process starts', 'IMAGE_RGB', 2),
         ('Loop', 'Loop',
          """Loop the containing Macros until the Statement is False \n
          Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped""",
@@ -179,8 +180,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
          'FILE_REFRESH', 4),
         ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
         ('Empty', 'Empty', 'Crates an Empty Macro', 'SHADING_BBOX', 6),
-        ('Select Object', 'Select Object', 'Select the chosen object', 'OBJECT_DATA', 7)
-    ]
+        ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7)]
     type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Empty')
 
     time: FloatProperty(name="Time", description="Time in Seconds", unit='TIME')
@@ -196,9 +196,15 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     step: FloatProperty(name="Step", description="Step of the Count statements", default=1)
     python_statement: StringProperty(name="Statement", description="Statement for the Python Statement")
     object: StringProperty(
-        name="Object",
-        description="Choose an Object which get select when this Event is played",
+        name="Active",
+        description="Choose an Object which get select and set as active when this Event is played",
         default=""
+    )
+    objects: CollectionProperty(type=properties.AR_event_object_name)
+    keep_selection: BoolProperty(
+        name="Keep Selection",
+        description="Select the specified objects and keep the current selected objects selected",
+        default=False
     )
 
     macro_index: IntProperty(name="Macro Index", default=-1)
@@ -209,8 +215,10 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
     def invoke(self, context, event):
-        if self.object == "" and context.object is not None:
+        if self.object == "" and context.object is not None and len(self.objects) == 0:
             self.object = context.object.name
+        if len(self.objects) == 0:
+            self.objects.add()
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
@@ -231,7 +239,16 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
                 box.prop(self, 'step')
         elif self.type == 'Select Object':
             box = layout.box()
+            box.prop(self, 'keep_selection')
             box.prop_search(self, 'object', context.view_layer, 'objects')
+            box.separator()
+            for object in self.objects:
+                box.prop_search(object, 'name', context.view_layer, 'objects')
+
+    def check(self, context):
+        while (index := self.objects.find("")) >= 0:
+            self.objects.remove(index)
+        self.objects.add()
 
     def execute(self, context):
         ActRec_pref = get_preferences(context)
@@ -267,6 +284,8 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
                     data["Stepnumber"] = self.step
             elif self.type == 'Select Object':
                 data['Object'] = self.object
+                data['Objects'] = [obj.name for obj in self.objects]
+                data['KeepSelection'] = self.keep_selection
             macro.command = "ar.event: %s" % json.dumps(data)
         functions.local_runtime_save(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -277,6 +296,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
 
     def clear(self):
         self.object = ""
+        self.objects.clear()
         super().clear()
 
 
@@ -736,7 +756,10 @@ class AR_OT_macro_edit(Macro_based, Operator):
                         'INVOKE_DEFAULT',
                         type=data['Type'],
                         macro_index=self.index,
-                        object=data['Object']
+                        object=data['Object'],
+                        objects=[{'name': obj_name} for obj_name in data['Objects']],
+                        keep_selection=data['KeepSelection']
+
                     )
                 else:
                     bpy.ops.ar.macro_add_event('INVOKE_DEFAULT', type=data['Type'], macro_index=self.index)

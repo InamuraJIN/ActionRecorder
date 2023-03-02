@@ -419,10 +419,10 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
         if split[0] == 'ar.event':
             data = json.loads(":".join(split[1:]))
             if data['Type'] == 'Render Init':
-                shared_data.render_init_macros.append((action_type, action.id, i + 1))
+                shared_data.render_init_macros.append((action_type, action.id, macros[i + 1].id))
                 return
-            elif data['Type'] == 'Render Complet':
-                shared_data.render_complete_macros.append((action_type, action.id, i + 1))
+            elif data['Type'] == 'Render Complete':
+                shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
                 return
 
     base_window = context_copy['window']
@@ -482,17 +482,30 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
 
                 return play(context_copy, macros[end_index + 1:], action, action_type)
             elif data['Type'] == 'Select Object':
-                obj = bpy.data.objects[data['Object']]
-                objs = context_copy['view_layer'].objects
-                if obj in objs.values():
-                    objs.active = obj
-                    for o in context_copy['selected_objects']:
-                        o.select_set(False)
-                    obj.select_set(True)
-                    context_copy['selected_objects'] = [obj]
-                else:
+                selected_objects = context_copy['selected_objects']
+
+                if not data['KeepSelection']:
+                    for object in selected_objects:
+                        object.select_set(False)
+                    selected_objects.clear()
+
+                for object_name in data['Objects']:
+                    if object := bpy.data.objects.get(object_name):
+                        object.select_set(True)
+                        selected_objects.append(object)
+
+                if data['Object'] == "":
+                    continue
+
+                objects = context_copy['view_layer'].objects
+                main_object = bpy.data.objects.get(data['Object'])
+                if main_object is None or main_object not in objects.values():
                     action.alert = macro.alert = True
                     return "%s Object doesn't exist in the active view layer" % data['Object']
+
+                objects.active = main_object
+                main_object.select_set(True)
+                selected_objects.append(main_object)
                 continue
             elif data['Type'] == 'EndLoop':
                 continue
@@ -540,7 +553,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 context_copy['space_data'] = base_space_data
                 area.ui_type = area_type
 
-            if bpy.context:  # Refresh the context
+            if bpy.context and bpy.context.area:  # Refresh the context
                 bpy.context.area.tag_redraw()
                 context_copy = bpy.context.copy()
 
@@ -564,9 +577,12 @@ def execute_render_init(dummy: bpy.types.Scene = None):
     """
     context = bpy.context
     ActRec_pref = get_preferences(context)
-    for action_type, action_id, start in shared_data.render_init_macros:
+    while len(shared_data.render_init_macros):
+        action_type, action_id, start_id = shared_data.render_init_macros.pop(0)
         action = getattr(ActRec_pref, action_type)[action_id]
-        play(context.copy(), action.macros[start:], action, action_type)
+        if (start_index := action.macros.find(start_id)) < 0:
+            continue
+        play(context.copy(), action.macros[start_index:], action, action_type)
 
 
 @persistent
@@ -581,9 +597,12 @@ def execute_render_complete(dummy=None):
     """
     context = bpy.context
     ActRec_pref = get_preferences(context)
-    for action_type, action_id, start in shared_data.render_complete_macros:
+    while len(shared_data.render_complete_macros):
+        action_type, action_id, start_id = shared_data.render_complete_macros.pop(0)
         action = getattr(ActRec_pref, action_type)[action_id]
-        play(context.copy(), action.macros[start:], action, action_type)
+        if (start_index := action.macros.find(start_id)) < 0:
+            continue
+        play(context.copy(), action.macros[start_index:], action, action_type)
 
 
 def get_font_path() -> str:

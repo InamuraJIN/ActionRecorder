@@ -16,7 +16,8 @@ from .locals import (
 )
 
 from .macros import (
-    AR_macro_multiline
+    AR_macro_multiline,
+    AR_event_object_name
 )
 
 from .shared import (
