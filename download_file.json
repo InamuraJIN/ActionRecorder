@@ -15,7 +15,7 @@
         "ActRec/actrec/operators/helper.py": [4, 0, 0],
         "ActRec/actrec/operators/locals.py": [4, 0, 5],
         "ActRec/actrec/operators/macros.py": [4, 0, 5],
-        "ActRec/actrec/operators/preferences.py": [4, 0, 1],
+        "ActRec/actrec/operators/preferences.py": [4, 0, 5],
         "ActRec/actrec/operators/shared.py": [4, 0, 5],
         "ActRec/actrec/panels/__init__.py": [4, 0, 0],
         "ActRec/actrec/panels/main.py": [4, 0, 5],
