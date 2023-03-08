@@ -10,7 +10,7 @@ from bpy.types import AddonPreferences
 import rna_keymap_ui
 
 # relative imports
-from . import properties, functions, config, update, keymap, log
+from . import properties, functions, config, update, keymap, log, shared_data
 from .log import logger, log_sys
 from .functions.shared import get_preferences
 # endregion
@@ -23,7 +23,21 @@ class AR_preferences(AddonPreferences):
 
     def update_is_loaded(self, context: bpy.types.Context):
         context.scene.name = context.scene.name
-    is_loaded: BoolProperty(name="INTERNAL", description="INTERNAL USE ONLY", default=False, update=update_is_loaded)
+
+    def get_is_loaded(self) -> bool:
+        return self.get("is_loaded", False) and shared_data.data_loaded
+
+    def set_is_loaded(self, value):
+        self["is_loaded"] = value
+
+    is_loaded: BoolProperty(
+        name="INTERNAL",
+        description="INTERNAL USE ONLY",
+        default=False,
+        update=update_is_loaded,
+        get=get_is_loaded,
+        set=set_is_loaded
+    )
 
     addon_directory: StringProperty(
         name="addon directory",
