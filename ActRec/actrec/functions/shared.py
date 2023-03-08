@@ -484,17 +484,17 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
             elif data['Type'] == 'Select Object':
                 selected_objects = context_copy['selected_objects']
 
-                if not data['KeepSelection']:
+                if not data.get('KeepSelection', False):
                     for object in selected_objects:
                         object.select_set(False)
                     selected_objects.clear()
 
-                for object_name in data['Objects']:
+                for object_name in data.get('Objects', []):
                     if object := bpy.data.objects.get(object_name):
                         object.select_set(True)
                         selected_objects.append(object)
 
-                if data['Object'] == "":
+                if data.get('Object', "") == "":
                     continue
 
                 objects = context_copy['view_layer'].objects
