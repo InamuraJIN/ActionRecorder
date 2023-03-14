@@ -4,7 +4,7 @@ from contextlib import suppress
 
 # blender modules
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, Menu
 
 # relative imports
 from . import globals
@@ -141,6 +141,27 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
                 for id in [x.id for x in category.actions]:
                     globals.draw_global_action(col, ActRec_pref, id)
         AR_PT_category.__name__ = "AR_PT_category_%s_%s" % (index, spaceType)
+
+        class AR_MT_category(Menu):
+            bl_idname = "AR_MT_category_%s_%s" % (index, spaceType)
+            bl_label = "Menu name"
+
+            @classmethod
+            def poll(self, context):
+                ActRec_pref = get_preferences(context)
+                index = int(self.bl_idname.split("_")[3])
+                return index < len(get_visible_categories(ActRec_pref, context))
+
+            def draw(self, context):
+                ActRec_pref = get_preferences(context)
+                index = int(self.bl_idname.split("_")[3])
+                category = get_visible_categories(ActRec_pref, context)[index]
+                layout = self.layout
+                col = layout.column()
+                for id in [x.id for x in category.actions]:
+                    globals.draw_global_action(col, ActRec_pref, id)
+        AR_MT_category.__name__ = "AR_MT_category_%s_%s" % (index, spaceType)
+
         if register:
             try:
                 bpy.utils.register_class(AR_PT_category)
