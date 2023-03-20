@@ -605,6 +605,13 @@ class AR_OT_global_remove(shared.Id_based, Operator):
     bl_description = "Remove the selected actions"
 
     @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        ids = ActRec_pref.get("global_actions.selected_ids", [])
+        selected_actions_str = ", ".join(ActRec_pref.global_actions[id].label for id in ids)
+        return "Remove the selected actions\nActions: %s" % (selected_actions_str)
+
+    @classmethod
     def poll(cls, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))

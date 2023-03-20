@@ -287,6 +287,12 @@ class AR_OT_category_delete(shared.Id_based, Operator):
     bl_label = "Delete Category"
     bl_description = "Delete the selected Category"
 
+    @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        id = functions.get_category_id(ActRec_pref, "", -1)
+        return "Delete the selected Category\nCategory: %s" % (ActRec_pref.categories[id].label)
+
     ignore_selection = False
 
     @classmethod
@@ -327,9 +333,14 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         return {"FINISHED"}
 
     def draw(self, context: bpy.types.Context):
+        ActRec_pref = functions.get_preferences(context)
         layout = self.layout
         layout.label(
-            text="All Actions in this Category will be deleted", icon='ERROR')
+            text="All Actions in this Category will be deleted",
+            icon='ERROR'
+        )
+        id = functions.get_category_id(ActRec_pref, self.id, self.index)
+        layout.label(text="Remove Category: %s" % (ActRec_pref.categories[id].label))
 
 
 class AR_OT_category_move_up(shared.Id_based, Operator):

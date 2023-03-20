@@ -128,6 +128,12 @@ class AR_OT_local_remove(shared.Id_based, Operator):
     bl_description = "Remove the selected Action"
 
     @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        index = functions.get_local_action_index(ActRec_pref, "", -1)
+        return "Remove the selected Action\nAction: %s" % (ActRec_pref.local_actions[index].label)
+
+    @classmethod
     def poll(cls, context):
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
