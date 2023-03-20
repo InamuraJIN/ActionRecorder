@@ -98,7 +98,7 @@ def update_log_amount_in_config(amount: int):
     """
     if config.log_amount == amount:
         return
-    
+
     path = os.path.join(os.path.dirname(__file__), "config.py")
     with open(path, 'r', encoding='utf-8') as file:
         lines = file.readlines()

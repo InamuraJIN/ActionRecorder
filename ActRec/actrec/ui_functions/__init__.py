@@ -9,5 +9,6 @@ from .categories import (
 )
 
 from .globals import (
-    draw_global_action
+    draw_global_action,
+    draw_simple_global_action
 )

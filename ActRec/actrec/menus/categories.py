@@ -4,10 +4,9 @@ import bpy
 from bpy.types import Menu
 
 # relative imports
-from .. import keymap
 from ..functions.shared import get_preferences
+from .. import ui_functions
 # endregion
-
 
 
 class AR_MT_Categories(Menu):
@@ -17,20 +16,15 @@ class AR_MT_Categories(Menu):
     def draw(self, context):
         layout = self.layout
         ActRec_pref = get_preferences(context)
-        for category in ActRec_pref.categories:
-            
-            
+        if not ActRec_pref.is_loaded:  # loads the actions if not already done
+            ActRec_pref.is_loaded = True
+        for index, category in enumerate(ui_functions.get_visible_categories(ActRec_pref, context)):
+            layout.menu("AR_MT_category_%s" % index, text=category.label)
 
 
 def register():
-    bpy.utils.register_class(SimpleCustomMenu)
+    bpy.utils.register_class(AR_MT_Categories)
 
 
 def unregister():
-    bpy.utils.unregister_class(SimpleCustomMenu)
-
-if __name__ == "__main__":
-    register()
-
-    # The menu can also be called from scripts
-    bpy.ops.wm.call_menu(name=SimpleCustomMenu.bl_idname)
+    bpy.utils.unregister_class(AR_MT_Categories)

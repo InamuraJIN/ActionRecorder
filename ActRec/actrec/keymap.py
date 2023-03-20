@@ -131,6 +131,8 @@ def register():
         # menu
         kmi = items.new("wm.call_menu_pie", 'A', 'PRESS', shift=True, alt=True)
         kmi.properties.name = 'AR_MT_action_pie'
+        kmi = items.new("wm.call_menu", 'C', 'PRESS', shift=True, alt=True)
+        kmi.properties.name = 'AR_MT_Categories'
 
 
 def unregister():
