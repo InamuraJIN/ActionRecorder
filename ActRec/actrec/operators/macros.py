@@ -5,6 +5,7 @@ import json
 import time
 import numpy
 import threading
+from typing import Optional
 
 # blender modules
 import bpy
@@ -836,7 +837,15 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
     bl_label = "Copy to Action Recorder"
     bl_description = "Copy the selected Operator to Action Recorder Macro"
 
-    copy_single: BoolProperty()
+    copy_single: BoolProperty(default=False)
+
+    context_class_lookup = {
+        bpy.types.Scene: "scene",
+        bpy.types.Object: "active_object",
+        bpy.types.Space: "space_data",
+        bpy.types.Area: "area",
+        bpy.types.Window: "window"
+    }
 
     @classmethod
     def poll(cls, context):
@@ -858,48 +867,44 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         if not (button_pointer is None or button_prop is None):
             base_object = button_pointer.id_data
             object_class = base_object.__class__
+
+            attr = self.context_class_lookup.get(object_class)
+            if attr is None:
+                attr = self.context_class_lookup.get(button_pointer.__class__)
+            if attr is None:
+                for cls in button_pointer.__class__.__bases__:
+                    attr = self.context_class_lookup.get(cls)
+                    if attr is not None:
+                        break
+
+            if attr is not None and base_object != getattr(context, attr):
+                base_object = getattr(context, attr)
+                object_class = base_object.__class__
+
+            if attr is not None:
+                return_value = self.handle_button_property(
+                    context,
+                    button_pointer,
+                    button_prop,
+                    base_object,
+                    object_class,
+                    attr
+                )
+                if return_value:
+                    return return_value
+
             # scans to the context attributes to get data for adding context commands
             for attr in dir(context):
-                if isinstance(getattr(bpy.context, attr), object_class):
-                    value = functions.convert_value_to_python(getattr(button_pointer, button_prop.identifier))
-                    if self.copy_single and bpy.ops.ui.copy_data_path_button.poll():
-                        clipboard = context.window_manager.clipboard
-                        bpy.ops.ui.copy_data_path_button(context.copy(), full_path=True)
-                        single_index = context.window_manager.clipboard.split(
-                            " = ")[0].split(".")[-1].split("[")[-1].replace("]", "")
-                        context.window_manager.clipboard = clipboard
-                        if single_index.isdigit():
-                            value = value[int(single_index)]
-
-                    if isinstance(value, str):
-                        value = "'%s'" % value
-                    elif isinstance(value, float):
-                        value = round(value, button_prop.precision)
-                    elif isinstance(button_prop, PointerProperty) and value is not None:
-                        for identifier, prop in bpy.data.bl_rna.properties.items():
-                            if (prop.type == 'COLLECTION'
-                                and prop.fixed_type == button_prop.fixed_type
-                                    and value.name in getattr(bpy.data, identifier)):
-                                value = "bpy.data.%s['%s']" % (identifier, value.name)
-                                break
-
-                    if base_object != button_pointer:
-                        pointer_class = button_pointer.__class__
-                        for prop in base_object.bl_rna.properties:
-                            if isinstance(getattr(base_object, prop.identifier), pointer_class):
-                                attr = "%s.%s" % (attr, prop.identifier)
-                                break
-
-                    if self.copy_single:
-                        command = "bpy.context.%s.%s[%s] = %s" % (
-                            attr, button_prop.identifier, single_index, str(value))
-                    else:
-                        command = "bpy.context.%s.%s = %s" % (attr, button_prop.identifier, str(value))
-                    self.copy_single = False
-                    bpy.ops.ar.macro_add('EXEC_DEFAULT', command=command)
-                    for area in context.screen.areas:
-                        area.tag_redraw()
-                    return {"FINISHED"}
+                return_value = self.handle_button_property(
+                    context,
+                    button_pointer,
+                    button_prop,
+                    base_object,
+                    object_class,
+                    attr
+                )
+                if return_value:
+                    return return_value
             else:
                 return {"CANCELLED"}
 
@@ -919,6 +924,67 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 area.tag_redraw()
             return {"FINISHED"}
         return {"CANCELLED"}
+
+    def handle_button_property(
+            self, context: bpy.types.Context, button_pointer, button_prop, base_object, object_class, attr: str
+    ) -> Optional[set[str]]:
+        """
+        add the given property (= button_pointer + button_prop) as a macro if possible
+
+        Args:
+            context (bpy.types.Context): active blender context
+            button_pointer (Any from bpy.types): button_pointer attribute from the context
+            button_prop (Any from bpy.types): button_prop attribute from the context
+            base_object (Any from bpy.types): object that is an attribute of context
+            object_class (Any <class> from bpy.types): class of the base_object
+            attr (str): attribute of context where the base_object is located
+
+        Returns:
+            Optional[set[str]]: on success: {"FINISHED"}
+        """
+        if isinstance(getattr(context, attr), object_class):
+            value = functions.convert_value_to_python(getattr(button_pointer, button_prop.identifier))
+            if self.copy_single and bpy.ops.ui.copy_data_path_button.poll():
+                clipboard = context.window_manager.clipboard
+                bpy.ops.ui.copy_data_path_button(context.copy(), full_path=True)
+                single_index = context.window_manager.clipboard.split(
+                    " = ")[0].split(".")[-1].split("[")[-1].replace("]", "")
+                context.window_manager.clipboard = clipboard
+                if single_index.isdigit():
+                    value = value[int(single_index)]
+
+            if isinstance(value, str):
+                value = "'%s'" % value
+            elif isinstance(value, float):
+                value = round(value, button_prop.precision)
+            elif isinstance(button_prop, PointerProperty) and value is not None:
+                for identifier, prop in bpy.data.bl_rna.properties.items():
+                    if (prop.type == 'COLLECTION'
+                        and prop.fixed_type == button_prop.fixed_type
+                            and value.name in getattr(bpy.data, identifier)):
+                        value = "bpy.data.%s['%s']" % (identifier, value.name)
+                        break
+
+            if base_object != button_pointer:
+                try:
+                    attr = "%s.%s" % (attr, button_pointer.path_from_id())
+                except ValueError:
+                    pointer_class = button_pointer.__class__
+                    for prop in base_object.bl_rna.properties:
+                        if isinstance(getattr(base_object, prop.identifier), pointer_class):
+                            attr = "%s.%s" % (attr, prop.identifier)
+                            break
+
+            if self.copy_single:
+                command = "bpy.context.%s.%s[%s] = %s" % (
+                    attr, button_prop.identifier, single_index, str(value))
+            else:
+                command = "bpy.context.%s.%s = %s" % (attr, button_prop.identifier, str(value))
+            self.copy_single = False
+            bpy.ops.ar.macro_add('EXEC_DEFAULT', command=command)
+            for area in context.screen.areas:
+                area.tag_redraw()
+            return {"FINISHED"}
 # endregion
 
 
