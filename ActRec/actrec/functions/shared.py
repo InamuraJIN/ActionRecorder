@@ -346,19 +346,21 @@ def update_command(command: str) -> Union[str, bool]:
         return False
 
 
-def run_queued_macros(context: bpy.types.Context, action_type: str, action_id: str, start: int):
+def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int):
     """
     runs macros from a given index of a specific action
 
     Args:
-        context (bpy.types.Context): active blender context
+        context_copy (dict): copy of the active context (bpy.context.copy())
         action_type (str): "global_actions" or "local_actions"
         action_id (str): id of the action with the macros to execute
         start (int): macro to start with in the macro collection
     """
-    ActRec_pref = context.preferences.addons[__module__].preferences
-    action = getattr(ActRec_pref, action_type)[action_id]
-    play(context, action.macros[start:], action, action_type)
+    context = bpy.context
+    with context.temp_override(**context_copy):
+        ActRec_pref = context.preferences.addons[__module__].preferences
+        action = getattr(ActRec_pref, action_type)[action_id]
+        play(context, action.macros[start:], action, action_type)
 
 
 def execute_individually(context: bpy.types.Context, command: str):
@@ -425,17 +427,16 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         if split[0] == 'ar.event':
             data: dict = json.loads(":".join(split[1:]))
             if data['Type'] == 'Timer':
-                with context.temp_override():
-                    bpy.app.timers.register(
-                        functools.partial(
-                            run_queued_macros,
-                            context,
-                            action_type,
-                            action.id,
-                            i + 1
-                        ),
-                        first_interval=data['Time']
-                    )
+                bpy.app.timers.register(
+                    functools.partial(
+                        run_queued_macros,
+                        context.copy(),
+                        action_type,
+                        action.id,
+                        i + 1
+                    ),
+                    first_interval=data['Time']
+                )
                 return
             elif data['Type'] == 'Loop':
                 end_index = i + 1
