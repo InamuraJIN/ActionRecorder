@@ -728,7 +728,7 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
         if id is None:
             return {'CANCELLED'}
         action = ActRec_pref.global_actions[id]
-        err = functions.play(context.copy(), action.macros, action, 'global_actions')
+        err = functions.play(context, action.macros, action, 'global_actions')
         if err:
             self.report({'ERROR'}, str(err))
         return {'FINISHED'}

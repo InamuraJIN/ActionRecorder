@@ -946,7 +946,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
             value = functions.convert_value_to_python(getattr(button_pointer, button_prop.identifier))
             if self.copy_single and bpy.ops.ui.copy_data_path_button.poll():
                 clipboard = context.window_manager.clipboard
-                bpy.ops.ui.copy_data_path_button(context.copy(), full_path=True)
+                bpy.ops.ui.copy_data_path_button(full_path=True)
                 single_index = context.window_manager.clipboard.split(
                     " = ")[0].split(".")[-1].split("[")[-1].replace("]", "")
                 context.window_manager.clipboard = clipboard

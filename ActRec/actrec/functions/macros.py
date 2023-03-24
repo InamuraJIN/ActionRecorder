@@ -146,16 +146,16 @@ def get_report_text(context: bpy.types.Context) -> str:
     Returns:
         str: report text
     """
-    override = context.copy()
-    area_type = override['area'].type
-    clipboard_data = override['window_manager'].clipboard
-    override['area'].type = 'INFO'
-    bpy.ops.info.select_all(override, action='SELECT')
-    bpy.ops.info.report_copy(override)
-    bpy.ops.info.select_all(override, action='DESELECT')
-    report_text = override['window_manager'].clipboard
-    override['area'].type = area_type
-    override['window_manager'].clipboard = clipboard_data
+    with context.temp_override():
+        area_type = context.area.type
+        clipboard_data = context.window_manager.clipboard
+        context.area.type = 'INFO'
+        bpy.ops.info.select_all(action='SELECT')
+        bpy.ops.info.report_copy()
+        bpy.ops.info.select_all(action='DESELECT')
+        report_text = context.window_manager.clipboard
+        context.area.type = area_type
+        context.window_manager.clipboard = clipboard_data
     return report_text
 
 
