@@ -363,7 +363,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
-        err = functions.play(context.copy(), action.macros, action, 'local_actions')
+        err = functions.play(context, action.macros, action, 'local_actions')
         if err:
             self.report({'ERROR'}, str(err))
         self.clear()

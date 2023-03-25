@@ -356,30 +356,31 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         action_id (str): id of the action with the macros to execute
         start (int): macro to start with in the macro collection
     """
-    ActRec_pref = context_copy['preferences'].addons[__module__].preferences
-    action = getattr(ActRec_pref, action_type)[action_id]
-    play(context_copy, action.macros[start:], action, action_type)
+    context = bpy.context
+    with context.temp_override(**context_copy):
+        ActRec_pref = context.preferences.addons[__module__].preferences
+        action = getattr(ActRec_pref, action_type)[action_id]
+        play(context, action.macros[start:], action, action_type)
 
 
-def execute_individually(context_copy: dict, command: str):
+def execute_individually(context: bpy.types.Context, command: str):
     """
     execute the given command on each selected object individually
 
     Args:
-        context_copy (dict): copy of the active context (bpy.context.copy())
+        context (bpy.types.Context): active blender context
         command (str): command to execute
     """
-    old_selected_objects = context_copy['selected_objects'][:]
-    old_active_object = context_copy['active_object']
+    old_selected_objects = context.selected_objects[:]
     for object in old_selected_objects:
         object.select_set(False)
 
     for object in old_selected_objects:
         object.select_set(True)
-        context_copy['selected_objects'] = [object]
-        context_copy['object'] = object
-        context_copy['active_object'] = object
-        context_copy['view_layer'].objects.active = object
+        context.selectable_objects = [object]
+        context.object = object
+        context.active_object = object
+        context.view_layer.objects.active = object
         exec(command)
         with suppress(ReferenceError):
             object.select_set(False)
@@ -388,21 +389,15 @@ def execute_individually(context_copy: dict, command: str):
         with suppress(ReferenceError):
             object.select_set(True)
 
-    with suppress(ReferenceError):
-        context_copy['selected_objects'] = old_selected_objects
-        context_copy['object'] = old_active_object
-        context_copy['active_object'] = old_active_object
-        context_copy['view_layer'].objects.active = old_active_object
 
-
-def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
+def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
          ) -> Union[Exception, str]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
 
     Args:
-        context_copy (dict): copy of the active context (bpy.context.copy())
+        context (bpy.types.Context): active blender context
         macros (bpy.types.CollectionProperty): macros to execute
         action (AR_action): action to track
         action_type (str): action type of the given action
@@ -425,21 +420,17 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
                 return
 
-    base_window = context_copy['window']
-    base_screen = context_copy['screen']
-    base_area = context_copy['area']
-    base_space_data = context_copy['space_data']
+    base_area = context.area
 
     for i, macro in enumerate(macros):  # realtime events
-
         split = macro.command.split(":")
         if split[0] == 'ar.event':
-            data = json.loads(":".join(split[1:]))
+            data: dict = json.loads(":".join(split[1:]))
             if data['Type'] == 'Timer':
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
-                        context_copy,
+                        context.copy(),
                         action_type,
                         action.id,
                         i + 1
@@ -469,20 +460,20 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 if data['StatementType'] == 'python':
                     try:
                         while eval(data["PyStatement"]):
-                            play(context_copy, loop_macros, action, action_type)
+                            play(context, loop_macros, action, action_type)
                     except Exception as err:
                         logger.error(err)
                         action.alert = macro.alert = True
                         return err
                 else:
                     for k in numpy.arange(data["Startnumber"], data["Endnumber"], data["Stepnumber"]):
-                        err = play(context_copy, loop_macros, action, action_type)
+                        err = play(context, loop_macros, action, action_type)
                         if err:
                             return err
 
-                return play(context_copy, macros[end_index + 1:], action, action_type)
+                return play(context, macros[end_index + 1:], action, action_type)
             elif data['Type'] == 'Select Object':
-                selected_objects = context_copy['selected_objects']
+                selected_objects = context.selected_objects
 
                 if not data.get('KeepSelection', False):
                     for object in selected_objects:
@@ -497,7 +488,7 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 if data.get('Object', "") == "":
                     continue
 
-                objects = context_copy['view_layer'].objects
+                objects = context.view_layer.objects
                 main_object = bpy.data.objects.get(data['Object'])
                 if main_object is None or main_object not in objects.values():
                     action.alert = macro.alert = True
@@ -518,49 +509,48 @@ def play(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_a
                 action.alert = macro.alert = True
                 return err
 
-            area = context_copy['area']
+            temp_window = context.window
+            temp_screen = context.screen
+            temp_area = area = context.area
+            temp_space = context.space_data
+            area_type = None
             if area:
                 area_type = area.ui_type
                 if macro.ui_type:
-                    windows = list(context_copy['window_manager'].windows)
+                    windows = list(context.window_manager.windows)
                     windows.reverse()
                     for window in windows:
                         if window.screen.areas[0].ui_type == macro.ui_type:
-                            context_copy['window'] = window
-                            context_copy['screen'] = copy_screen = window.screen
-                            context_copy['area'] = copy_area = copy_screen.areas[0]
-                            context_copy['space_data'] = copy_area.spaces[0]
+                            temp_window = window
+                            temp_screen = temp_window.screen
+                            temp_area = temp_screen.area[0]
+                            temp_space = temp_area.spaces[0]
                             break
                     else:
                         area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
-                command = "%s(context_copy, \"%s\", %s" % (
+                command = "%s(\"%s\", %s" % (
                     split[0], macro.operator_execution_context, "(".join(split[1:]))
             elif command.startswith("bpy.context."):
-                split = command.replace("bpy.context.", "").split(".")
-                command = "context_copy['%s'].%s" % (split[0], ".".join(split[1:]))
+                command = command.replace("bpy.context.", "context.")
 
-            if action.execution_mode == "GROUP":
-                exec(command)
-            else:
-                execute_individually(context_copy, command)
+            with context.temp_override(window=temp_window, area=temp_area, screen=temp_screen, space_data=temp_space):
+                if action.execution_mode == "GROUP":
+                    exec(command)
+                else:
+                    execute_individually(context, command)
 
-            if area and macro.ui_type:
-                context_copy['window'] = base_window
-                context_copy['screen'] = base_screen
-                context_copy['area'] = base_area
-                context_copy['space_data'] = base_space_data
+            if area and area_type:
                 area.ui_type = area_type
 
             if bpy.context and bpy.context.area:  # Refresh the context
                 bpy.context.area.tag_redraw()
-                context_copy = bpy.context.copy()
 
         except Exception as err:
             logger.error("%s; command: %s" % (err, command))
             action.alert = macro.alert = True
-            if base_area:
+            if base_area and area_type:
                 base_area.ui_type = area_type
             return err
 
@@ -582,10 +572,10 @@ def execute_render_init(dummy: bpy.types.Scene = None):
         action = getattr(ActRec_pref, action_type)[action_id]
         if (start_index := action.macros.find(start_id)) < 0:
             continue
-        play(context.copy(), action.macros[start_index:], action, action_type)
+        play(context, action.macros[start_index:], action, action_type)
 
 
-@persistent
+@ persistent
 def execute_render_complete(dummy=None):
     # https://docs.blender.org/api/current/bpy.app.handlers.html
     """
@@ -602,7 +592,7 @@ def execute_render_complete(dummy=None):
         action = getattr(ActRec_pref, action_type)[action_id]
         if (start_index := action.macros.find(start_id)) < 0:
             continue
-        play(context.copy(), action.macros[start_index:], action, action_type)
+        play(context, action.macros[start_index:], action, action_type)
 
 
 def get_font_path() -> str:

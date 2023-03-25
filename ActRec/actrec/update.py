@@ -491,9 +491,9 @@ class AR_OT_show_restart_menu(Operator):
 
     def execute(self, context):
         if self.restart_options == "save":
-            bpy.ops.ar.restart(context.copy(), save=True)
+            bpy.ops.ar.restart(save=True)
         elif self.restart_options == "restart":
-            bpy.ops.ar.restart(context.copy())
+            bpy.ops.ar.restart()
         return {"FINISHED"}
 
     def cancel(self, context):
