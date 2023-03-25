@@ -16,17 +16,17 @@ from .shared import get_preferences
 # region Functions
 
 
-def local_runtime_save(ActRec_pref: bpy.types.AddonPreferences, scene: bpy.types.Scene, use_autosave: bool = True):
+def local_runtime_save(ActRec_pref: bpy.types.AddonPreferences, scene: bpy.types.Scene, save_to_scene: bool = True):
     """
     save local action to the local temp (dict) while Blender is running
 
     Args:
         ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
         scene (bpy.types.Scene): Blender scene to write to
-        use_autosave (bool, optional): include autosave to scene (depend on AddonPreference autosave). Defaults to True.
+        save_to_scene (bool, optional): include save to scene. Defaults to True.
     """
     shared_data.local_temp = shared.property_to_python(ActRec_pref.local_actions)
-    if use_autosave and ActRec_pref.autosave and scene:
+    if save_to_scene and scene:
         scene.ar.local = json.dumps(shared_data.local_temp)
 
 

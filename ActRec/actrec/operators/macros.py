@@ -35,6 +35,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
     bl_idname = "ar.macro_add"
     bl_label = "ActRec Add Macro"
     bl_description = "Add the last operation you executed"
+    bl_options = {'UNDO'}
 
     command: StringProperty(default="")
     report_length: IntProperty(default=0)
@@ -167,6 +168,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     bl_idname = "ar.macro_add_event"
     bl_label = "Add Event"
     bl_description = "Add a Event to the selected Action"
+    bl_options = {'UNDO'}
 
     types = [
         ('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
@@ -363,6 +365,7 @@ class AR_OT_macro_remove(Macro_based, Operator):
     bl_idname = "ar.macro_remove"
     bl_label = "Remove Macro"
     bl_description = "Remove the selected Macro"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -393,6 +396,7 @@ class AR_OT_macro_move_up(Macro_based, Operator):
     bl_idname = "ar.macro_move_up"
     bl_label = "Move Macro Up"
     bl_description = "Move the selected Macro up"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -428,6 +432,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
     bl_idname = "ar.macro_move_down"
     bl_label = "Move Macro Down"
     bl_description = "Move the selected Macro down"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -632,6 +637,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     bl_idname = "ar.macro_edit"
     bl_label = "Edit"
     bl_description = "Double click to Edit"
+    bl_options = {'UNDO'}
 
     def set_clear_operator(self, value: bool):
         """
@@ -912,6 +918,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
     bl_idname = "ar.copy_to_actrec"
     bl_label = "Copy to Action Recorder"
     bl_description = "Copy the selected Operator to Action Recorder Macro"
+    bl_options = {'UNDO'}
 
     copy_single: BoolProperty(default=False)
 

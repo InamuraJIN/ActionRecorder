@@ -560,6 +560,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     bl_idname = "ar.global_to_local"
     bl_label = "Global Action to Local"
     bl_description = "Transfer the selected Action to Local-actions"
+    bl_options = {'UNDO'}
 
     @ classmethod
     def poll(cls, context: bpy.types.Context):
@@ -594,6 +595,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
                     category.actions.remove(category.actions.find(id))
         functions.category_runtime_save(ActRec_pref)
         functions.global_runtime_save(ActRec_pref, False)
+        functions.local_runtime_save(ActRec_pref, context.scene)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
