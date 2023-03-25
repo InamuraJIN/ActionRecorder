@@ -4,7 +4,7 @@
         "ActRec/actrec/functions/__init__.py": [4, 0, 3],
         "ActRec/actrec/functions/categories.py": [4, 0, 3],
         "ActRec/actrec/functions/globals.py": [4, 0, 3],
-        "ActRec/actrec/functions/locals.py": [4, 0, 3],
+        "ActRec/actrec/functions/locals.py": [4, 0, 5],
         "ActRec/actrec/functions/macros.py": [4, 0, 5],
         "ActRec/actrec/functions/shared.py": [4, 0, 5],
         "ActRec/actrec/menus/__init__.py": [4, 0, 5],
