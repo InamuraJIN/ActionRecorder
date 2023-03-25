@@ -186,16 +186,14 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
 
     time: FloatProperty(name="Time", description="Time in Seconds", unit='TIME')
     statement_type: EnumProperty(
+        default='repeat',
         items=[
-            ('count', 'Count',
-             'Count a Number from the Start with the Step to the End, \nStop when Number > End', '', 0),
+            ('repeat', 'Repeat', 'Repeat the given count', '', 0),
             ('python', 'Python Statement', 'Create a custom statement with python code', '', 1)
         ]
     )
-    start: FloatProperty(name="Start", description="Start of the Count statements", default=0)
-    end: FloatProperty(name="End", description="End of the Count statements", default=1)
-    step: FloatProperty(name="Step", description="Step of the Count statements", default=1)
-    python_statement: StringProperty(name="Statement", description="Statement for the Python Statement")
+    repeat_count: IntProperty(name='Count', min=0, default=1, description="How many times the Loop gets repeated")
+    python_statement: StringProperty(name="Statement", description="Statement to be evaluated as python code")
     object: StringProperty(
         name="Active",
         description="Choose an Object which get select and set as active when this Event is played",
@@ -235,9 +233,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             if self.statement_type == 'python':
                 box.prop(self, 'python_statement')
             else:
-                box.prop(self, 'start')
-                box.prop(self, 'end')
-                box.prop(self, 'step')
+                box.prop(self, 'repeat_count')
         elif self.type == 'Select Object':
             box = layout.box()
             box.prop(self, 'keep_selection')
@@ -280,9 +276,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
                 if self.statement_type == 'python':
                     data["PyStatement"] = self.python_statement
                 else:
-                    data["Startnumber"] = self.start
-                    data["Endnumber"] = self.end
-                    data["Stepnumber"] = self.step
+                    data["RepeatCount"] = self.repeat_count
             elif self.type == 'Select Object':
                 data['Object'] = self.object
                 data['Objects'] = [obj.name for obj in self.objects]
@@ -739,18 +733,29 @@ class AR_OT_macro_edit(Macro_based, Operator):
                             'INVOKE_DEFAULT',
                             type=data['Type'],
                             macro_index=self.index,
-                            statement_type=data['StatementType'],
+                            statement_type='python',
                             python_statement=data["PyStatement"]
+                        )
+                    elif data['StatementType'] == 'count':
+                        # DEPRECATED Convert old count loop into new repeat loop
+                        start = data["Startnumber"]
+                        end = data["Endnumber"]
+                        step = data["Stepnumber"]
+                        count = int((end - start)/step)
+                        bpy.ops.ar.macro_add_event(
+                            'INVOKE_DEFAULT',
+                            type=data['Type'],
+                            macro_index=self.index,
+                            statement_type='repeat',
+                            count=count
                         )
                     else:
                         bpy.ops.ar.macro_add_event(
                             'INVOKE_DEFAULT',
                             type=data['Type'],
                             macro_index=self.index,
-                            statement_type=data['StatementType'],
-                            start=data["Startnumber"],
-                            end=data["Endnumber"],
-                            step=data["Stepnumber"]
+                            statement_type='repeat',
+                            count=data["RepeatCount"]
                         )
                 elif data['Type'] == 'Select Object':
                     bpy.ops.ar.macro_add_event(

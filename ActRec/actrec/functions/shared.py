@@ -465,12 +465,17 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                         logger.error(err)
                         action.alert = macro.alert = True
                         return err
-                else:
+                elif data['StatementType'] == 'count':
+                    # DEPRECATED used to support old count loop macros
                     for k in numpy.arange(data["Startnumber"], data["Endnumber"], data["Stepnumber"]):
                         err = play(context, loop_macros, action, action_type)
                         if err:
                             return err
-
+                else:
+                    for k in range(data["RepeatCount"]):
+                        err = play(context, loop_macros, action, action_type)
+                        if err:
+                            return err
                 return play(context, macros[end_index + 1:], action, action_type)
             elif data['Type'] == 'Select Object':
                 selected_objects = context.selected_objects
