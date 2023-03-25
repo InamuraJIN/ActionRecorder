@@ -10,6 +10,7 @@ import numpy
 import functools
 import ensurepip
 import subprocess
+import traceback
 
 # blender modules
 import bpy
@@ -391,7 +392,7 @@ def execute_individually(context: bpy.types.Context, command: str):
 
 
 def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
-         ) -> Union[Exception, str]:
+         ) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
@@ -502,6 +503,25 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                 objects.active = main_object
                 main_object.select_set(True)
                 selected_objects.append(main_object)
+                continue
+            elif data['Type'] == 'Run Script':
+                text = bpy.data.texts.new(macro.id)
+                text.clear()
+                text.write(data['ScriptText'])
+                try:
+                    text.as_module()
+                except Exception:
+                    error = traceback.format_exception(*sys.exc_info())
+                    # corrects the filename of the exception to the text name, otherwise "<string>"
+                    error_split = error[3].replace('"<string>"', '').split(',')
+                    error[3] = '%s "%s",%s' % (error_split[0], text.name, error_split[1])
+                    error.pop(2)  # removes exec(self.as_string(), mod.__dict__) in bpy_types.py
+                    error.pop(1)  # removes text.as_module()
+                    error = "".join(error)
+                    logger.error("%s; command: %s" % (error, command))
+                    action.alert = macro.alert = True
+                    return error
+                bpy.data.texts.remove(text)
                 continue
             elif data['Type'] == 'EndLoop':
                 continue

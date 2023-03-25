@@ -181,7 +181,9 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
          'FILE_REFRESH', 4),
         ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
         ('Empty', 'Empty', 'Crates an Empty Macro', 'SHADING_BBOX', 6),
-        ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7)]
+        ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7),
+        ('Run Script', 'Run Script',
+         'Choose a Text file that gets saved into the macro and executed', 'FILE_SCRIPT', 8)]
     type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Empty')
 
     time: FloatProperty(name="Time", description="Time in Seconds", unit='TIME')
@@ -205,6 +207,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         description="Select the specified objects and keep the current selected objects selected",
         default=False
     )
+    script_name: StringProperty(name="Text", description="Chose a Text to convert into a macro script")
 
     macro_index: IntProperty(name="Macro Index", default=-1)
 
@@ -241,6 +244,14 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             box.separator()
             for object in self.objects:
                 box.prop_search(object, 'name', context.view_layer, 'objects')
+        elif self.type == 'Run Script':
+            box = layout.box()
+            row = box.row()
+            row.prop_search(self, 'script_name', bpy.data, 'texts', results_are_suggestions=False)
+            op = row.operator('ar.macro_event_load_script', icon='IMPORT', text="")
+            op.id = self.id
+            op.index = self.index
+            op.macro_index = self.macro_index
 
     def check(self, context):
         while (index := self.objects.find("")) >= 0:
@@ -281,6 +292,16 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
                 data['Object'] = self.object
                 data['Objects'] = [obj.name for obj in self.objects]
                 data['KeepSelection'] = self.keep_selection
+            elif self.type == 'Run Script':
+                text: bpy.types.Text = bpy.data.texts.get(self.script_name)
+                if text is None:
+                    if self.script_name != "":
+                        return {"FINISHED"}
+                    data['ScriptName'] = "NONE"
+                    data['ScriptText'] = ""
+                else:
+                    data['ScriptName'] = text.name.replace("[ActRec Macro]", "").strip()
+                    data['ScriptText'] = "\n".join(line.body for line in text.lines)
             macro.command = "ar.event: %s" % json.dumps(data)
         functions.local_runtime_save(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -293,6 +314,49 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         self.object = ""
         self.objects.clear()
         super().clear()
+
+
+class AR_OT_macro_event_load_script(Macro_based, Operator):
+    bl_idname = 'ar.macro_event_load_script'
+    bl_label = 'Load Text to Text Editor'
+    bl_description = "Loads the Text of this macro into the Texteditor"
+
+    macro_index: IntProperty(name="Macro Index", default=-1)
+
+    def execute(self, context: bpy.types.Context):
+        if self.macro_index < 0:
+            self.clear()
+            return {'CANCELLED'}
+
+        ActRec_pref = functions.get_preferences(context)
+        action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
+        action = ActRec_pref.local_actions[action_index]
+
+        if self.macro_index >= len(action.macros):
+            self.clear()
+            return {'CANCELLED'}
+        macro = action.macros[self.macro_index]
+        self.macro_index = -1
+
+        split = macro.command.split(":")
+        if split[0] != 'ar.event':
+            self.clear()
+            return {'CANCELLED'}
+
+        data = json.loads(":".join(split[1:]))
+        if data['Type'] != 'Run Script':
+            self.clear()
+            return {'CANCELLED'}
+
+        text_name = data['ScriptName']
+        if bpy.data.texts.find(text_name) != -1:
+            text_name = "%s [ActRec Macro]" % data['ScriptName']
+        text = bpy.data.texts.get(text_name)
+        if text is None:
+            text = bpy.data.texts.new(text_name)
+        text.clear()
+        text.write(data['ScriptText'])
+        return {'FINISHED'}
 
 
 class AR_OT_macro_remove(Macro_based, Operator):
@@ -767,6 +831,13 @@ class AR_OT_macro_edit(Macro_based, Operator):
                         keep_selection=data['KeepSelection']
 
                     )
+                elif data['Type'] == 'Run Script':
+                    bpy.ops.ar.macro_add_event(
+                        'INVOKE_DEFAULT',
+                        type=data['Type'],
+                        macro_index=self.index,
+                        script_name=data['ScriptName']
+                    )
                 else:
                     bpy.ops.ar.macro_add_event('INVOKE_DEFAULT', type=data['Type'], macro_index=self.index)
                 self.clear()
@@ -996,6 +1067,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
 classes = [
     AR_OT_macro_add,
     AR_OT_macro_add_event,
+    AR_OT_macro_event_load_script,
     AR_OT_macro_remove,
     AR_OT_macro_move_up,
     AR_OT_macro_move_down,

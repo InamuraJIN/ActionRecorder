@@ -192,7 +192,8 @@ class AR_preferences(AddonPreferences):
     hide_local_text: BoolProperty(
         name="Hide Local Action in Texteditor",
         description="Hide the Local Action in the Texteditor",
-        update=hide_show_local_in_texteditor
+        update=hide_show_local_in_texteditor,
+        default=True
     )
     local_create_empty: BoolProperty(default=True, name="Create Empty", description="Create Empty Macro on Error")
 
