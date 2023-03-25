@@ -117,6 +117,7 @@ def unregister():
     update.unregister()
     preferences.unregister()
     keymap.unregister()
+    ui_functions.unregister()
 
     handlers = bpy.app.handlers
     handlers.undo_post.remove(functions.category_runtime_load)

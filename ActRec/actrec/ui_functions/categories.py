@@ -22,8 +22,6 @@ space_mode_attribute = {
     'DOPESHEET_EDITOR': 'ui_mode'
 }
 
-# region Panel
-
 
 def category_visible(ActRec_pref: bpy.types.AddonPreferences,
                      context: bpy.types.Context,
@@ -191,4 +189,9 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
     ActRec_pref = get_preferences(bpy.context)
     if ActRec_pref.selected_category == '' and len(ActRec_pref.categories):
         ActRec_pref.categories[0].selected = True
-# endregion
+
+
+def unregister():
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+    classes.clear()

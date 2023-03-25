@@ -12,3 +12,10 @@ from .globals import (
     draw_global_action,
     draw_simple_global_action
 )
+
+
+# region Registration
+def unregister():
+    from .categories import unregister as unreg
+    unreg()
+# endregion
