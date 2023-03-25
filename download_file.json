@@ -5,7 +5,7 @@
         "ActRec/actrec/functions/categories.py": [4, 0, 3],
         "ActRec/actrec/functions/globals.py": [4, 0, 3],
         "ActRec/actrec/functions/locals.py": [4, 0, 3],
-        "ActRec/actrec/functions/macros.py": [4, 0, 3],
+        "ActRec/actrec/functions/macros.py": [4, 0, 5],
         "ActRec/actrec/functions/shared.py": [4, 0, 5],
         "ActRec/actrec/menus/__init__.py": [4, 0, 5],
         "ActRec/actrec/menus/locals.py": [4, 0, 0],
@@ -39,7 +39,7 @@
         "ActRec/actrec/log.py": [4, 0, 5],
         "ActRec/actrec/preferences.py": [4, 0, 5],
         "ActRec/actrec/shared_data.py": [4, 0, 5],
-        "ActRec/actrec/update.py": [4, 0, 3],
+        "ActRec/actrec/update.py": [4, 0, 5],
         "ActRec/__init__.py": [4, 0, 5]
     },
     "remove": []
