@@ -13,6 +13,10 @@ class AR_MT_Categories(Menu):
     bl_label = "Categories"
     bl_idname = "AR_MT_Categories"
 
+    @classmethod
+    def poll(cls, context):
+        return (context.area is not None)
+
     def draw(self, context):
         layout = self.layout
         ActRec_pref = get_preferences(context)
