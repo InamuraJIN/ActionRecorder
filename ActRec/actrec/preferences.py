@@ -10,7 +10,7 @@ from bpy.types import AddonPreferences
 import rna_keymap_ui
 
 # relative imports
-from . import properties, functions, config, update, keymap, log
+from . import properties, functions, config, update, keymap, log, shared_data
 from .log import logger, log_sys
 from .functions.shared import get_preferences
 # endregion
@@ -20,6 +20,24 @@ from .functions.shared import get_preferences
 
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
+
+    def update_is_loaded(self, context: bpy.types.Context):
+        context.scene.name = context.scene.name
+
+    def get_is_loaded(self) -> bool:
+        return self.get("is_loaded", False) and shared_data.data_loaded
+
+    def set_is_loaded(self, value):
+        self["is_loaded"] = value
+
+    is_loaded: BoolProperty(
+        name="INTERNAL",
+        description="INTERNAL USE ONLY",
+        default=False,
+        update=update_is_loaded,
+        get=get_is_loaded,
+        set=set_is_loaded
+    )
 
     addon_directory: StringProperty(
         name="addon directory",
@@ -174,7 +192,8 @@ class AR_preferences(AddonPreferences):
     hide_local_text: BoolProperty(
         name="Hide Local Action in Texteditor",
         description="Hide the Local Action in the Texteditor",
-        update=hide_show_local_in_texteditor
+        update=hide_show_local_in_texteditor,
+        default=True
     )
     local_create_empty: BoolProperty(default=True, name="Create Empty", description="Create Empty Macro on Error")
 
@@ -349,12 +368,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
         elif ActRec_pref.preference_tab == 'keymap':
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
-            km = kc.keymaps['Screen'].active()
-            layout.context_pointer_set("keymap", km)
-            for kmi in km.keymap_items:
-                if not any(item.compare(kmi) for item in keymap.keymaps['default'].keymap_items):
-                    continue
-                rna_keymap_ui.draw_kmi([], kc, km, kmi, col2, 0)
+            for addon_keymap in keymap.keymaps.values():
+                km = kc.keymaps[addon_keymap.name].active()
+                col2.context_pointer_set("keymap", km)
+                for kmi in km.keymap_items:
+                    if not any(kmi.idname == item.idname for item in keymap.keymaps['default'].keymap_items):
+                        continue
+                    rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()
             row.prop(self, 'auto_update')

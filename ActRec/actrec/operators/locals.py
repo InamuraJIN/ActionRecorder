@@ -24,6 +24,7 @@ class AR_OT_local_to_global(Operator):
     bl_idname = "ar.local_to_global"
     bl_label = "Local Action to Global"
     bl_description = "Transfer the selected Action to Global-actions"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -88,6 +89,7 @@ class AR_OT_local_to_global(Operator):
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
         functions.category_runtime_save(ActRec_pref)
         functions.global_runtime_save(ActRec_pref, False)
+        functions.local_runtime_save(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -96,6 +98,7 @@ class AR_OT_local_add(Operator):
     bl_idname = "ar.local_add"
     bl_label = "Add"
     bl_description = "Add a New Action"
+    bl_options = {'UNDO'}
 
     name: StringProperty(
         name="Name",
@@ -125,6 +128,13 @@ class AR_OT_local_remove(shared.Id_based, Operator):
     bl_idname = "ar.local_remove"
     bl_label = "Remove"
     bl_description = "Remove the selected Action"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        index = functions.get_local_action_index(ActRec_pref, "", -1)
+        return "Remove the selected Action\nAction: %s" % (ActRec_pref.local_actions[index].label)
 
     @classmethod
     def poll(cls, context):
@@ -150,6 +160,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
     bl_idname = "ar.local_move_up"
     bl_label = "Move Up"
     bl_description = "Move the selected Action up"
+    bl_options = {'UNDO'}
 
     ignore_selection = False
 
@@ -185,7 +196,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
     bl_idname = "ar.local_move_down"
     bl_label = "Move Down"
     bl_description = "Move the selected Action Down"
-    bl_options = {"REGISTER"}
+    bl_options = {'UNDO'}
 
     ignore_selection = False
 
@@ -221,6 +232,7 @@ class AR_OT_local_load(Operator):
     bl_idname = "ar.local_load"
     bl_label = "Load Local Actions"
     bl_description = "Load the Local Action from the last Save"
+    bl_options = {'UNDO'}
 
     source: EnumProperty(
         name='Source',
@@ -302,6 +314,7 @@ class AR_OT_local_load(Operator):
 class AR_OT_local_selection_up(Operator):
     bl_idname = 'ar.local_selection_up'
     bl_label = 'ActRec Selection Up'
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -319,6 +332,7 @@ class AR_OT_local_selection_up(Operator):
 class AR_OT_local_selection_down(Operator):
     bl_idname = 'ar.local_selection_down'
     bl_label = 'ActRec Selection Down'
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -356,7 +370,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
-        err = functions.play(context.copy(), action.macros, action, 'local_actions')
+        err = functions.play(context, action.macros, action, 'local_actions')
         if err:
             self.report({'ERROR'}, str(err))
         self.clear()
@@ -366,6 +380,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
 class AR_OT_local_record(shared.Id_based, Operator):
     bl_idname = "ar.local_record"
     bl_label = "Start/Stop Recording"
+    bl_options = {'UNDO'}
 
     ignore_selection = False
     record_start_index: IntProperty()
@@ -473,6 +488,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
 
 class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
     bl_idname = "ar.local_icon"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -507,6 +523,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
     bl_idname = "ar.local_clear"
     bl_label = "Clear Macros"
     bl_description = "Delete all Macros of the selected Action"
+    bl_options = {'UNDO'}
 
     ignore_selection = False
 

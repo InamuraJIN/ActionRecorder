@@ -560,6 +560,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     bl_idname = "ar.global_to_local"
     bl_label = "Global Action to Local"
     bl_description = "Transfer the selected Action to Local-actions"
+    bl_options = {'UNDO'}
 
     @ classmethod
     def poll(cls, context: bpy.types.Context):
@@ -594,6 +595,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
                     category.actions.remove(category.actions.find(id))
         functions.category_runtime_save(ActRec_pref)
         functions.global_runtime_save(ActRec_pref, False)
+        functions.local_runtime_save(ActRec_pref, context.scene)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -603,6 +605,13 @@ class AR_OT_global_remove(shared.Id_based, Operator):
     bl_idname = "ar.global_remove"
     bl_label = "Remove Action"
     bl_description = "Remove the selected actions"
+
+    @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        ids = ActRec_pref.get("global_actions.selected_ids", [])
+        selected_actions_str = ", ".join(ActRec_pref.global_actions[id].label for id in ids)
+        return "Remove the selected actions\nActions: %s" % (selected_actions_str)
 
     @classmethod
     def poll(cls, context: bpy.types.Context):
@@ -721,7 +730,7 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
         if id is None:
             return {'CANCELLED'}
         action = ActRec_pref.global_actions[id]
-        err = functions.play(context.copy(), action.macros, action, 'global_actions')
+        err = functions.play(context, action.macros, action, 'global_actions')
         if err:
             self.report({'ERROR'}, str(err))
         return {'FINISHED'}

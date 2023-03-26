@@ -4,7 +4,7 @@ from contextlib import suppress
 
 # blender modules
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, Menu
 
 # relative imports
 from . import globals
@@ -21,8 +21,6 @@ space_mode_attribute = {
     'CLIP_EDITOR': 'mode',
     'DOPESHEET_EDITOR': 'ui_mode'
 }
-
-# region Panel
 
 
 def category_visible(ActRec_pref: bpy.types.AddonPreferences,
@@ -42,6 +40,8 @@ def category_visible(ActRec_pref: bpy.types.AddonPreferences,
     # REFACTOR indentation
     if ActRec_pref.show_all_categories or not len(category.areas):
         return True
+    if context.area is None:
+        return False
     area_type = context.area.ui_type
     area_space = context.area.type
     for area in category.areas:
@@ -141,6 +141,7 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
                 for id in [x.id for x in category.actions]:
                     globals.draw_global_action(col, ActRec_pref, id)
         AR_PT_category.__name__ = "AR_PT_category_%s_%s" % (index, spaceType)
+
         if register:
             try:
                 bpy.utils.register_class(AR_PT_category)
@@ -153,7 +154,46 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
                     panel = getattr(bpy.types, AR_PT_category.__name__)
                     bpy.utils.unregister_class(panel)
                     classes.remove(panel)
+
+    class AR_MT_category(Menu):
+        bl_idname = "AR_MT_category_%s" % index
+        bl_label = "Category"
+
+        @classmethod
+        def poll(self, context):
+            ActRec_pref = get_preferences(context)
+            index = int(self.bl_idname.split("_")[3])
+            return index < len(get_visible_categories(ActRec_pref, context))
+
+        def draw(self, context):
+            ActRec_pref = get_preferences(context)
+            index = int(self.bl_idname.split("_")[3])
+            category = get_visible_categories(ActRec_pref, context)[index]
+            layout = self.layout
+            col = layout.column()
+            for id in [x.id for x in category.actions]:
+                globals.draw_simple_global_action(col, ActRec_pref, id)
+    AR_MT_category.__name__ = "AR_MT_category_%s" % index
+
+    if register:
+        try:
+            bpy.utils.register_class(AR_MT_category)
+            classes.append(AR_MT_category)
+        except RuntimeError as err:
+            logger.error("Couldn't register Menu :(\n(%s)", err)
+    else:
+        with suppress(Exception):
+            if hasattr(bpy.types, AR_MT_category.__name__):
+                menu = getattr(bpy.types, AR_MT_category.__name__)
+                bpy.utils.unregister_class(menu)
+                classes.remove(menu)
+
     ActRec_pref = get_preferences(bpy.context)
     if ActRec_pref.selected_category == '' and len(ActRec_pref.categories):
         ActRec_pref.categories[0].selected = True
-# endregion
+
+
+def unregister():
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+    classes.clear()

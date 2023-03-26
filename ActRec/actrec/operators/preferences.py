@@ -89,10 +89,10 @@ class AR_OT_preferences_open_explorer(Operator):
             directory (str): path to directory to open
         """
         if sys.platform == "win32":
-            os.startfile(self.directory)
+            os.startfile(directory)
         else:
             opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.call([opener, self.directory])
+            subprocess.call([opener, directory])
 
     def execute(self, context):
         self.path = os.path.normpath(self.path)

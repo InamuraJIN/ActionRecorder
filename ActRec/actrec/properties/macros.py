@@ -40,8 +40,17 @@ class AR_macro_multiline(PropertyGroup):
     update: BoolProperty(get=get_update)
 
 
+class AR_event_object_name(PropertyGroup):
+    name: StringProperty(
+        name="Object",
+        description="Choose an Object which get select when this Event is played",
+        default=""
+    )
+
+
 classes = [
-    AR_macro_multiline
+    AR_macro_multiline,
+    AR_event_object_name
 ]
 
 # region Registration

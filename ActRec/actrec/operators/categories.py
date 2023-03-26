@@ -199,7 +199,7 @@ class AR_OT_category_add(AR_OT_category_interface, Operator):
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         new = ActRec_pref.categories.add()
-        new.label = functions.check_for_duplicates([c.label for c in ActRec_pref.categories], self.label)
+        new.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
         self.apply_visibility(ActRec_pref, AR_OT_category_interface.category_visibility, new.id)
         ui_functions.register_category(ActRec_pref, len(ActRec_pref.categories) - 1)
         context.area.tag_redraw()
@@ -234,14 +234,16 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
         ActRec_pref = get_preferences(context)
         id = self.id = functions.get_category_id(ActRec_pref, self.id, self.index)
         category = ActRec_pref.categories.get(id, None)
-        if category:
-            AR_OT_category_interface.category_visibility = functions.read_category_visibility(ActRec_pref, id)
-            return context.window_manager.invoke_props_dialog(self)
-        return {'CANCELLED'}
+        if not category:
+            return {'CANCELLED'}
+        self.label = category.label
+        AR_OT_category_interface.category_visibility = functions.read_category_visibility(ActRec_pref, id)
+        return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         category = ActRec_pref.categories[self.id]
+        category.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
         category.areas.clear()
         self.apply_visibility(
             ActRec_pref, AR_OT_category_interface.category_visibility, self.id
@@ -285,6 +287,12 @@ class AR_OT_category_delete(shared.Id_based, Operator):
     bl_label = "Delete Category"
     bl_description = "Delete the selected Category"
 
+    @classmethod
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        id = functions.get_category_id(ActRec_pref, "", -1)
+        return "Delete the selected Category\nCategory: %s" % (ActRec_pref.categories[id].label)
+
     ignore_selection = False
 
     @classmethod
@@ -325,9 +333,14 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         return {"FINISHED"}
 
     def draw(self, context: bpy.types.Context):
+        ActRec_pref = functions.get_preferences(context)
         layout = self.layout
         layout.label(
-            text="All Actions in this Category will be deleted", icon='ERROR')
+            text="All Actions in this Category will be deleted",
+            icon='ERROR'
+        )
+        id = functions.get_category_id(ActRec_pref, self.id, self.index)
+        layout.label(text="Remove Category: %s" % (ActRec_pref.categories[id].label))
 
 
 class AR_OT_category_move_up(shared.Id_based, Operator):
