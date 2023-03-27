@@ -4,7 +4,7 @@ bl_info = {
     "name": "ActionRecorder",
     "author": "InamuraJIN, Rivin",
     "version": (4, 0, 6),
-    "blender": (3, 3, 0),
+    "blender": (3, 3, 5),
     "location": "View 3D",
     "warning": "",
     "docs_url": 'https://github.com/InamuraJIN/ActionRecorder/blob/master/README.md',  # Documentation
