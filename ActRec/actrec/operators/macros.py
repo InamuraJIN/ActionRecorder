@@ -154,7 +154,10 @@ class AR_OT_macro_add(shared.Id_based, Operator):
             if new_report:
                 self.report({'ERROR'}, "No Action could be added")
             if ActRec_pref.local_create_empty:
-                bpy.ops.ar.macro_add_event("EXEC_DEFAULT", id=action.id, index=index, type="Empty")
+                macro = action.macros.add()
+                macro.label = "<Empty>"
+                macro.command = ""
+                bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
         functions.local_runtime_save(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
@@ -182,11 +185,10 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         ('EndLoop', 'EndLoop', 'Ending the latest called loop, when no Loop Event was called this Event get skipped',
          'FILE_REFRESH', 4),
         ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
-        ('Empty', 'Empty', 'Crates an Empty Macro', 'SHADING_BBOX', 6),
         ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7),
         ('Run Script', 'Run Script',
          'Choose a Text file that gets saved into the macro and executed', 'FILE_SCRIPT', 8)]
-    type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Empty')
+    type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Clipboard')
 
     time: FloatProperty(name="Time", description="Time in Seconds", unit='TIME')
     statement_type: EnumProperty(
@@ -275,10 +277,6 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             name = functions.get_name_of_command(context, clipboard)
             macro.label = name if isinstance(name, str) else clipboard
             macro.command = clipboard
-        elif self.type == 'Empty':
-            macro.label = "<Empty>"
-            macro.command = ""
-            bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
         else:
             macro.label = "Event: %s" % self.type
             data = {'Type': self.type}
