@@ -158,7 +158,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                 macro.label = "<Empty>"
                 macro.command = ""
                 bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         bpy.context.area.tag_redraw()
@@ -306,7 +306,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
                     data['ScriptName'] = text.name.replace("[ActRec Macro]", "").strip()
                     data['ScriptText'] = "\n".join(line.body for line in text.lines)
             macro.command = "ar.event: %s" % json.dumps(data)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -385,7 +385,7 @@ class AR_OT_macro_remove(Macro_based, Operator):
         action = ActRec_pref.local_actions[action_index]
         index = functions.get_local_macro_index(action, self.id, self.index)
         action.macros.remove(index)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -422,7 +422,7 @@ class AR_OT_macro_move_up(Macro_based, Operator):
         else:
             action.macros.move(index, index - 1)
             action.active_macro_index = index - 1
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -458,7 +458,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
         else:
             action.macros.move(index, index + 1)
             action.active_macro_index = index + 1
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -901,7 +901,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         else:
             macro.label = self.label
             macro.command = self.command
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()

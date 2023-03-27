@@ -53,7 +53,8 @@ class AR_OT_gloabal_recategorize_action(shared.Id_based, Operator):
             else:
                 for id in ids:
                     category.actions.remove(category.actions.find(id))
-        functions.global_runtime_save(ActRec_pref)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -172,8 +173,6 @@ class AR_OT_global_import(Operator, ImportHelper):
             self.report({'ERROR'}, "Select a .json or .zip file {%s}" % self.filepath)
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
-        functions.category_runtime_save(ActRec_pref)
-        functions.global_runtime_save(ActRec_pref, False)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -550,8 +549,6 @@ class AR_OT_global_load(Operator):
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         functions.load(ActRec_pref)
-        functions.category_runtime_save(ActRec_pref, False)
-        functions.global_runtime_save(ActRec_pref, False)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -593,9 +590,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
                 ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
                 for category in ActRec_pref.categories:
                     category.actions.remove(category.actions.find(id))
-        functions.category_runtime_save(ActRec_pref)
-        functions.global_runtime_save(ActRec_pref, False)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -626,8 +621,6 @@ class AR_OT_global_remove(shared.Id_based, Operator):
             ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))
-        functions.category_runtime_save(ActRec_pref)
-        functions.global_runtime_save(ActRec_pref, False)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -655,7 +648,6 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
                 if id_action.id in ids:
                     index = category.actions.find(id_action.id)
                     category.actions.move(index, index - 1)
-        functions.category_runtime_save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -680,7 +672,6 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
                 if id_action.id in ids:
                     index = category.actions.find(id_action.id)
                     category.actions.move(index, index + 1)
-        functions.category_runtime_save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -711,7 +702,8 @@ class AR_OT_global_rename(shared.Id_based, Operator):
             action = ActRec_pref.global_actions.get(id, None)
             if action:
                 ActRec_pref.global_actions[id].label = label
-                functions.global_runtime_save(ActRec_pref)
+                if ActRec_pref.autosave:
+                    functions.save(ActRec_pref)
                 context.area.tag_redraw()
                 return {"FINISHED"}
         return {'CANCELLED'}
@@ -756,7 +748,8 @@ class AR_OT_global_icon(icon_manager.Icontable, shared.Id_based, Operator):
         ActRec_pref.global_actions[self.id].icon = ActRec_pref.selected_icon
         ActRec_pref.selected_icon = 0  # Icon: NONE
         self.reuse = False
-        functions.global_runtime_save(ActRec_pref)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         bpy.context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -794,7 +787,8 @@ class AR_OT_add_ar_shortcut(Operator):
         if self.id == '' or functions.is_action_keymap_empty(kmi):
             functions.remove_action_keymap(self.id)
             return
-        functions.global_runtime_save(ActRec_pref)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
 
 
 class AR_OT_remove_ar_shortcut(Operator):
@@ -810,7 +804,8 @@ class AR_OT_remove_ar_shortcut(Operator):
         if functions.get_action_keymap(self.id) is None:
             return {"CANCELLED"}
         functions.remove_action_keymap(self.id)
-        functions.global_runtime_save(ActRec_pref)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         return {"FINISHED"}
 
 # endregion

@@ -56,10 +56,6 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         elif not (self.id in selected_ids):
             self['selected'] = value
 
-    def update_execution_mode(self, context: bpy.types.Context):
-        ActRec_pref = get_preferences(context)
-        functions.global_runtime_save(ActRec_pref, False)
-
     selected: BoolProperty(
         default=False,
         set=set_selected,
@@ -67,8 +63,6 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         description="Select this Action Button\nuse ctrl to select multiple",
         name='Select'
     )
-
-    execution_mode: shared.AR_action.EnumProperty_execution_mode(update=update_execution_mode)
 
 
 class AR_global_import_action(PropertyGroup):

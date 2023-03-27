@@ -140,7 +140,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
             ActRec_pref = get_preferences(context)
             if not ActRec_pref.local_record_macros:
                 if self.get('active', True) != value:
-                    functions.local_runtime_save(ActRec_pref, context.scene)
+                    functions.save_local_to_scene(ActRec_pref, context.scene)
                 self['active'] = value
 
     def get_command(self) -> str:
@@ -201,8 +201,7 @@ class AR_action(Id_based, Alert_system, Icon_system):
 
     label: StringProperty()
     macros: CollectionProperty(type=AR_macro)
-    EnumProperty_execution_mode = functools.partial(
-        EnumProperty,
+    execution_mode: EnumProperty(
         items=[("INDIVIDUAL", "Individual",
                 """Performs the current action on all selected objects individually.
 Therefore, the action is executed as many times as there are selected objects.""",

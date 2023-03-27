@@ -2,16 +2,12 @@
 
 from .categories import (
     read_category_visibility,
-    category_runtime_save,
-    category_runtime_load,
     get_category_id
 )
 
 from .globals import (
     save,
     load,
-    global_runtime_save,
-    global_runtime_load,
     import_global_from_dict,
     get_global_action_id,
     get_global_action_ids,
@@ -22,8 +18,6 @@ from .globals import (
 )
 
 from .locals import (
-    local_runtime_save,
-    local_runtime_load,
     save_local_to_scene,
     get_local_action_index,
     load_local_action,

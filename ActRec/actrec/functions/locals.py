@@ -16,34 +16,6 @@ from .shared import get_preferences
 # region Functions
 
 
-def local_runtime_save(ActRec_pref: bpy.types.AddonPreferences, scene: bpy.types.Scene, save_to_scene: bool = True):
-    """
-    save local action to the local temp (dict) while Blender is running
-
-    Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        scene (bpy.types.Scene): Blender scene to write to
-        save_to_scene (bool, optional): include save to scene. Defaults to True.
-    """
-    shared_data.local_temp = shared.property_to_python(ActRec_pref.local_actions)
-    if save_to_scene and scene:
-        scene.ar.local = json.dumps(shared_data.local_temp)
-
-
-@persistent
-def local_runtime_load(dummy: bpy.types.Scene = None):
-    """
-    loads local actions from the local temp (dict) while Blender is running
-
-    Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
-    """
-    ActRec_pref = get_preferences(bpy.context)
-    ActRec_pref.local_actions.clear()
-    for action in shared_data.local_temp:
-        shared.add_data_to_collection(ActRec_pref.local_actions, action)
-
-
 def save_local_to_scene(ActRec_pref: bpy.types.AddonPreferences, scene: bpy.types.Scene):
     """
     saves all local actions to the given scene

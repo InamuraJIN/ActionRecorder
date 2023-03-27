@@ -67,10 +67,6 @@ def on_load(dummy=None):
 
     functions.load(ActRec_pref)
     icon_manager.load_icons(ActRec_pref)
-
-    functions.local_runtime_save(ActRec_pref, None, False)
-    functions.global_runtime_save(ActRec_pref, False)
-    functions.category_runtime_save(ActRec_pref, False)
     log.logger.info("Finished: Load ActRec Data")
 
 # region Registration
@@ -89,12 +85,6 @@ def register():
     keymap.register()
 
     handlers = bpy.app.handlers
-    handlers.undo_post.append(functions.category_runtime_load)
-    handlers.undo_post.append(functions.global_runtime_load)
-    handlers.undo_post.append(functions.local_runtime_load)
-    handlers.redo_post.append(functions.category_runtime_load)
-    handlers.redo_post.append(functions.global_runtime_load)
-    handlers.redo_post.append(functions.local_runtime_load)
     handlers.render_init.append(functions.execute_render_init)
     handlers.render_complete.append(functions.execute_render_complete)
     handlers.depsgraph_update_post.append(functions.track_scene)
@@ -120,12 +110,6 @@ def unregister():
     ui_functions.unregister()
 
     handlers = bpy.app.handlers
-    handlers.undo_post.remove(functions.category_runtime_load)
-    handlers.undo_post.remove(functions.global_runtime_load)
-    handlers.undo_post.remove(functions.local_runtime_load)
-    handlers.redo_post.remove(functions.category_runtime_load)
-    handlers.redo_post.remove(functions.global_runtime_load)
-    handlers.redo_post.remove(functions.local_runtime_load)
     handlers.render_init.remove(functions.execute_render_init)
     handlers.render_complete.remove(functions.execute_render_complete)
     handlers.depsgraph_update_post.remove(functions.track_scene)
