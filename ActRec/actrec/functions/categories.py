@@ -16,35 +16,6 @@ from .shared import get_preferences
 # region functions
 
 
-def category_runtime_save(ActRec_pref: bpy.types.AddonPreferences, use_autosave: bool = True):
-    """
-     save categories to the local temp (dict) while Blender is running
-
-    Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        use_autosave (bool, optional):
-            include autosave to storage file (depend on AddonPreference autosave).
-            Defaults to True.
-    """
-    shared_data.categories_temp = shared.property_to_python(ActRec_pref.categories)
-    if use_autosave and ActRec_pref.autosave:
-        globals.save(ActRec_pref)
-
-
-@persistent
-def category_runtime_load(dummy: bpy.types.Scene = None):
-    """
-    load categories while Blender is running from the local temp (dict)
-
-    Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
-    """
-    ActRec_pref = get_preferences(bpy.context)
-    ActRec_pref.categories.clear()
-    for category in shared_data.categories_temp:
-        shared.add_data_to_collection(ActRec_pref.categories, category)
-
-
 def get_category_id(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int) -> str:
     """
     get category id based on id (check for existence) or index

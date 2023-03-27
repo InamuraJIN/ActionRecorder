@@ -19,38 +19,6 @@ from .shared import get_preferences
 # region Functions
 
 
-def global_runtime_save(ActRec_pref: bpy.types.AddonPreferences, use_autosave: bool = True):
-    """
-    save global actions to the local temp (dict) while Blender is running
-
-    Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        use_autosave (bool, optional):
-            include autosave to storage file (depend on AddonPreference autosave).
-            Defaults to True.
-    """
-    shared_data.global_temp = shared.property_to_python(ActRec_pref.global_actions)
-    if use_autosave and ActRec_pref.autosave:
-        save(ActRec_pref)
-
-
-@persistent
-def global_runtime_load(dummy: bpy.types.Scene = None):
-    """
-    load global actions while Blender is running from the local temp (dict)
-
-    Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
-    """
-    ActRec_pref = get_preferences(bpy.context)
-    ActRec_pref.global_actions.clear()
-    # needed otherwise all global actions get selected
-    ActRec_pref["global_actions.selected_ids"] = []
-    # Writes data from global_temp (JSON format) to global_actions (Blender Property)
-    for action in shared_data.global_temp:
-        shared.add_data_to_collection(ActRec_pref.global_actions, action)
-
-
 def save(ActRec_pref: bpy.types.AddonPreferences):
     """
     save the global actions and categories to the storage file

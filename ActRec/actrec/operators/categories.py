@@ -203,7 +203,6 @@ class AR_OT_category_add(AR_OT_category_interface, Operator):
         self.apply_visibility(ActRec_pref, AR_OT_category_interface.category_visibility, new.id)
         ui_functions.register_category(ActRec_pref, len(ActRec_pref.categories) - 1)
         context.area.tag_redraw()
-        functions.category_runtime_save(ActRec_pref)
         return {"FINISHED"}
 
 
@@ -248,7 +247,6 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
         self.apply_visibility(
             ActRec_pref, AR_OT_category_interface.category_visibility, self.id
         )
-        functions.category_runtime_save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -329,7 +327,6 @@ class AR_OT_category_delete(shared.Id_based, Operator):
             if len(categories):
                 categories[0].selected = True
             context.area.tag_redraw()
-            functions.category_runtime_save(ActRec_pref)
         return {"FINISHED"}
 
     def draw(self, context: bpy.types.Context):
@@ -377,7 +374,6 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
             functions.swap_collection_items(categories, i, y)
             ActRec_pref.categories[y].selected = True
             context.area.tag_redraw()
-            functions.category_runtime_save(ActRec_pref)
             return {"FINISHED"}
         return {'CANCELLED'}
 
@@ -422,7 +418,6 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
             functions.swap_collection_items(categories, i, y)
             ActRec_pref.categories[y].selected = True
             context.area.tag_redraw()
-            functions.category_runtime_save(ActRec_pref)
             return {"FINISHED"}
         return {'CANCELLED'}
 # endregion

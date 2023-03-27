@@ -154,8 +154,11 @@ class AR_OT_macro_add(shared.Id_based, Operator):
             if new_report:
                 self.report({'ERROR'}, "No Action could be added")
             if ActRec_pref.local_create_empty:
-                bpy.ops.ar.macro_add_event("EXEC_DEFAULT", id=action.id, index=index, type="Empty")
-        functions.local_runtime_save(ActRec_pref, context.scene)
+                macro = action.macros.add()
+                macro.label = "<Empty>"
+                macro.command = ""
+                bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         bpy.context.area.tag_redraw()
@@ -182,11 +185,10 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         ('EndLoop', 'EndLoop', 'Ending the latest called loop, when no Loop Event was called this Event get skipped',
          'FILE_REFRESH', 4),
         ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
-        ('Empty', 'Empty', 'Crates an Empty Macro', 'SHADING_BBOX', 6),
         ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7),
         ('Run Script', 'Run Script',
          'Choose a Text file that gets saved into the macro and executed', 'FILE_SCRIPT', 8)]
-    type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Empty')
+    type: EnumProperty(items=types, name="Event Type", description='Shows all possible Events', default='Clipboard')
 
     time: FloatProperty(name="Time", description="Time in Seconds", unit='TIME')
     statement_type: EnumProperty(
@@ -249,7 +251,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         elif self.type == 'Run Script':
             box = layout.box()
             row = box.row()
-            row.prop_search(self, 'script_name', bpy.data, 'texts', results_are_suggestions=False)
+            row.prop_search(self, 'script_name', bpy.data, 'texts', results_are_suggestions=True)
             op = row.operator('ar.macro_event_load_script', icon='IMPORT', text="")
             op.id = self.id
             op.index = self.index
@@ -275,10 +277,6 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             name = functions.get_name_of_command(context, clipboard)
             macro.label = name if isinstance(name, str) else clipboard
             macro.command = clipboard
-        elif self.type == 'Empty':
-            macro.label = "<Empty>"
-            macro.command = ""
-            bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
         else:
             macro.label = "Event: %s" % self.type
             data = {'Type': self.type}
@@ -297,15 +295,18 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             elif self.type == 'Run Script':
                 text: bpy.types.Text = bpy.data.texts.get(self.script_name)
                 if text is None:
-                    if self.script_name != "":
-                        return {"FINISHED"}
-                    data['ScriptName'] = "NONE"
-                    data['ScriptText'] = ""
+                    data['ScriptName'] = self.script_name
+                    if self.script_name != "" and macro.command.startswith("ar.event:"):
+                        split = macro.command.split(":")
+                        old_data = json.loads(":".join(split[1:]))
+                        data['ScriptText'] = old_data.get('ScriptText', "")
+                    else:
+                        data['ScriptText'] = "# No script with this name was available during initialization"
                 else:
                     data['ScriptName'] = text.name.replace("[ActRec Macro]", "").strip()
                     data['ScriptText'] = "\n".join(line.body for line in text.lines)
             macro.command = "ar.event: %s" % json.dumps(data)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -384,7 +385,7 @@ class AR_OT_macro_remove(Macro_based, Operator):
         action = ActRec_pref.local_actions[action_index]
         index = functions.get_local_macro_index(action, self.id, self.index)
         action.macros.remove(index)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -421,7 +422,7 @@ class AR_OT_macro_move_up(Macro_based, Operator):
         else:
             action.macros.move(index, index - 1)
             action.active_macro_index = index - 1
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -457,7 +458,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
         else:
             action.macros.move(index, index + 1)
             action.active_macro_index = index + 1
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -900,7 +901,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         else:
             macro.label = self.label
             macro.command = self.command
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()

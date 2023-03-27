@@ -87,9 +87,7 @@ class AR_OT_local_to_global(Operator):
         if ActRec_pref.local_to_global_mode == 'move':
             functions.remove_local_action_from_text(ActRec_pref.local_actions[ActRec_pref.active_local_action_index])
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
-        functions.category_runtime_save(ActRec_pref)
-        functions.global_runtime_save(ActRec_pref, False)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -117,7 +115,7 @@ class AR_OT_local_add(Operator):
         new.id  # create new id, uses internal getter
         new.label = functions.check_for_duplicates(map(lambda x: x.label, ActRec_pref.local_actions), self.name)
         ActRec_pref.active_local_action_index = -1  # set to last element, uses internal setter
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(new)
         context.area.tag_redraw()
@@ -151,7 +149,7 @@ class AR_OT_local_remove(shared.Id_based, Operator):
         else:
             functions.remove_local_action_from_text(ActRec_pref.local_actions[index])
             ActRec_pref.local_actions.remove(index)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -184,7 +182,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index - 1)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -220,7 +218,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index + 1)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -299,7 +297,7 @@ class AR_OT_local_load(Operator):
                         macros.append(macro)
                     data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
         functions.load_local_action(ActRec_pref, data)
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             for action in ActRec_pref.local_actions:
                 functions.local_action_to_text(action)
@@ -478,7 +476,7 @@ class AR_OT_local_record(shared.Id_based, Operator):
                 functions.add_report_as_macro(context, ActRec_pref, action, report, error_reports)
             if error_reports:
                 self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
-            functions.local_runtime_save(ActRec_pref, bpy.context.scene)
+            functions.save_local_to_scene(ActRec_pref, bpy.context.scene)
             if not ActRec_pref.hide_local_text:
                 functions.local_action_to_text(action)
             context.area.tag_redraw()
@@ -511,7 +509,7 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
         action.icon = ActRec_pref.selected_icon
         ActRec_pref.selected_icon = 0  # Icon: NONE
         self.reuse = False
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         context.area.tag_redraw()
@@ -543,7 +541,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
         action.macros.clear()
-        functions.local_runtime_save(ActRec_pref, context.scene)
+        functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
         bpy.context.area.tag_redraw()
