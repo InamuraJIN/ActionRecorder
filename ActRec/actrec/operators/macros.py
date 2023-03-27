@@ -249,7 +249,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         elif self.type == 'Run Script':
             box = layout.box()
             row = box.row()
-            row.prop_search(self, 'script_name', bpy.data, 'texts', results_are_suggestions=False)
+            row.prop_search(self, 'script_name', bpy.data, 'texts', results_are_suggestions=True)
             op = row.operator('ar.macro_event_load_script', icon='IMPORT', text="")
             op.id = self.id
             op.index = self.index
@@ -297,10 +297,13 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             elif self.type == 'Run Script':
                 text: bpy.types.Text = bpy.data.texts.get(self.script_name)
                 if text is None:
-                    if self.script_name != "":
-                        return {"FINISHED"}
-                    data['ScriptName'] = "NONE"
-                    data['ScriptText'] = ""
+                    data['ScriptName'] = self.script_name
+                    if self.script_name != "" and macro.command.startswith("ar.event:"):
+                        split = macro.command.split(":")
+                        old_data = json.loads(":".join(split[1:]))
+                        data['ScriptText'] = old_data.get('ScriptText', "")
+                    else:
+                        data['ScriptText'] = "# No script with this name was available during initialization"
                 else:
                     data['ScriptName'] = text.name.replace("[ActRec Macro]", "").strip()
                     data['ScriptText'] = "\n".join(line.body for line in text.lines)
