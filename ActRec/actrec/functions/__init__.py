@@ -54,7 +54,6 @@ from .shared import (
     get_font_path,
     split_and_keep,
     text_to_lines,
-    execute_render_init,
     execute_render_complete,
     enum_list_id_to_name_dict,
     enum_items_to_enum_prop_list,

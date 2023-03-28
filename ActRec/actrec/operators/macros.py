@@ -177,7 +177,6 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         ('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
         ('Render Complete', 'Render Complete',
          'Waits for the render process to be completed and runs all macros below', 'IMAGE_RGB_ALPHA', 1),
-        ('Render Init', 'Render Init', 'Runs all macros below before the rendering process starts', 'IMAGE_RGB', 2),
         ('Loop', 'Loop',
          """Loop the containing Macros until the Statement is False \n
          Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped""",

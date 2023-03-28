@@ -414,12 +414,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         split = macro.command.split(":")
         if split[0] == 'ar.event':
             data = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Render Init':
-                shared_data.render_init_macros.append((action_type, action.id, macros[i + 1].id))
-                return
-            elif data['Type'] == 'Render Complete':
+            if data['Type'] == 'Render Complete':
                 shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
-                return
+                break
 
     base_area = context.area
 
@@ -427,7 +424,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         split = macro.command.split(":")
         if split[0] == 'ar.event':
             data: dict = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Timer':
+            if data['Type'] in {'Render Complete'}:
+                return
+            elif data['Type'] == 'Timer':
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
@@ -578,26 +577,6 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             if base_area and area_type:
                 base_area.ui_type = area_type
             return err
-
-
-@persistent
-def execute_render_init(dummy: bpy.types.Scene = None):
-    # https://docs.blender.org/api/current/bpy.app.handlers.html
-    """
-    execute macros, which are called after the event macro "Render Init"
-    use bpy.app.handlers and therefore uses a dummy variable for the scene object
-
-    Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
-    """
-    context = bpy.context
-    ActRec_pref = get_preferences(context)
-    while len(shared_data.render_init_macros):
-        action_type, action_id, start_id = shared_data.render_init_macros.pop(0)
-        action = getattr(ActRec_pref, action_type)[action_id]
-        if (start_index := action.macros.find(start_id)) < 0:
-            continue
-        play(context, action.macros[start_index:], action, action_type)
 
 
 @ persistent

@@ -85,7 +85,6 @@ def register():
     keymap.register()
 
     handlers = bpy.app.handlers
-    handlers.render_init.append(functions.execute_render_init)
     handlers.render_complete.append(functions.execute_render_complete)
     handlers.depsgraph_update_post.append(functions.track_scene)
     handlers.load_post.append(on_load)
@@ -110,7 +109,6 @@ def unregister():
     ui_functions.unregister()
 
     handlers = bpy.app.handlers
-    handlers.render_init.remove(functions.execute_render_init)
     handlers.render_complete.remove(functions.execute_render_complete)
     handlers.depsgraph_update_post.remove(functions.track_scene)
     handlers.load_post.remove(on_load)
