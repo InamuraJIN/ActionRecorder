@@ -9,7 +9,7 @@ from typing import Optional
 
 # blender modules
 import bpy
-from bpy.types import Operator, PointerProperty
+from bpy.types import Operator, PointerProperty, UILayout
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty, FloatProperty, BoolProperty
 
 # relative imports
@@ -744,7 +744,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     edit: BoolProperty(default=False)
     multiline_asked: BoolProperty(default=False)
     clear_operator: BoolProperty(
-        name="Clear Operator Command",
+        name="Clear Operator",
         description="Delete the parameters of an operator command. Otherwise the complete command is cleared",
         get=lambda x: False,
         set=set_clear_operator
@@ -760,6 +760,31 @@ class AR_OT_macro_edit(Macro_based, Operator):
     font = None
     time = 0
     is_operator = False
+
+    def items_ui_type(self, context: bpy.types.Context):
+        enum_items = [("NONE", "None", "not specified, will be using the active type", "BLANK1", 0)]
+        if context is None or context.area is None:
+            return enum_items
+        area = context.area
+        try:
+            area.ui_type = ""
+        except TypeError as err:
+            error_items = eval(str(err).split('enum "" not found in ')[1])
+            enum_items.extend(
+                (item,
+                 UILayout.enum_item_name(area, 'ui_type', item),
+                 UILayout.enum_item_description(area, 'ui_type', item),
+                 UILayout.enum_item_icon(area, 'ui_type', item),
+                 i
+                 )for i, item in enumerate(error_items, 1)
+            )
+        return enum_items
+    ui_type: EnumProperty(
+        items=items_ui_type,
+        default=0,
+        name="Editor Type",
+        description="Current editor type for this area"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -854,6 +879,10 @@ class AR_OT_macro_edit(Macro_based, Operator):
             self.last_label = ActRec_pref.last_macro_label
             self.last_command = ActRec_pref.last_macro_command
             self.is_operator = self.command.startswith("bpy.ops")
+            try:
+                self.ui_type = macro.ui_type
+            except TypeError:
+                self.ui_type = "NONE"
             return context.window_manager.invoke_props_dialog(self, width=self.width)
         else:
             action.active_macro_index = index
@@ -878,9 +907,10 @@ class AR_OT_macro_edit(Macro_based, Operator):
             col.prop(line, 'text', text="")
 
         row = layout.row()
+        action = ActRec_pref.local_actions[self.action_index]
+        macro = action.macros[self.index]
+        row.prop(self, 'ui_type', text="")
         if self.is_operator:
-            action = ActRec_pref.local_actions[self.action_index]
-            macro = action.macros[self.index]
             row.prop(macro, 'operator_execution_context', text="")
             row.prop(self, 'clear_operator', toggle=True)
         row.prop(self, 'use_last_command', toggle=True)
@@ -900,6 +930,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         else:
             macro.label = self.label
             macro.command = self.command
+        macro.ui_type = "" if self.ui_type == "NONE" else self.ui_type
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)

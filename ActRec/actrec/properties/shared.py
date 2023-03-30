@@ -5,7 +5,7 @@ import functools
 
 # blender modules
 import bpy
-from bpy.types import PropertyGroup
+from bpy.types import PropertyGroup, UILayout
 from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty, EnumProperty
 
 # relative imports
