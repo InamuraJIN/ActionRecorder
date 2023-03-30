@@ -34,6 +34,7 @@ def on_load(dummy=None):
     log.logger.info("Start: Load ActRec Data")
     context = bpy.context
     ActRec_pref = get_preferences(context)
+    ActRec_pref.operators_list_length = 0
     # load local actions
     if bpy.data.filepath == "":
         try:

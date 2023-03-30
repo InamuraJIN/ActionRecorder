@@ -201,7 +201,7 @@ class AR_preferences(AddonPreferences):
     last_macro_label: StringProperty(name="last label", default="label of the last macro")
     last_macro_command: StringProperty(name="last command", default="command of the last macro")
 
-    operators_list_length: IntProperty(name="INTERNAL")
+    operators_list_length: IntProperty(name="INTERNAL", default=0)
 
     multiline_support_installing: BoolProperty(name="INTERNAL", default=False)
     multiline_support_dont_ask: BoolProperty(
