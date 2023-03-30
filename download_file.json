@@ -25,7 +25,7 @@
         "ActRec/actrec/properties/globals.py": [4, 0, 6],
         "ActRec/actrec/properties/locals.py": [4, 0, 6],
         "ActRec/actrec/properties/macros.py": [4, 0, 6],
-        "ActRec/actrec/properties/shared.py": [4, 0, 6],
+        "ActRec/actrec/properties/shared.py": [4, 0, 7],
         "ActRec/actrec/ui_functions/__init__.py": [4, 0, 6],
         "ActRec/actrec/ui_functions/categories.py": [4, 0, 6],
         "ActRec/actrec/ui_functions/globals.py": [4, 0, 6],
