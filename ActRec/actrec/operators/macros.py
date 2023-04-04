@@ -842,7 +842,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
                             type=data['Type'],
                             macro_index=self.index,
                             statement_type='repeat',
-                            count=count
+                            repeat_count=count
                         )
                     else:
                         bpy.ops.ar.macro_add_event(
@@ -850,7 +850,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
                             type=data['Type'],
                             macro_index=self.index,
                             statement_type='repeat',
-                            count=data["RepeatCount"]
+                            repeat_count=data["RepeatCount"]
                         )
                 elif data['Type'] == 'Select Object':
                     bpy.ops.ar.macro_add_event(
