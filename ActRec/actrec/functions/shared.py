@@ -517,7 +517,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     error.pop(2)  # removes exec(self.as_string(), mod.__dict__) in bpy_types.py
                     error.pop(1)  # removes text.as_module()
                     error = "".join(error)
-                    logger.error("%s; command: %s" % (error, command))
+                    logger.error("%s; command: %s" % (error, data))
                     action.alert = macro.alert = True
                     return error
                 bpy.data.texts.remove(text)
@@ -533,25 +533,6 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                 action.alert = macro.alert = True
                 return err
 
-            temp_window = context.window
-            temp_screen = context.screen
-            temp_area = area = context.area
-            temp_space = context.space_data
-            area_type = None
-            if area:
-                area_type = area.ui_type
-                if macro.ui_type:
-                    windows = list(context.window_manager.windows)
-                    windows.reverse()
-                    for window in windows:
-                        if window.screen.areas[0].ui_type == macro.ui_type:
-                            temp_window = window
-                            temp_screen = temp_window.screen
-                            temp_area = temp_screen.area[0]
-                            temp_space = temp_area.spaces[0]
-                            break
-                    else:
-                        area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
                 command = "%s(\"%s\", %s" % (
@@ -559,16 +540,47 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             elif command.startswith("bpy.context."):
                 command = command.replace("bpy.context.", "context.")
 
-            with context.temp_override(window=temp_window, area=temp_area, screen=temp_screen, space_data=temp_space):
+            temp_window = context.window
+            temp_screen = context.screen
+            temp_area = context.area
+            temp_space = context.space_data
+            area_type = None
+            if temp_area and macro.ui_type and temp_area.ui_type != macro.ui_type:
+                area_type = temp_area.ui_type
+                windows = list(context.window_manager.windows)
+                windows.reverse()
+                for window in windows:
+                    if window.screen.areas[0].ui_type == macro.ui_type:
+                        temp_window = window
+                        temp_screen = temp_window.screen
+                        temp_area = temp_screen.area[0]
+                        temp_space = temp_area.spaces[0]
+                        break
+                else:
+                    temp_area.ui_type = macro.ui_type
+
+            # HACK Blender keeps crashing when some operator are executed in UV area and temp_override(area=uv_area)
+            if temp_area.ui_type == 'UV':
                 if action.execution_mode == "GROUP":
                     exec(command)
                 else:
                     execute_individually(context, command)
+            else:
+                with context.temp_override(
+                        window=temp_window,
+                        screen=temp_screen,
+                        area=temp_area,
+                        space_data=temp_space
+                ):
+                    if action.execution_mode == "GROUP":
+                        exec(command)
+                    else:
+                        execute_individually(context, command)
 
-            if area and area_type:
-                area.ui_type = area_type
+            if temp_area and area_type:
+                temp_area.ui_type = area_type
 
-            if bpy.context and bpy.context.area:  # Refresh the context
+            if bpy.context and bpy.context.area:
                 bpy.context.area.tag_redraw()
 
         except Exception as err:
