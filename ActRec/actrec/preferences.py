@@ -81,7 +81,7 @@ class AR_preferences(AddonPreferences):
                 logger.error("ActRec ERROR: Icon Path \"%s\" don't exist, fallback to %s" % (origin_path, path))
             self['icon_path'] = path
             if not os.path.exists(path):
-                os.makedirs(path)
+                os.makedirs(path, exist_ok=True)
             return path
 
     def set_icon_path(self, origin_path: str):
@@ -93,7 +93,7 @@ class AR_preferences(AddonPreferences):
         """
         self['icon_path'] = origin_path
         if not (os.path.exists(origin_path) and os.path.isdir(origin_path)):
-            os.makedirs(origin_path)
+            os.makedirs(origin_path, exist_ok=True)
 
     icon_path: StringProperty(
         name="Icons Path",
@@ -259,7 +259,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
         # REFACTOR indentation
         self['storage_path'] = origin_path
         if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
-            os.makedirs(os.path.dirname(origin_path))
+            os.makedirs(os.path.dirname(origin_path), exist_ok=True)
             with open(origin_path, 'w') as storage_file:
                 storage_file.write('{}')
 
