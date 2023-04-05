@@ -54,25 +54,32 @@ class AR_OT_category_interface(Operator):
 
     modes = {
         'VIEW_3D': functions.enum_items_to_enum_prop_list(
-            bpy.ops.object.mode_set.get_rna_type().bl_rna.properties[1].enum_items
+            bpy.ops.object.mode_set.get_rna_type().bl_rna.properties[1].enum_items,
+            value_offset=1
         ),
         'IMAGE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceImageEditor.bl_rna.properties['ui_mode'].enum_items
+            bpy.types.SpaceImageEditor.bl_rna.properties['ui_mode'].enum_items,
+            value_offset=1
         ),
         'NODE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceNodeEditor.bl_rna.properties['texture_type'].enum_items
+            bpy.types.SpaceNodeEditor.bl_rna.properties['texture_type'].enum_items,
+            value_offset=1
         ),
         'SEQUENCE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceSequenceEditor.bl_rna.properties['view_type'].enum_items
+            bpy.types.SpaceSequenceEditor.bl_rna.properties['view_type'].enum_items,
+            value_offset=1
         ),
         'CLIP_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceClipEditor.bl_rna.properties['mode'].enum_items
+            bpy.types.SpaceClipEditor.bl_rna.properties['mode'].enum_items,
+            value_offset=1
         ),
         'DOPESHEET_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceDopeSheetEditor.bl_rna.properties['ui_mode'].enum_items
+            bpy.types.SpaceDopeSheetEditor.bl_rna.properties['ui_mode'].enum_items,
+            value_offset=1
         ),
         'GRAPH_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceGraphEditor.bl_rna.properties['mode'].enum_items
+            bpy.types.SpaceGraphEditor.bl_rna.properties['mode'].enum_items,
+            value_offset=1
         )
     }
 

@@ -230,17 +230,18 @@ def enum_list_id_to_name_dict(enum_list: list) -> dict:
     return {identifier: name for identifier, name, *tail in enum_list}
 
 
-def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty) -> list[tuple]:
+def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts enum items to an enum property list
 
     Args:
         items (enum_items): enum items to convert
+        value_offset (int): offset to apply to the value of each element
 
     Returns:
         list[tuple]: list with elements of format (identifier, name, description, icon, value)
     """
-    return [(item.identifier, item.name, item.description, item.icon, item.value) for item in items]
+    return [(item.identifier, item.name, item.description, item.icon, item.value + value_offset) for item in items]
 
 
 def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[str]:
