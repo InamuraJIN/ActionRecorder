@@ -165,6 +165,16 @@ class AR_OT_global_import(Operator, ImportHelper):
 
                 data['categories'] = [category for category in data['categories'] if category['id'] in category_ids]
                 data['actions'] = [action for action in data['actions'] if action['id'] in action_ids]
+                current_action_ids = set(action.id for action in ActRec_pref.global_actions)
+                current_category_ids = set(action.id for action in ActRec_pref.categories)
+                for action in data['actions']:
+                    if action['id'] not in current_action_ids:
+                        continue
+                    action['id'] = uuid.uuid1().hex
+                for category in data['categories']:
+                    if category['id'] not in current_category_ids:
+                        continue
+                    category['id'] = uuid.uuid1().hex
                 functions.import_global_from_dict(ActRec_pref, data)
                 if self.include_keymap:
                     default_km = keymaps.get('default')
