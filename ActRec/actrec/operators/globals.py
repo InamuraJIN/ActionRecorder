@@ -173,6 +173,8 @@ class AR_OT_global_import(Operator, ImportHelper):
             self.report({'ERROR'}, "Select a .json or .zip file {%s}" % self.filepath)
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
