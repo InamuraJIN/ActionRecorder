@@ -182,6 +182,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index - 1)
+            ActRec_pref.active_local_action_index -= 1
         functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
@@ -218,6 +219,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index + 1)
+            ActRec_pref.active_local_action_index += 1
         functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
