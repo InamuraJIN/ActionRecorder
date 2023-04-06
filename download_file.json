@@ -14,7 +14,7 @@
         "ActRec/actrec/operators/categories.py": [4, 0, 7],
         "ActRec/actrec/operators/globals.py": [4, 0, 7],
         "ActRec/actrec/operators/helper.py": [4, 0, 0],
-        "ActRec/actrec/operators/locals.py": [4, 0, 6],
+        "ActRec/actrec/operators/locals.py": [4, 0, 7],
         "ActRec/actrec/operators/macros.py": [4, 0, 7],
         "ActRec/actrec/operators/preferences.py": [4, 0, 6],
         "ActRec/actrec/operators/shared.py": [4, 0, 6],
