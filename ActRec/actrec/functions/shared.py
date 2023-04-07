@@ -558,12 +558,13 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                 else:
                     area_type = temp_area.ui_type
                     temp_area.ui_type = macro.ui_type
-            for region in reversed(temp_area.regions):  # mostly "WINDOW" is at the end of the list
-                if region.type != "WINDOW":
-                    continue
-                temp_region = region
+            if temp_area:
+                for region in reversed(temp_area.regions):  # mostly "WINDOW" is at the end of the list
+                    if region.type != "WINDOW":
+                        continue
+                    temp_region = region
 
-            # region need to be set when override area for temp_override
+            # Note: region need to be set when override area for temp_override
             # for more detail see https://projects.blender.org/blender/blender/issues/106373
             with context.temp_override(
                     window=temp_window,

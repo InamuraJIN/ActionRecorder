@@ -157,6 +157,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                 macro = action.macros.add()
                 macro.label = "<Empty>"
                 macro.command = ""
+                action.active_macro_index = -1
                 bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -174,16 +175,17 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     types = [
-        ('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
+        ('Timer', 'Timer', 'Wait the chosen Time and continue with the next macros', 'SORTTIME', 0),
         ('Render Complete', 'Render Complete',
-         'Waits for the render process to be completed and runs all macros below', 'IMAGE_RGB_ALPHA', 1),
+         '''Waits for the render process to be completed and execute the next macros\n
+         WARNING: Macros executed after this might crash Blender''', 'IMAGE_RGB_ALPHA', 1),
         ('Loop', 'Loop',
-         """Loop the containing Macros until the Statement is False \n
-         Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped""",
+         '''Add before the macro to Loop\n
+         Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped''',
          'FILE_REFRESH', 3),
         ('EndLoop', 'EndLoop', 'Ending the latest called loop, when no Loop Event was called this Event get skipped',
          'FILE_REFRESH', 4),
-        ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
+        ('Clipboard', 'Clipboard', 'Paste and add the macro currently on the clipboard', 'CONSOLE', 5),
         ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7),
         ('Run Script', 'Run Script',
          'Choose a Text file that gets saved into the macro and executed', 'FILE_SCRIPT', 8)]
@@ -1020,6 +1022,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 if return_value:
                     return return_value
             else:
+                self.report({'WARNING'}, "Couldn't copy this property")
                 return {"CANCELLED"}
 
         button_operator = getattr(context, "button_operator", None)
@@ -1083,6 +1086,8 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 try:
                     attr = "%s.%s" % (attr, button_pointer.path_from_id())
                 except ValueError:
+                    if base_object is None:
+                        return
                     pointer_class = button_pointer.__class__
                     for prop in base_object.bl_rna.properties:
                         if isinstance(getattr(base_object, prop.identifier), pointer_class):
