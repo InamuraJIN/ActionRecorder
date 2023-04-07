@@ -544,10 +544,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             temp_window = context.window
             temp_screen = context.screen
             temp_area = context.area
-            temp_space = context.space_data
+            temp_region = context.region
             area_type = None
             if temp_area and macro.ui_type and temp_area.ui_type != macro.ui_type:
-                area_type = temp_area.ui_type
                 windows = list(context.window_manager.windows)
                 windows.reverse()
                 for window in windows:
@@ -555,28 +554,27 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                         temp_window = window
                         temp_screen = temp_window.screen
                         temp_area = temp_screen.area[0]
-                        temp_space = temp_area.spaces[0]
                         break
                 else:
+                    area_type = temp_area.ui_type
                     temp_area.ui_type = macro.ui_type
+            for region in reversed(temp_area.regions):  # mostly "WINDOW" is at the end of the list
+                if region.type != "WINDOW":
+                    continue
+                temp_region = region
 
-            # HACK Blender keeps crashing when some operator are executed in UV area and temp_override(area=uv_area)
-            if temp_area.ui_type == 'UV':
+            # region need to be set when override area for temp_override
+            # for more detail see https://projects.blender.org/blender/blender/issues/106373
+            with context.temp_override(
+                    window=temp_window,
+                    screen=temp_screen,
+                    area=temp_area,
+                    region=temp_region
+            ):
                 if action.execution_mode == "GROUP":
                     exec(command)
                 else:
                     execute_individually(context, command)
-            else:
-                with context.temp_override(
-                        window=temp_window,
-                        screen=temp_screen,
-                        area=temp_area,
-                        space_data=temp_space
-                ):
-                    if action.execution_mode == "GROUP":
-                        exec(command)
-                    else:
-                        execute_individually(context, command)
 
             if temp_area and area_type:
                 temp_area.ui_type = area_type
