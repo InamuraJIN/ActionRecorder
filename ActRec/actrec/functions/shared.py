@@ -244,6 +244,31 @@ def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offs
     return [(item.identifier, item.name, item.description, item.icon, item.value + value_offset) for item in items]
 
 
+def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+    """
+    converts view_3d items to an enum property list with categories for General, Grease Pencil, Curves
+
+    Args:
+        items (enum_items): enum items to convert
+        value_offset (int): offset to apply to the value of each element
+
+    Returns:
+        list[tuple]: list with elements of format (identifier, name, description, icon, value)
+    """
+    general = [("", "General", "")]
+    grease_pencil = [("", "Grease Pencil", "")]
+    curves = [("", "Curves", "")]
+    modes = enum_items_to_enum_prop_list(items, value_offset)
+    for mode in modes:
+        if "GPENCIL" in mode[0]:
+            grease_pencil.append(mode)
+        elif "CURVES" in mode[0]:
+            curves.append(mode)
+        else:
+            general.append(mode)
+    return general + grease_pencil + curves
+
+
 def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[str]:
     """
     get the name of a given command

@@ -53,7 +53,7 @@ class AR_OT_category_interface(Operator):
     }
 
     modes = {
-        'VIEW_3D': functions.enum_items_to_enum_prop_list(
+        'VIEW_3D': functions.get_categorized_view_3d_modes(
             bpy.ops.object.mode_set.get_rna_type().bl_rna.properties[1].enum_items,
             value_offset=1
         ),
