@@ -249,11 +249,16 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         category = ActRec_pref.categories[self.id]
-        category.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
+        category.label = functions.check_for_duplicates(
+            (c.label for c in ActRec_pref.categories if c.id != self.id),
+            self.label
+        )
         category.areas.clear()
         self.apply_visibility(
             ActRec_pref, AR_OT_category_interface.category_visibility, self.id
         )
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
