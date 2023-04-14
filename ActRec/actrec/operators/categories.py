@@ -122,9 +122,21 @@ class AR_OT_category_interface(Operator):
         Returns:
             list: modes of the area
         """
-        return AR_OT_category_interface.modes.get(
+        items = AR_OT_category_interface.modes.get(
             AR_OT_category_interface.areas_to_spaces_with_mode[self.area], []
         )
+        current_visible_modes = set()
+        for area, mode in AR_OT_category_interface.category_visibility:
+            if area != self.area:
+                continue
+            current_visible_modes.add(mode)
+        return [
+            (
+                identifier,
+                "%s (used)" % name if identifier in current_visible_modes else name,
+                *tail
+            ) for identifier, name, *tail in items
+        ]
 
     label: StringProperty(name="Category Label", default="Untitled")
     area: EnumProperty(
