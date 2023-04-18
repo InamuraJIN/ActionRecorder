@@ -15,7 +15,7 @@ def main():
     if len(sys.argv) > 2:
         blender_rev = sys.argv[2]
     else:
-        blender_rev = "2.93"  # LTS
+        blender_rev = "3.3"  # LTS
 
     if len(sys.argv) > 3:
         test_format = sys.argv[3]
