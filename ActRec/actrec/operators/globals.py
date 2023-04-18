@@ -727,6 +727,13 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
     bl_description = 'Play this Action Button'
     bl_options = {'UNDO', 'INTERNAL'}
 
+    @classmethod
+    def description(cls, context: bpy.types.Context, properties):
+        ActRec_pref = functions.get_preferences(context)
+        id = functions.get_global_action_id(ActRec_pref, properties.id, properties.index)
+        action = ActRec_pref.global_actions[id]
+        return action.description
+
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, self.index)
@@ -793,7 +800,7 @@ class AR_OT_add_ar_shortcut(Operator):
         return {"FINISHED"}
 
     def cancel(self, context: bpy.types.Context):
-        #  Use cancel as execution of changed keymap (not indented use of invoke_popup)
+        #  Use cancel as execution of changed keymap (not intended use of invoke_popup)
         ActRec_pref = get_preferences(context)
         kmi = functions.get_action_keymap(self.id)
         if self.id == '' or functions.is_action_keymap_empty(kmi):
@@ -820,6 +827,41 @@ class AR_OT_remove_ar_shortcut(Operator):
             functions.save(ActRec_pref)
         return {"FINISHED"}
 
+
+class AR_OT_global_edit_description(Operator):
+    bl_idname = "ar.global_edit_description"
+    bl_label = "Edit Description"
+    bl_options = {'INTERNAL'}
+    bl_description = "Edit the description of this Action"
+
+    id: StringProperty()
+    description: StringProperty(
+        name="Description",
+        description="Sets the description that gets shown when hovered over this action"
+    )
+    action_label: StringProperty()
+
+    def draw(self, context: bpy.types.Context):
+        layout = self.layout
+        layout.label(text="Action: %s" % self.action_label)
+        layout.prop(self, 'description')
+
+    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+        ActRec_pref = functions.get_preferences(context)
+        id = functions.get_global_action_id(ActRec_pref, self.id, -1)
+        action = ActRec_pref.global_actions[id]
+        self.action_label = action.label
+        self.description = action.description
+        return context.window_manager.invoke_props_dialog(self)
+
+    def execute(self, context: bpy.types.Context):
+        ActRec_pref = functions.get_preferences(context)
+        id = functions.get_global_action_id(ActRec_pref, self.id, -1)
+        ActRec_pref.global_actions[id].description = self.description
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
+        return {'FINISHED'}
+
 # endregion
 
 
@@ -838,7 +880,8 @@ classes = [
     AR_OT_global_execute_action,
     AR_OT_global_icon,
     AR_OT_add_ar_shortcut,
-    AR_OT_remove_ar_shortcut
+    AR_OT_remove_ar_shortcut,
+    AR_OT_global_edit_description
 ]
 
 # region Registration

@@ -225,7 +225,7 @@ def enum_list_id_to_name_dict(enum_list: list) -> dict:
         enum_list (list): enum list to convert
 
     Returns:
-        dict: created identifier to name dict
+        dict: identifier to name
     """
     return {identifier: name for identifier, name, *tail in enum_list}
 
@@ -384,7 +384,11 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         start (int): macro to start with in the macro collection
     """
     context = bpy.context
-    with context.temp_override(**context_copy):
+    if context_copy is None:
+        temp_override = context.temp_override()
+    else:
+        temp_override = context.temp_override(**context_copy)
+    with temp_override:
         ActRec_pref = context.preferences.addons[__module__].preferences
         action = getattr(ActRec_pref, action_type)[action_id]
         play(context, action.macros[start:], action, action_type)
@@ -633,7 +637,17 @@ def execute_render_complete(dummy=None):
         action = getattr(ActRec_pref, action_type)[action_id]
         if (start_index := action.macros.find(start_id)) < 0:
             continue
-        play(context, action.macros[start_index:], action, action_type)
+        bpy.app.timers.register(
+            functools.partial(
+                run_queued_macros,
+                None,
+                action_type,
+                action_id,
+                start_index
+            ),
+            first_interval=0.1
+        )
+        # play(context, action.macros[start_index:], action, action_type)
 
 
 def get_font_path() -> str:

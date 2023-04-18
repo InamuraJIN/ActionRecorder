@@ -200,6 +200,7 @@ HINT: Sometimes it helps to change to Invoke to get the expected behavior"""
 class AR_action(Id_based, Alert_system, Icon_system):
 
     label: StringProperty()
+    description: StringProperty(default="Play this Action Button")
     macros: CollectionProperty(type=AR_macro)
     execution_mode: EnumProperty(
         items=[("INDIVIDUAL", "Individual",
