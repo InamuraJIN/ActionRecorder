@@ -225,22 +225,48 @@ def enum_list_id_to_name_dict(enum_list: list) -> dict:
         enum_list (list): enum list to convert
 
     Returns:
-        dict: created identifier to name dict
+        dict: identifier to name
     """
     return {identifier: name for identifier, name, *tail in enum_list}
 
 
-def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty) -> list[tuple]:
+def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts enum items to an enum property list
 
     Args:
         items (enum_items): enum items to convert
+        value_offset (int): offset to apply to the value of each element
 
     Returns:
         list[tuple]: list with elements of format (identifier, name, description, icon, value)
     """
-    return [(item.identifier, item.name, item.description, item.icon, item.value) for item in items]
+    return [(item.identifier, item.name, item.description, item.icon, item.value + value_offset) for item in items]
+
+
+def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+    """
+    converts view_3d items to an enum property list with categories for General, Grease Pencil, Curves
+
+    Args:
+        items (enum_items): enum items to convert
+        value_offset (int): offset to apply to the value of each element
+
+    Returns:
+        list[tuple]: list with elements of format (identifier, name, description, icon, value)
+    """
+    general = [("", "General", "")]
+    grease_pencil = [("", "Grease Pencil", "")]
+    curves = [("", "Curves", "")]
+    modes = enum_items_to_enum_prop_list(items, value_offset)
+    for mode in modes:
+        if "GPENCIL" in mode[0]:
+            grease_pencil.append(mode)
+        elif "CURVES" in mode[0]:
+            curves.append(mode)
+        else:
+            general.append(mode)
+    return general + grease_pencil + curves
 
 
 def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[str]:
@@ -358,7 +384,11 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         start (int): macro to start with in the macro collection
     """
     context = bpy.context
-    with context.temp_override(**context_copy):
+    if context_copy is None:
+        temp_override = context.temp_override()
+    else:
+        temp_override = context.temp_override(**context_copy)
+    with temp_override:
         ActRec_pref = context.preferences.addons[__module__].preferences
         action = getattr(ActRec_pref, action_type)[action_id]
         play(context, action.macros[start:], action, action_type)
@@ -414,12 +444,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         split = macro.command.split(":")
         if split[0] == 'ar.event':
             data = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Render Init':
-                shared_data.render_init_macros.append((action_type, action.id, macros[i + 1].id))
-                return
-            elif data['Type'] == 'Render Complete':
+            if data['Type'] == 'Render Complete':
                 shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
-                return
+                break
 
     base_area = context.area
 
@@ -427,7 +454,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         split = macro.command.split(":")
         if split[0] == 'ar.event':
             data: dict = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Timer':
+            if data['Type'] in {'Render Complete'}:
+                return
+            elif data['Type'] == 'Timer':
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
@@ -518,7 +547,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     error.pop(2)  # removes exec(self.as_string(), mod.__dict__) in bpy_types.py
                     error.pop(1)  # removes text.as_module()
                     error = "".join(error)
-                    logger.error("%s; command: %s" % (error, command))
+                    logger.error("%s; command: %s" % (error, data))
                     action.alert = macro.alert = True
                     return error
                 bpy.data.texts.remove(text)
@@ -534,25 +563,6 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                 action.alert = macro.alert = True
                 return err
 
-            temp_window = context.window
-            temp_screen = context.screen
-            temp_area = area = context.area
-            temp_space = context.space_data
-            area_type = None
-            if area:
-                area_type = area.ui_type
-                if macro.ui_type:
-                    windows = list(context.window_manager.windows)
-                    windows.reverse()
-                    for window in windows:
-                        if window.screen.areas[0].ui_type == macro.ui_type:
-                            temp_window = window
-                            temp_screen = temp_window.screen
-                            temp_area = temp_screen.area[0]
-                            temp_space = temp_area.spaces[0]
-                            break
-                    else:
-                        area.ui_type = macro.ui_type
             if command.startswith("bpy.ops."):
                 split = command.split("(")
                 command = "%s(\"%s\", %s" % (
@@ -560,16 +570,46 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             elif command.startswith("bpy.context."):
                 command = command.replace("bpy.context.", "context.")
 
-            with context.temp_override(window=temp_window, area=temp_area, screen=temp_screen, space_data=temp_space):
+            temp_window = context.window
+            temp_screen = context.screen
+            temp_area = context.area
+            temp_region = context.region
+            area_type = None
+            if temp_area and macro.ui_type and temp_area.ui_type != macro.ui_type:
+                windows = list(context.window_manager.windows)
+                windows.reverse()
+                for window in windows:
+                    if window.screen.areas[0].ui_type == macro.ui_type:
+                        temp_window = window
+                        temp_screen = temp_window.screen
+                        temp_area = temp_screen.area[0]
+                        break
+                else:
+                    area_type = temp_area.ui_type
+                    temp_area.ui_type = macro.ui_type
+            if temp_area:
+                for region in reversed(temp_area.regions):  # mostly "WINDOW" is at the end of the list
+                    if region.type != "WINDOW":
+                        continue
+                    temp_region = region
+
+            # Note: region need to be set when override area for temp_override
+            # for more detail see https://projects.blender.org/blender/blender/issues/106373
+            with context.temp_override(
+                    window=temp_window,
+                    screen=temp_screen,
+                    area=temp_area,
+                    region=temp_region
+            ):
                 if action.execution_mode == "GROUP":
                     exec(command)
                 else:
                     execute_individually(context, command)
 
-            if area and area_type:
-                area.ui_type = area_type
+            if temp_area and area_type:
+                temp_area.ui_type = area_type
 
-            if bpy.context and bpy.context.area:  # Refresh the context
+            if bpy.context and bpy.context.area:
                 bpy.context.area.tag_redraw()
 
         except Exception as err:
@@ -578,26 +618,6 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             if base_area and area_type:
                 base_area.ui_type = area_type
             return err
-
-
-@persistent
-def execute_render_init(dummy: bpy.types.Scene = None):
-    # https://docs.blender.org/api/current/bpy.app.handlers.html
-    """
-    execute macros, which are called after the event macro "Render Init"
-    use bpy.app.handlers and therefore uses a dummy variable for the scene object
-
-    Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
-    """
-    context = bpy.context
-    ActRec_pref = get_preferences(context)
-    while len(shared_data.render_init_macros):
-        action_type, action_id, start_id = shared_data.render_init_macros.pop(0)
-        action = getattr(ActRec_pref, action_type)[action_id]
-        if (start_index := action.macros.find(start_id)) < 0:
-            continue
-        play(context, action.macros[start_index:], action, action_type)
 
 
 @ persistent
@@ -617,7 +637,17 @@ def execute_render_complete(dummy=None):
         action = getattr(ActRec_pref, action_type)[action_id]
         if (start_index := action.macros.find(start_id)) < 0:
             continue
-        play(context, action.macros[start_index:], action, action_type)
+        bpy.app.timers.register(
+            functools.partial(
+                run_queued_macros,
+                None,
+                action_type,
+                action_id,
+                start_index
+            ),
+            first_interval=0.1
+        )
+        # play(context, action.macros[start_index:], action, action_type)
 
 
 def get_font_path() -> str:

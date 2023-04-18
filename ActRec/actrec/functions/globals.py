@@ -78,6 +78,7 @@ def import_global_from_dict(ActRec_pref: bpy.types.AddonPreferences, data: dict)
         ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
         data (dict): dict to use
     """
+    existing_category_len = len(ActRec_pref.categories)
     value = data.get('categories', None)
     if value:
         shared.apply_data_to_item(ActRec_pref.categories, value)
@@ -85,7 +86,7 @@ def import_global_from_dict(ActRec_pref: bpy.types.AddonPreferences, data: dict)
     if value:
         shared.apply_data_to_item(ActRec_pref.global_actions, value)
 
-    for i in range(len(ActRec_pref.categories)):
+    for i in range(existing_category_len, len(ActRec_pref.categories)):
         ui_functions.register_category(ActRec_pref, i)
     if len(ActRec_pref.categories):
         ActRec_pref.categories[0].selected = True

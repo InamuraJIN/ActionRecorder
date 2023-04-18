@@ -53,26 +53,33 @@ class AR_OT_category_interface(Operator):
     }
 
     modes = {
-        'VIEW_3D': functions.enum_items_to_enum_prop_list(
-            bpy.ops.object.mode_set.get_rna_type().bl_rna.properties[1].enum_items
+        'VIEW_3D': functions.get_categorized_view_3d_modes(
+            bpy.ops.object.mode_set.get_rna_type().bl_rna.properties[1].enum_items,
+            value_offset=1
         ),
         'IMAGE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceImageEditor.bl_rna.properties['ui_mode'].enum_items
+            bpy.types.SpaceImageEditor.bl_rna.properties['ui_mode'].enum_items,
+            value_offset=1
         ),
         'NODE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceNodeEditor.bl_rna.properties['texture_type'].enum_items
+            bpy.types.SpaceNodeEditor.bl_rna.properties['texture_type'].enum_items,
+            value_offset=1
         ),
         'SEQUENCE_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceSequenceEditor.bl_rna.properties['view_type'].enum_items
+            bpy.types.SpaceSequenceEditor.bl_rna.properties['view_type'].enum_items,
+            value_offset=1
         ),
         'CLIP_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceClipEditor.bl_rna.properties['mode'].enum_items
+            bpy.types.SpaceClipEditor.bl_rna.properties['mode'].enum_items,
+            value_offset=1
         ),
         'DOPESHEET_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceDopeSheetEditor.bl_rna.properties['ui_mode'].enum_items
+            bpy.types.SpaceDopeSheetEditor.bl_rna.properties['ui_mode'].enum_items,
+            value_offset=1
         ),
         'GRAPH_EDITOR': functions.enum_items_to_enum_prop_list(
-            bpy.types.SpaceGraphEditor.bl_rna.properties['mode'].enum_items
+            bpy.types.SpaceGraphEditor.bl_rna.properties['mode'].enum_items,
+            value_offset=1
         )
     }
 
@@ -115,9 +122,21 @@ class AR_OT_category_interface(Operator):
         Returns:
             list: modes of the area
         """
-        return AR_OT_category_interface.modes.get(
+        items = AR_OT_category_interface.modes.get(
             AR_OT_category_interface.areas_to_spaces_with_mode[self.area], []
         )
+        current_visible_modes = set()
+        for area, mode in AR_OT_category_interface.category_visibility:
+            if area != self.area:
+                continue
+            current_visible_modes.add(mode)
+        return [
+            (
+                identifier,
+                "%s (used)" % name if identifier in current_visible_modes else name,
+                *tail
+            ) for identifier, name, *tail in items
+        ]
 
     label: StringProperty(name="Category Label", default="Untitled")
     area: EnumProperty(
@@ -242,11 +261,16 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
     def execute(self, context: bpy.types.Context):
         ActRec_pref = get_preferences(context)
         category = ActRec_pref.categories[self.id]
-        category.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
+        category.label = functions.check_for_duplicates(
+            (c.label for c in ActRec_pref.categories if c.id != self.id),
+            self.label
+        )
         category.areas.clear()
         self.apply_visibility(
             ActRec_pref, AR_OT_category_interface.category_visibility, self.id
         )
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}

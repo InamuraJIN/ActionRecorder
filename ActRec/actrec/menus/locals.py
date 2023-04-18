@@ -49,6 +49,7 @@ def menu_draw(self, context: bpy.types.Context):
             layout.operator("ar.remove_ar_shortcut").id = button_operator.id
         else:
             layout.operator("ar.add_ar_shortcut").id = button_operator.id
+        layout.operator("ar.global_edit_description").id = button_operator.id
 
 
 class WM_MT_button_context(Menu):
@@ -72,6 +73,7 @@ internal_classes = [
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+
     for cls in internal_classes:
         with suppress(Exception):
             bpy.utils.register_class(cls)
@@ -82,9 +84,10 @@ def register():
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
+
+    with suppress(Exception):
+        bpy.types.WM_MT_button_context.remove(menu_draw)
     for cls in internal_classes:
         with suppress(Exception):
             bpy.utils.unregister_class(cls)
-    with suppress(Exception):
-        bpy.types.WM_MT_button_context.remove(menu_draw)
 # endregion

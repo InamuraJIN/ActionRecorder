@@ -186,6 +186,7 @@ def compare_value(str_value: str, value) -> bool:
         bool: equal compare result
     """
     return (isinstance(value, float) and compare_fstr_float(str_value, value)
+            or isinstance(value, set) and str_value == str(value)
             or isinstance(value, bool) and str_value == str(value)
             or isinstance(value, int) and str_value == str(value)
             or isinstance(value, str) and str_value[1: -1] == value)

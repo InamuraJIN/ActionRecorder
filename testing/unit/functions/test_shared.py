@@ -94,7 +94,8 @@ def clear_load_global(request):
              ],
              "icon": 127,
              "icon_name": "NODE_MATERIAL",
-             "execution_mode": "GROUP"
+             "execution_mode": "GROUP",
+             "description": "Play this Action Button"
          })],
     indirect=["clear_load_global"]
 )

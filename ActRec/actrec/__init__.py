@@ -34,6 +34,7 @@ def on_load(dummy=None):
     log.logger.info("Start: Load ActRec Data")
     context = bpy.context
     ActRec_pref = get_preferences(context)
+    ActRec_pref.operators_list_length = 0
     # load local actions
     if bpy.data.filepath == "":
         try:
@@ -62,8 +63,8 @@ def on_load(dummy=None):
     functions.load_local_action(ActRec_pref, json.loads(context.scene.ar.local))
 
     # update paths
-    ActRec_pref.storage_path
-    ActRec_pref.icon_path
+    ActRec_pref.storage_path = ActRec_pref.storage_path
+    ActRec_pref.icon_path = ActRec_pref.icon_path
 
     functions.load(ActRec_pref)
     icon_manager.load_icons(ActRec_pref)
@@ -85,7 +86,6 @@ def register():
     keymap.register()
 
     handlers = bpy.app.handlers
-    handlers.render_init.append(functions.execute_render_init)
     handlers.render_complete.append(functions.execute_render_complete)
     handlers.depsgraph_update_post.append(functions.track_scene)
     handlers.load_post.append(on_load)
@@ -110,7 +110,6 @@ def unregister():
     ui_functions.unregister()
 
     handlers = bpy.app.handlers
-    handlers.render_init.remove(functions.execute_render_init)
     handlers.render_complete.remove(functions.execute_render_complete)
     handlers.depsgraph_update_post.remove(functions.track_scene)
     handlers.load_post.remove(on_load)

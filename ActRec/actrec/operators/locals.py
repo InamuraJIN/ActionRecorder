@@ -132,7 +132,10 @@ class AR_OT_local_remove(shared.Id_based, Operator):
     def description(cls, context, properties):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, "", -1)
-        return "Remove the selected Action\nAction: %s" % (ActRec_pref.local_actions[index].label)
+        label = "NONE"
+        if len(ActRec_pref.local_actions):
+            label = ActRec_pref.local_actions[index].label
+        return "Remove the selected Action\nAction: %s" % (label)
 
     @classmethod
     def poll(cls, context):
@@ -182,6 +185,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index - 1)
+            ActRec_pref.active_local_action_index -= 1
         functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}
@@ -218,6 +222,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
             return {"CANCELLED"}
         else:
             ActRec_pref.local_actions.move(index, index + 1)
+            ActRec_pref.active_local_action_index += 1
         functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         return {"FINISHED"}

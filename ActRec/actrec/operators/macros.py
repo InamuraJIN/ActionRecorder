@@ -9,7 +9,7 @@ from typing import Optional
 
 # blender modules
 import bpy
-from bpy.types import Operator, PointerProperty
+from bpy.types import Operator, PointerProperty, UILayout
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty, FloatProperty, BoolProperty
 
 # relative imports
@@ -157,6 +157,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                 macro = action.macros.add()
                 macro.label = "<Empty>"
                 macro.command = ""
+                action.active_macro_index = -1
                 bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -174,17 +175,17 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     types = [
-        ('Timer', 'Timer', 'Wait the chosen Time and continue with the Macros', 'SORTTIME', 0),
+        ('Timer', 'Timer', 'Wait the chosen Time and continue with the next macros', 'SORTTIME', 0),
         ('Render Complete', 'Render Complete',
-         'Waits for the render process to be completed and runs all macros below', 'IMAGE_RGB_ALPHA', 1),
-        ('Render Init', 'Render Init', 'Runs all macros below before the rendering process starts', 'IMAGE_RGB', 2),
+         '''Waits for the render process to be completed and execute the next macros\n
+         WARNING: Macros executed after this might crash Blender''', 'IMAGE_RGB_ALPHA', 1),
         ('Loop', 'Loop',
-         """Loop the containing Macros until the Statement is False \n
-         Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped""",
+         '''Add before the macro to Loop\n
+         Note: The Loop need the EndLoop Event to work, otherwise the Event get skipped''',
          'FILE_REFRESH', 3),
         ('EndLoop', 'EndLoop', 'Ending the latest called loop, when no Loop Event was called this Event get skipped',
          'FILE_REFRESH', 4),
-        ('Clipboard', 'Clipboard', 'Adding a command with the data from the Clipboard', 'CONSOLE', 5),
+        ('Clipboard', 'Clipboard', 'Paste and add the macro currently on the clipboard', 'CONSOLE', 5),
         ('Select Object', 'Select Object', 'Select the chosen objects', 'OBJECT_DATA', 7),
         ('Run Script', 'Run Script',
          'Choose a Text file that gets saved into the macro and executed', 'FILE_SCRIPT', 8)]
@@ -745,7 +746,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     edit: BoolProperty(default=False)
     multiline_asked: BoolProperty(default=False)
     clear_operator: BoolProperty(
-        name="Clear Operator Command",
+        name="Clear Operator",
         description="Delete the parameters of an operator command. Otherwise the complete command is cleared",
         get=lambda x: False,
         set=set_clear_operator
@@ -761,6 +762,31 @@ class AR_OT_macro_edit(Macro_based, Operator):
     font = None
     time = 0
     is_operator = False
+
+    def items_ui_type(self, context: bpy.types.Context):
+        enum_items = [("NONE", "None", "not specified, will be using the active type", "BLANK1", 0)]
+        if context is None or context.area is None:
+            return enum_items
+        area = context.area
+        try:
+            area.ui_type = ""
+        except TypeError as err:
+            error_items = eval(str(err).split('enum "" not found in ')[1])
+            enum_items.extend(
+                (item,
+                 UILayout.enum_item_name(area, 'ui_type', item),
+                 UILayout.enum_item_description(area, 'ui_type', item),
+                 UILayout.enum_item_icon(area, 'ui_type', item),
+                 i
+                 )for i, item in enumerate(error_items, 1)
+            )
+        return enum_items
+    ui_type: EnumProperty(
+        items=items_ui_type,
+        default=0,
+        name="Editor Type",
+        description="Current editor type for this area"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -818,7 +844,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
                             type=data['Type'],
                             macro_index=self.index,
                             statement_type='repeat',
-                            count=count
+                            repeat_count=count
                         )
                     else:
                         bpy.ops.ar.macro_add_event(
@@ -826,7 +852,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
                             type=data['Type'],
                             macro_index=self.index,
                             statement_type='repeat',
-                            count=data["RepeatCount"]
+                            repeat_count=data["RepeatCount"]
                         )
                 elif data['Type'] == 'Select Object':
                     bpy.ops.ar.macro_add_event(
@@ -855,6 +881,10 @@ class AR_OT_macro_edit(Macro_based, Operator):
             self.last_label = ActRec_pref.last_macro_label
             self.last_command = ActRec_pref.last_macro_command
             self.is_operator = self.command.startswith("bpy.ops")
+            try:
+                self.ui_type = macro.ui_type
+            except TypeError:
+                self.ui_type = "NONE"
             return context.window_manager.invoke_props_dialog(self, width=self.width)
         else:
             action.active_macro_index = index
@@ -879,9 +909,10 @@ class AR_OT_macro_edit(Macro_based, Operator):
             col.prop(line, 'text', text="")
 
         row = layout.row()
+        action = ActRec_pref.local_actions[self.action_index]
+        macro = action.macros[self.index]
+        row.prop(self, 'ui_type', text="")
         if self.is_operator:
-            action = ActRec_pref.local_actions[self.action_index]
-            macro = action.macros[self.index]
             row.prop(macro, 'operator_execution_context', text="")
             row.prop(self, 'clear_operator', toggle=True)
         row.prop(self, 'use_last_command', toggle=True)
@@ -901,6 +932,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         else:
             macro.label = self.label
             macro.command = self.command
+        macro.ui_type = "" if self.ui_type == "NONE" else self.ui_type
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
@@ -990,6 +1022,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 if return_value:
                     return return_value
             else:
+                self.report({'WARNING'}, "Couldn't copy this property")
                 return {"CANCELLED"}
 
         button_operator = getattr(context, "button_operator", None)
@@ -1053,6 +1086,8 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 try:
                     attr = "%s.%s" % (attr, button_pointer.path_from_id())
                 except ValueError:
+                    if base_object is None:
+                        return
                     pointer_class = button_pointer.__class__
                     for prop in base_object.bl_rna.properties:
                         if isinstance(getattr(base_object, prop.identifier), pointer_class):
