@@ -134,6 +134,8 @@ def property_to_python(property: bpy.types.Property, exclude: list = [], depth: 
         else:
             # PointerProperty
             return get_pointer_property_as_dict(property, exclude, depth)
+    if isinstance(property, set):  # Catch EnumProperty with EnumFlag
+        property = list(property)
     return property
 
 
@@ -153,9 +155,11 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
     if isinstance(data, list):
         for element in data:
             if key:
-                subitem = getattr(property, key).add()
+                subitem = getattr(property, key)
             else:
-                subitem = property.add()
+                subitem = property
+            if not isinstance(subitem, set):  # Exclude EnumProperty with EnumFlag
+                subitem.add()
             apply_data_to_item(subitem, element)
     elif isinstance(data, dict):
         for key, value in data.items():
