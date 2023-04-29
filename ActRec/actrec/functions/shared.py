@@ -159,7 +159,7 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
             else:
                 subitem = property
             if not isinstance(subitem, set):  # Exclude EnumProperty with EnumFlag
-                subitem.add()
+                subitem = subitem.add()
             apply_data_to_item(subitem, element)
     elif isinstance(data, dict):
         for key, value in data.items():
