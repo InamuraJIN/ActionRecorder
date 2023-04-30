@@ -52,7 +52,7 @@ def check_for_duplicates(check_list: list, name: str, num: int = 1) -> str:
 def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: list, depth: int) -> dict:
     """
     converts a Blender PointerProperty to a python dict
-    (used internal for property_to_python, pls use property_to_python to convert any Ble)
+    (used internal for property_to_python, pls use property_to_python to convert any Blender Property)
 
     Args:
         property (bpy.types.PointerProperty): Blender Property to convert
