@@ -153,14 +153,16 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
         key (str, optional): used to apply a single value of a given Blender Property dynamic. Defaults to "".
     """
     if isinstance(data, list):
+        item = property
+        if key:
+            item = getattr(property, key)
+            if isinstance(item, set):  # EnumProperty with EnumFlag
+                setattr(property, key, set(data))
+                return
+        if isinstance(item, set):  # EnumProperty with EnumFlag but no key
+            return
         for element in data:
-            if key:
-                subitem = getattr(property, key)
-            else:
-                subitem = property
-            if not isinstance(subitem, set):  # Exclude EnumProperty with EnumFlag
-                subitem = subitem.add()
-            apply_data_to_item(subitem, element)
+            apply_data_to_item(item.add(), element)
     elif isinstance(data, dict):
         for key, value in data.items():
             apply_data_to_item(property, value, key)

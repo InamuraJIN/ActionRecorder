@@ -48,6 +48,7 @@ from .shared import (
     insert_to_collection,
     swap_collection_items,
     property_to_python,
+    apply_data_to_item,
     get_name_of_command,
     update_command,
     play,
