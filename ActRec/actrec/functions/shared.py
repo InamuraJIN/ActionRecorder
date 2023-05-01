@@ -159,11 +159,16 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
             if isinstance(item, set):  # EnumProperty with EnumFlag
                 setattr(property, key, set(data))
                 return
-        if isinstance(item, set):  # EnumProperty with EnumFlag but no key
+            elif isinstance(item, bpy.types.bpy_prop_array):  # ArrayProperty
+                setattr(property, key, data)
+                return
+        if isinstance(item, (set, bpy.types.bpy_prop_array)):  # EnumProperty with EnumFlag but no key
             return
         for element in data:
             apply_data_to_item(item.add(), element)
     elif isinstance(data, dict):
+        if key:
+            property = getattr(property, key)
         for key, value in data.items():
             apply_data_to_item(property, value, key)
     elif hasattr(property, key):
