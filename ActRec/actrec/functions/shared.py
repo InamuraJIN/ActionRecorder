@@ -593,7 +593,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     if window.screen.areas[0].ui_type == macro.ui_type:
                         temp_window = window
                         temp_screen = temp_window.screen
-                        temp_area = temp_screen.area[0]
+                        temp_area = temp_screen.areas[0]
                         break
                 else:
                     area_type = temp_area.ui_type
@@ -692,6 +692,41 @@ def split_and_keep(sep: str, text: str) -> list[str]:
     for s in sep:
         text = text.replace(s, s + p)
     return text.split(p)
+
+
+def get_attribute(obj: object, name: str):
+    """
+    Call getattr to get attribute from an object but it can reach attributes of attributes
+    E.g.: x.y.z with the input get_attribute(x, 'y.z')
+
+    Args:
+        obj (object): object to get attributes from
+        name (str): attribute of this object. Can be of format 'attribute.subattribute.subsub.' etc.
+
+    Returns:
+        Any: attribute of the object
+    """
+    for arg_name in name.split("."):
+        obj = getattr(obj, arg_name)
+    return obj
+
+
+def get_attribute_default(obj: object, name: str, default: None):
+    """
+    Call getattr to get attribute from an object but it can reach attributes of attributes
+    E.g.: x.y.z with the input get_attribute(x, 'y.z')
+
+    Args:
+        obj (object): object to get attributes from
+        name (str): attribute of this object. Can be of format 'attribute.subattribute.subsub.' etc.
+        default (None): returned when one attribute doesn't exist
+
+    Returns:
+        Any: attribute of the object
+    """
+    for arg_name in name.split("."):
+        obj = getattr(obj, arg_name, default)
+    return obj
 
 
 def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: str = " ,") -> list[str]:

@@ -960,7 +960,8 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         bpy.types.Object: "active_object",
         bpy.types.Space: "space_data",
         bpy.types.Area: "area",
-        bpy.types.Window: "window"
+        bpy.types.Window: "window",
+        bpy.types.Mesh: "active_object.data"
     }
 
     @classmethod
@@ -993,8 +994,8 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                     if attr is not None:
                         break
 
-            if attr is not None and base_object != getattr(context, attr):
-                base_object = getattr(context, attr)
+            if attr is not None and base_object != functions.get_attribute(context, attr):
+                base_object = functions.get_attribute(context, attr)
                 object_class = base_object.__class__
 
             if attr is not None:
@@ -1059,7 +1060,7 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         Returns:
             Optional[set[str]]: on success: {"FINISHED"}
         """
-        if isinstance(getattr(context, attr), object_class):
+        if isinstance(functions.get_attribute(context, attr), object_class):
             value = functions.convert_value_to_python(getattr(button_pointer, button_prop.identifier))
             if self.copy_single and bpy.ops.ui.copy_data_path_button.poll():
                 clipboard = context.window_manager.clipboard
@@ -1090,7 +1091,9 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                         return
                     pointer_class = button_pointer.__class__
                     for prop in base_object.bl_rna.properties:
-                        if isinstance(getattr(base_object, prop.identifier), pointer_class):
+                        prop_object = getattr(base_object, prop.identifier)
+                        if (isinstance(prop_object, pointer_class)
+                                or (hasattr(prop_object, 'bl_rna') and isinstance(prop_object.bl_rna, pointer_class))):
                             attr = "%s.%s" % (attr, prop.identifier)
                             break
 
