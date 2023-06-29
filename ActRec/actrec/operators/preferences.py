@@ -29,8 +29,8 @@ class AR_OT_preferences_directory_selector(Operator, ExportHelper):
     use_filter_folder = True
     filepath: StringProperty(name="File Path", maxlen=0, default=" ")
 
-    preference_name: StringProperty()
-    path_extension: StringProperty()
+    preference_name: StringProperty(options={'HIDDEN'})
+    path_extension: StringProperty(options={'HIDDEN'})
 
     def execute(self, context):
         ActRec_pref = get_preferences(bpy.context)
@@ -50,8 +50,8 @@ class AR_OT_preferences_recover_directory(Operator):
     bl_description = "Recover the standard Storage directory"
     bl_options = {'REGISTER', 'INTERNAL'}
 
-    preference_name: StringProperty()
-    path_extension: StringProperty()
+    preference_name: StringProperty(options={'HIDDEN'})
+    path_extension: StringProperty(options={'HIDDEN'})
 
     def execute(self, context):
         ActRec_pref = get_preferences(context)
