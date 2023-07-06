@@ -1,3 +1,7 @@
+# LINK
+ - [Action Recorder](#action-recorder)
+ - [Add-ons Explained](#add-ons-explained)
+ - 
 # PLEASE!
 Our workload has made it difficult for us to update and fix bugs<br>
 New programmers are expected to be created!<br>
