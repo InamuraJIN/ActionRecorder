@@ -320,7 +320,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
                 icon='FILEBROWSER'
             )
             ops.preference_name = "storage_path"
-            ops.path_extension = ""
+            ops.path_extension = "Storage.json"
 
             ops = row.operator(
                 "ar.preferences_recover_directory",
