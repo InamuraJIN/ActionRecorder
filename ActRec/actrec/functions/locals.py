@@ -70,7 +70,7 @@ def local_action_to_text(action: 'AR_local_actions', text_name: str = None) -> N
 
 def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = None) -> None:
     """
-    remove the local action from the TextEditro
+    remove the local action from the TextEditor
 
     Args:
         action (AR_local_actions): action to remove

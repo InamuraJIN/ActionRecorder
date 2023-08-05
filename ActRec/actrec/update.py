@@ -318,7 +318,7 @@ def no_stream_download_version_file(module_name: str) -> None:
 
 def draw_update_button(layout: UILayout, ActRec_pref: AddonPreferences) -> None:
     """
-    draws the update button and show a progressbar when files get downloaded
+    draws the update button and show a progress bar when files get downloaded
 
     Args:
         layout (UILayout): context where to draw the button
