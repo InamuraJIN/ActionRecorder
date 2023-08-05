@@ -3,26 +3,20 @@
 from typing import Optional
 
 # blender modules
-import bpy
-from bpy.app.handlers import persistent
-
-# relative imports
-from . import globals, shared
-from .. import shared_data
-from .shared import get_preferences
+from bpy.types import AddonPreferences
 # endregion
 
 
 # region functions
 
 
-def get_category_id(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int) -> str:
+def get_category_id(ActRec_pref: AddonPreferences, id: str, index: int) -> str:
     """
     get category id based on id (check for existence) or index
     fallback to selected category if no match occurred
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         id (str): id to check
         index (int): index of the category
 
@@ -39,12 +33,12 @@ def get_category_id(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int
         return id
 
 
-def read_category_visibility(ActRec_pref: bpy.types.AddonPreferences, id: str) -> Optional[list]:
+def read_category_visibility(ActRec_pref: AddonPreferences, id: str) -> Optional[list]:
     """
     get all areas and modes where the category with the given id is visible
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         id (str): id of the category
 
     Returns:

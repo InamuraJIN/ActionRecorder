@@ -1,7 +1,7 @@
 # region Imports
 # blender modules
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, Context
 
 # relative imports
 from .. import config
@@ -33,7 +33,7 @@ def panel_factory(space_type: str):
         bl_idname = "AR_PT_local_%s" % space_type
         bl_order = 0
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             if ActRec_pref.update:
@@ -63,11 +63,11 @@ def panel_factory(space_type: str):
         bl_order = 1
 
         @classmethod
-        def poll(cls, context):
+        def poll(cls, context: Context) -> bool:
             ActRec_pref = get_preferences(context)
             return len(ActRec_pref.local_actions)
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             box = layout.box()
@@ -111,14 +111,14 @@ def panel_factory(space_type: str):
         bl_idname = "AR_PT_global_%s" % space_type
         bl_order = 2
 
-        def draw_header(self, context):
+        def draw_header(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             row = layout.row(align=True)
             row.prop(ActRec_pref, 'global_hide_menu',
                      icon='COLLAPSEMENU', text="", emboss=True)
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             if not ActRec_pref.is_loaded:  # loads the actions if not already done
                 ActRec_pref.is_loaded = True
@@ -157,11 +157,11 @@ def panel_factory(space_type: str):
         bl_options = {'DEFAULT_CLOSED'}
         bl_order = 3
 
-        def draw_header(self, context):
+        def draw_header(self, context: Context) -> None:
             layout = self.layout
             layout.label(icon='INFO')
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             layout = self.layout
             ActRec_pref = get_preferences(context)
             layout.operator('wm.url_open', text="Manual",
@@ -199,7 +199,7 @@ def panel_factory(space_type: str):
         bl_options = {'DEFAULT_CLOSED'}
         bl_order = 4
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             col = layout.column()

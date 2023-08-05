@@ -6,7 +6,7 @@ import importlib
 # blender modules
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
-from bpy.types import AddonPreferences
+from bpy.types import AddonPreferences, Context
 import rna_keymap_ui
 
 # relative imports
@@ -21,13 +21,13 @@ from .functions.shared import get_preferences
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
 
-    def update_is_loaded(self, context: bpy.types.Context):
+    def update_is_loaded(self, context: Context) -> None:
         context.scene.name = context.scene.name
 
     def get_is_loaded(self) -> bool:
         return self.get("is_loaded", False) and shared_data.data_loaded
 
-    def set_is_loaded(self, value):
+    def set_is_loaded(self, value: bool) -> None:
         self["is_loaded"] = value
 
     is_loaded: BoolProperty(
@@ -84,7 +84,7 @@ class AR_preferences(AddonPreferences):
                 os.makedirs(path, exist_ok=True)
             return path
 
-    def set_icon_path(self, origin_path: str):
+    def set_icon_path(self, origin_path: str) -> None:
         """setter of icon_path
         creates new folder if needed
 
@@ -173,14 +173,14 @@ class AR_preferences(AddonPreferences):
     )
     local_record_macros: BoolProperty(name="Record Macros", default=False)
 
-    def hide_show_local_in_texteditor(self, context: bpy.types.Context):
+    def hide_show_local_in_texteditor(self, context: Context):
         """
         update function of hide_local_text
         gets called every time the value of the hide_local_text is changed
         hides/show the local action as text files in the texteditor of Blender
 
         Args:
-            context (bpy.types.Context): unused
+            context (Context): unused
         """
         if self.hide_local_text:
             for text in bpy.data.texts:
@@ -249,7 +249,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             self['storage_path'] = path
             return path
 
-    def set_storage_path(self, origin_path: str):
+    def set_storage_path(self, origin_path: str) -> None:
         """
         setter of storage_path
 
@@ -284,12 +284,12 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
     selected_category: StringProperty(get=get_selected_category, default='')
     show_all_categories: BoolProperty(name="Show All Categories", default=False)
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         """
         draws the addon preferences
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
         """
         # REFACTOR indentation ?
         ActRec_pref = get_preferences(context)

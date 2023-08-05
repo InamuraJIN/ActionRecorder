@@ -7,6 +7,7 @@ import mathutils
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
+from bpy.types import Operator, Scene, Context
 
 # relative imports
 from . import shared
@@ -66,12 +67,12 @@ def convert_value_to_python(value) -> tuple:
     return value
 
 
-def executed_operator_to_dict(ops: bpy.types.Operator) -> dict:
+def executed_operator_to_dict(ops: Operator) -> dict:
     """
     converts an executed operator properties to a dictionary
 
     Args:
-        ops (bpy.types.Operator): executed operator to extract data from
+        ops (Operator): executed operator to extract data from
 
     Returns:
         dict: properties of operator
@@ -90,12 +91,12 @@ def executed_operator_to_dict(ops: bpy.types.Operator) -> dict:
 
 
 @persistent
-def track_scene(dummy: bpy.types.Scene = None):
+def track_scene(dummy: Scene = None) -> None:
     """
     tracks the scene to have more information for macro creation
 
     Args:
-        dummy (bpy.types.Scene, optional): unused. Defaults to None.
+        dummy (Scene, optional): unused. Defaults to None.
     """
     # REFACTOR indentation
     context = bpy.context
@@ -136,12 +137,12 @@ def track_scene(dummy: bpy.types.Scene = None):
         ActRec_pref.operators_list_length = 0
 
 
-def get_report_text(context: bpy.types.Context) -> str:
+def get_report_text(context: Context) -> str:
     """
     extract all reports from Blender
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
 
     Returns:
         str: report text
@@ -438,17 +439,17 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
 
 
 def add_report_as_macro(
-        context: bpy.types.Context,
+        context: Context,
         ActRec_pref: bpy.types.AddonPreferences,
         action: 'AR_local_action',
         report: str,
         error_reports: list,
-        ui_type: str = ""):
+        ui_type: str = "") -> None:
     """
     add a report as a new macro to the given action
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
         action (AR_local_action): action to add macro to
         report (str): report to add as macro
@@ -482,12 +483,12 @@ def split_context_report(report: str) -> Tuple[list, str, str]:
     return split[:-1], split[-1], value  # source_path, attribute, value
 
 
-def get_id_object(context: bpy.types.Context, source_path: list, attribute: str) -> str:
+def get_id_object(context: Context, source_path: list, attribute: str) -> str:
     """
     get the id property as Blender object from the given source path and attribute
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         source_path (list): path from the context (excluded) to the attribute (excluded)
         attribute (str): attribute for the source path
 
@@ -558,12 +559,12 @@ def get_copy_of_object(data: dict, obj: 'blender_object', attribute: str, depth=
     return data
 
 
-def create_object_copy(context: bpy.types.Context, source_path: list, attribute: str) -> dict:
+def create_object_copy(context: Context, source_path: list, attribute: str) -> dict:
     """
     creates a copy of a given object based on it's source path and attribute from the context
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         source_path (list): path from the context (excluded) to the attribute (excluded)
         attribute (str): attribute for the source path
 
@@ -606,13 +607,13 @@ def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: l
     return
 
 
-def improve_context_report(context: bpy.types.Context, copy_dict: dict, source_path: list, attribute: str, value: str
+def improve_context_report(context: Context, copy_dict: dict, source_path: list, attribute: str, value: str
                            ) -> str:
     """
     improve the context report(<source_path>.<attribute>) with the active context to get accurate results
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         copy_dict (dict): copy of an blender object
         source_path (list): path from the context (excluded) to the attribute (excluded)
         attribute (str): attribute for the source path
@@ -707,13 +708,17 @@ def evaluate_operator(op_type: str, op_name: str, op_values: dict) -> bool:
 
 
 def improve_operator_report(
-        context: bpy.types.Context, op_type: str, op_name: str, op_values: dict, op_evaluation: bool) -> str:
+        context: Context,
+        op_type: str,
+        op_name: str,
+        op_values: dict,
+        op_evaluation: bool) -> str:
     """
     improve the operator if needed
     bpy.ops.<type>.<name>(values)
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         op_type (str): type of the operator
         op_name (str): name of the operator
         op_values (dict): values of the operator

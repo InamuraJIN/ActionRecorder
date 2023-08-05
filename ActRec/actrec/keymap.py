@@ -5,6 +5,9 @@ import json
 
 # blender modules
 import bpy
+from bpy.types import KeyMapItems
+
+# relative imports
 from .log import logger
 # endregion
 
@@ -17,7 +20,7 @@ keymap_path = os.path.join(
 # region functions
 
 
-def load_action_keymap(items: bpy.types.KeyMapItems):
+def load_action_keymap(items: KeyMapItems) -> None:
     """
     reads the global action keymap from file located inside the addon folder.
 
@@ -25,7 +28,7 @@ def load_action_keymap(items: bpy.types.KeyMapItems):
     and therefore needed to be known while Blender register.
 
     Args:
-        items (bpy.types.KeyMapItems): "Keymap items to register loaded keymap to"
+        items (KeyMapItems): "Keymap items to register loaded keymap to"
     """
     if not os.path.exists(keymap_path):
         return
@@ -39,13 +42,13 @@ def load_action_keymap(items: bpy.types.KeyMapItems):
     load_action_keymap_data(data, items)
 
 
-def load_action_keymap_data(data: list, items: bpy.types.KeyMapItems):
+def load_action_keymap_data(data: list, items: KeyMapItems) -> None:
     """
     applies action keymap data in JSON format to Blender
 
     Args:
         data (dict): Keymap in JSON Format
-        items (bpy.types.KeyMapItems): Keymap items to register data to
+        items (KeyMapItems): Keymap items to register data to
     """
     if not data:
         return
@@ -66,12 +69,12 @@ def load_action_keymap_data(data: list, items: bpy.types.KeyMapItems):
         kmi.map_type = key['map_type']
 
 
-def action_keymap_to_data(items: bpy.types.KeyMapItems) -> dict:
+def action_keymap_to_data(items: KeyMapItems) -> dict:
     """
     converts an global action keymap into a dict of JSON Format
 
     Args:
-        items (bpy.types.KeyMapItems): Keymap items to convert to dict
+        items (KeyMapItems): Keymap items to convert to dict
 
     Returns:
         dict: JSON Format
@@ -94,7 +97,7 @@ def action_keymap_to_data(items: bpy.types.KeyMapItems) -> dict:
     }
 
 
-def save_action_keymap(items: bpy.types.KeyMapItems):
+def save_action_keymap(items: KeyMapItems) -> None:
     """
     writes the global action keymap to a file located inside the addon folder.
 
@@ -102,7 +105,7 @@ def save_action_keymap(items: bpy.types.KeyMapItems):
     and therefore needed to be known while Blender register.
 
     Args:
-        items (bpy.types.KeyMapItems): "Keymap items to unregister loaded global keymaps from"
+        items (KeyMapItems): "Keymap items to unregister loaded global keymaps from"
     """
     data = action_keymap_to_data(items)
     with open(keymap_path, 'w', encoding='utf-8') as storage_file:

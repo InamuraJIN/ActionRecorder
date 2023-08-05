@@ -7,7 +7,7 @@ import bpy
 # region UI functions
 
 
-def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str):
+def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str) -> None:
     """
     draws row of global action button.
 
@@ -38,7 +38,7 @@ def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonP
     row.prop(action, 'execution_mode', text="", icon_only=True)
 
 
-def draw_simple_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str):
+def draw_simple_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str) -> None:
     """
     draws row of global action button but only the operator
 

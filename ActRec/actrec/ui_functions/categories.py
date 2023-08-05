@@ -4,7 +4,7 @@ from contextlib import suppress
 
 # blender modules
 import bpy
-from bpy.types import Panel, Menu
+from bpy.types import Panel, Menu, Context, AddonPreferences
 
 # relative imports
 from . import globals
@@ -23,15 +23,16 @@ space_mode_attribute = {
 }
 
 
-def category_visible(ActRec_pref: bpy.types.AddonPreferences,
-                     context: bpy.types.Context,
-                     category: 'AR_category') -> bool:
+def category_visible(
+        ActRec_pref: AddonPreferences,
+        context: Context,
+        category: 'AR_category') -> bool:
     """
     checks if category is visible based on the given context
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        context (bpy.types.Context): active blender context
+        ActRec_pref (AddonPreferences): preferences of this addon
+        context (Context): active blender context
         category (AR_category): category to check
 
     Returns:
@@ -59,13 +60,13 @@ def category_visible(ActRec_pref: bpy.types.AddonPreferences,
     return False
 
 
-def get_visible_categories(ActRec_pref: bpy.types.AddonPreferences, context: bpy.types.Context) -> list['AR_category']:
+def get_visible_categories(ActRec_pref: AddonPreferences, context: Context) -> list['AR_category']:
     """
     get list of all visible categories
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        context (bpy.types.Context): active blender context
+        ActRec_pref (AddonPreferences): preferences of this addon
+        context (Context): active blender context
 
     Returns:
         list[AR_category]: list of all visible categories
@@ -73,29 +74,32 @@ def get_visible_categories(ActRec_pref: bpy.types.AddonPreferences, context: bpy
     return [category for category in ActRec_pref.categories if category_visible(ActRec_pref, context, category)]
 
 
-def register_category(ActRec_pref: bpy.types.AddonPreferences, index: int):
+def register_category(ActRec_pref: AddonPreferences, index: int) -> None:
     """
     register a category based on the index in all spaces (panels.ui_space_types)
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         index (int): index of category to register
     """
     register_unregister_category(index)
 
 
-def unregister_category(ActRec_pref: bpy.types.AddonPreferences, index: int):
+def unregister_category(ActRec_pref: AddonPreferences, index: int) -> None:
     """
     unregister a category based on the index in all spaces (panels.ui_space_types)
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         index (int): index of category to unregister
     """
     register_unregister_category(index, register=False)
 
 
-def register_unregister_category(index: int, space_types: list[str] = panels.ui_space_types, register: bool = True):
+def register_unregister_category(
+        index: int,
+        space_types: list[str] = panels.ui_space_types,
+        register: bool = True) -> None:
     """
     register or unregister a single category in all given spaces
 
@@ -117,12 +121,12 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
             bl_options = {"INSTANCED", "DEFAULT_CLOSED"}
 
             @classmethod
-            def poll(self, context):
+            def poll(self, context: Context) -> bool:
                 ActRec_pref = get_preferences(context)
                 index = int(self.bl_idname.split("_")[3])
                 return index < len(get_visible_categories(ActRec_pref, context))
 
-            def draw_header(self, context):
+            def draw_header(self, context: Context) -> None:
                 ActRec_pref = get_preferences(context)
                 index = int(self.bl_idname.split("_")[3])
                 category = get_visible_categories(ActRec_pref, context)[index]
@@ -132,7 +136,7 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
                          icon='LAYER_ACTIVE' if category.selected else 'LAYER_USED', emboss=False)
                 row.label(text=category.label)
 
-            def draw(self, context):
+            def draw(self, context: Context) -> None:
                 ActRec_pref = get_preferences(context)
                 index = int(self.bl_idname.split("_")[3])
                 category = get_visible_categories(ActRec_pref, context)[index]
@@ -160,12 +164,12 @@ def register_unregister_category(index: int, space_types: list[str] = panels.ui_
         bl_label = "Category"
 
         @classmethod
-        def poll(self, context):
+        def poll(self, context: Context) -> bool:
             ActRec_pref = get_preferences(context)
             index = int(self.bl_idname.split("_")[3])
             return index < len(get_visible_categories(ActRec_pref, context))
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             index = int(self.bl_idname.split("_")[3])
             category = get_visible_categories(ActRec_pref, context)[index]

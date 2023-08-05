@@ -16,6 +16,7 @@ import traceback
 import bpy
 import bl_math
 from bpy.app.handlers import persistent
+from bpy.types import PointerProperty, Property, CollectionProperty, Context, AddonPreferences
 
 # relative imports
 from ..log import logger
@@ -49,13 +50,13 @@ def check_for_duplicates(check_list: list, name: str, num: int = 1) -> str:
     return name
 
 
-def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: list, depth: int) -> dict:
+def get_pointer_property_as_dict(property: PointerProperty, exclude: list, depth: int) -> dict:
     """
     converts a Blender PointerProperty to a python dict
     (used internal for property_to_python, pls use property_to_python to convert any Blender Property)
 
     Args:
-        property (bpy.types.PointerProperty): Blender Property to convert
+        property (PointerProperty): Blender Property to convert
         exclude (list):
             property values to exclude, to exclude deeper values use form <value>.<sub-value>
             E.g. for AR_global_actions "actions.name" to excluded the names from the actions
@@ -87,12 +88,12 @@ def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: l
     return data
 
 
-def property_to_python(property: bpy.types.Property, exclude: list = [], depth: int = 5) -> Union[list, dict, str]:
+def property_to_python(property: Property, exclude: list = [], depth: int = 5) -> Union[list, dict, str]:
     """
     converts any Blender Property to a python object, only needed for Property with complex structure
 
     Args:
-        property (bpy.types.Property): Blender Property to convert
+        property (Property): Blender Property to convert
         exclude (list, optional):
             property values to exclude, to exclude deeper values use form <value>.<sub-value>
             E.g. for AR_global_actions "actions.name" to excluded the names from the actions
@@ -139,7 +140,7 @@ def property_to_python(property: bpy.types.Property, exclude: list = [], depth: 
     return property
 
 
-def apply_data_to_item(property: bpy.types.Property, data, key=""):
+def apply_data_to_item(property: Property, data, key="") -> None:
     """
     apply given python data to a property,
     used to convert python data (from property_to_python) to Blender Property.
@@ -148,7 +149,7 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
     - single data (like int, string, etc.) with a given key
 
     Args:
-        property (bpy.types.Property): Blender Property to apply the data to
+        property (Property): Blender Property to apply the data to
         data (any): data to apply
         key (str, optional): used to apply a single value of a given Blender Property dynamic. Defaults to "".
     """
@@ -176,25 +177,25 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
             setattr(property, key, data)
 
 
-def add_data_to_collection(collection: bpy.types.CollectionProperty, data: dict):
+def add_data_to_collection(collection: CollectionProperty, data: dict) -> None:
     """
     creates new collection element and applies the data to it
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to apply to
+        collection (CollectionProperty): collection to apply to
         data (dict): data to apply
     """
     new_item = collection.add()
     apply_data_to_item(new_item, data)
 
 
-def insert_to_collection(collection: bpy.types.CollectionProperty, index: int, data: dict):
+def insert_to_collection(collection: CollectionProperty, index: int, data: dict) -> None:
     """
     inset a new element inside a collection and apply the given data to it
     if the index is out of bounds the element is insert at the end of the collection
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to apply to
+        collection (CollectionProperty): collection to apply to
         index (int): index where to insert
         data (dict): data to apply
     """
@@ -204,13 +205,13 @@ def insert_to_collection(collection: bpy.types.CollectionProperty, index: int, d
         collection.move(len(collection) - 1, index)
 
 
-def swap_collection_items(collection: bpy.types.CollectionProperty, index_1: int, index_2: int):
+def swap_collection_items(collection: CollectionProperty, index_1: int, index_2: int) -> None:
     """
     swaps to collection items
     if the index is set to the last element of the collection
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to execute on
+        collection (CollectionProperty): collection to execute on
         index_1 (int): first index to swap with second
         index_2 (int): second index to swap with first
     """
@@ -241,7 +242,7 @@ def enum_list_id_to_name_dict(enum_list: list) -> dict:
     return {identifier: name for identifier, name, *tail in enum_list}
 
 
-def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+def enum_items_to_enum_prop_list(items: CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts enum items to an enum property list
 
@@ -255,7 +256,7 @@ def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offs
     return [(item.identifier, item.name, item.description, item.icon, item.value + value_offset) for item in items]
 
 
-def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+def get_categorized_view_3d_modes(items: CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts view_3d items to an enum property list with categories for General, Grease Pencil, Curves
 
@@ -280,12 +281,12 @@ def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_off
     return general + grease_pencil + curves
 
 
-def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[str]:
+def get_name_of_command(context: Context, command: str) -> Optional[str]:
     """
     get the name of a given command
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         command (str): Blender command to get name from
 
     Returns:
@@ -384,7 +385,7 @@ def update_command(command: str) -> Union[str, bool]:
         return False
 
 
-def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int):
+def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int) -> None:
     """
     runs macros from a given index of a specific action
 
@@ -405,12 +406,12 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         play(context, action.macros[start:], action, action_type)
 
 
-def execute_individually(context: bpy.types.Context, command: str):
+def execute_individually(context: Context, command: str) -> None:
     """
     execute the given command on each selected object individually
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         command (str): command to execute
     """
     old_selected_objects = context.selected_objects[:]
@@ -432,15 +433,17 @@ def execute_individually(context: bpy.types.Context, command: str):
             object.select_set(True)
 
 
-def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
-         ) -> Union[Exception, str, None]:
+def play(
+        context: Context,
+        macros: CollectionProperty,
+        action: 'AR_action', action_type: str) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
 
     Args:
-        context (bpy.types.Context): active blender context
-        macros (bpy.types.CollectionProperty): macros to execute
+        context (Context): active blender context
+        macros (CollectionProperty): macros to execute
         action (AR_action): action to track
         action_type (str): action type of the given action
 
@@ -632,7 +635,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
 
 
 @ persistent
-def execute_render_complete(dummy=None):
+def execute_render_complete(dummy=None) -> None:
     # https://docs.blender.org/api/current/bpy.app.handlers.html
     """
     execute macros, which are called after the event macro "Render Complete"
@@ -694,7 +697,7 @@ def split_and_keep(sep: str, text: str) -> list[str]:
     return text.split(p)
 
 
-def get_attribute(obj: object, name: str):
+def get_attribute(obj: object, name: str) -> object:
     """
     Call getattr to get attribute from an object but it can reach attributes of attributes
     E.g.: x.y.z with the input get_attribute(x, 'y.z')
@@ -711,7 +714,7 @@ def get_attribute(obj: object, name: str):
     return obj
 
 
-def get_attribute_default(obj: object, name: str, default: None):
+def get_attribute_default(obj: object, name: str, default: None) -> object | None:
     """
     Call getattr to get attribute from an object but it can reach attributes of attributes
     E.g.: x.y.z with the input get_attribute(x, 'y.z')
@@ -830,15 +833,15 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     return (False, ":(")
 
 
-def get_preferences(context: bpy.types.Context) -> bpy.types.AddonPreferences:
+def get_preferences(context: Context) -> AddonPreferences:
     """
     get addon preferences of this addon, which are stored in Blender
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
 
     Returns:
-        bpy.types.AddonPreferences: preferences of this addon
+        AddonPreferences: preferences of this addon
     """
     return context.preferences.addons[__module__].preferences
 

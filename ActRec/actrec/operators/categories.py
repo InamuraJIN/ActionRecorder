@@ -174,7 +174,7 @@ class AR_OT_category_interface(Operator):
                     new_mode = new_area.modes.add()
                     new_mode.type = mode
 
-    def draw(self, context: Context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.prop(self, 'label', text="Label")
         layout.prop(self, 'area')

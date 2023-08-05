@@ -12,7 +12,7 @@ import sys
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Scene, AddonPreferences, UILayout, Context, Event
 from bpy.props import BoolProperty, EnumProperty
 from bpy_extras.io_utils import ExportHelper
 from bpy.app.handlers import persistent
@@ -40,13 +40,13 @@ class Update_manager:
 
 
 @persistent
-def on_start(dummy: bpy.types.Scene = None):
+def on_start(dummy: Scene = None) -> None:
     """
     get called on start of Blender with on_load handler and checks for available update of ActRec
     opens a thread to run the process faster (the thread get closed in on_scene_update)
 
     Args:
-        dummy (bpy.types.Scene, optional):
+        dummy (Scene, optional):
         needed because blender handler inputs the scene as argument for a handler function. Defaults to None.
     """
     ActRec_pref = get_preferences(bpy.context)
@@ -58,7 +58,7 @@ def on_start(dummy: bpy.types.Scene = None):
 
 
 @persistent
-def on_scene_update(dummy: bpy.types.Scene = None):
+def on_scene_update(dummy: Scene = None) -> None:
     """
     get called on the first scene update of Blender and closes the thread from on start,
     which is used to check for updates and removes the functions from the handler
@@ -98,17 +98,16 @@ def check_for_update(version_file: Optional[dict]) -> tuple[bool, Union[str, tup
 
 
 def update(
-    ActRec_pref: bpy.types.AddonPreferences,
-    path: str,
-    update_respond: Optional[requests.Response],
-    download_chunks: dict,
-    download_length: int
-) -> Optional[bool]:
+        ActRec_pref: AddonPreferences,
+        path: str,
+        update_respond: Optional[requests.Response],
+        download_chunks: dict,
+        download_length: int) -> Optional[bool]:
     """
     runs the update process and shows the download process with a progress bar if possible
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         path (str): path to the file to update
         update_respond (Optional[requests.Response]): open response to file,
         needed if file is to large to download in one function call (chunk size 1024)
@@ -155,13 +154,13 @@ def update(
         return None
 
 
-def install_update(ActRec_pref: bpy.types.AddonPreferences, download_chunks: dict, version_file: dict):
+def install_update(ActRec_pref: AddonPreferences, download_chunks: dict, version_file: dict) -> None:
     """
     installs all downloaded files successively and removes old files if needed
     + cleans up all unused data
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         download_chunks (dict): contains all downloaded files and their data
         version_file (dict): contains data about the addon version, the version of each file and the open request
     """
@@ -246,12 +245,14 @@ def get_version_file(res: requests.Response) -> Union[bool, dict, None]:
 
 
 def apply_version_file_result(
-        ActRec_pref: bpy.types.AddonPreferences, version_file: dict, update: tuple[bool, Union[tuple, str]]):
+        ActRec_pref: AddonPreferences,
+        version_file: dict,
+        update: tuple[bool, Union[tuple, str]]) -> None:
     """
     updates the version in the addon preferences if needed and closes the open request from version file
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AddonPreferences): preferences of this addon
         version_file (dict): contains data about the addon version, the version of each file and the open request
         update (tuple[bool, Union[tuple, str]]):
         [0] update is available;
@@ -292,7 +293,7 @@ def get_download_list(version_file: dict) -> Optional[list]:
     return download_list
 
 
-def no_stream_download_version_file(module_name: str):
+def no_stream_download_version_file(module_name: str) -> None:
     """
     downloads the version file without needed to be called again. Is faster but stops Blender from executing other code.
 
@@ -315,13 +316,13 @@ def no_stream_download_version_file(module_name: str):
 # region UI functions
 
 
-def draw_update_button(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences):
+def draw_update_button(layout: UILayout, ActRec_pref: AddonPreferences) -> None:
     """
     draws the update button and show a progressbar when files get downloaded
 
     Args:
-        layout (bpy.types.UILayout): context where to draw the button
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        layout (UILayout): context where to draw the button
+        ActRec_pref (AddonPreferences): preferences of this addon
     """
     if ActRec_pref.update_progress >= 0:
         row = layout.row()
@@ -339,7 +340,7 @@ class AR_OT_update_check(Operator):
     bl_label = "Check for Update"
     bl_description = "check for available update"
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         res = start_get_version_file()
         if res:
             self.timer = context.window_manager.event_timer_add(0.1)
@@ -348,14 +349,14 @@ class AR_OT_update_check(Operator):
         self.report({'WARNING'}, "No Internet Connection")
         return {'CANCELLED'}
 
-    def modal(self, context, event):
+    def modal(self, context: Context, event: Event) -> set[str]:
         version_file = get_version_file(Update_manager.version_file['respond'])
         if isinstance(version_file, dict) or version_file is None:
             Update_manager.version_file = version_file
             return self.execute(context)
         return {'PASS_THROUGH'}
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         version_file = Update_manager.version_file
         if not version_file:
             return {'CANCELLED'}
@@ -367,7 +368,7 @@ class AR_OT_update_check(Operator):
         context.window_manager.event_timer_remove(self.timer)
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         if Update_manager.version_file:
             res = Update_manager.version_file.get('respond')
             if res:
@@ -382,11 +383,11 @@ class AR_OT_update(Operator):
     bl_description = "install the new version"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return ActRec_pref.update
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         Update_manager.download_list = get_download_list(
             Update_manager.version_file)
         Update_manager.download_length = len(Update_manager.download_list)
@@ -395,7 +396,7 @@ class AR_OT_update(Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
-    def modal(self, context, event):
+    def modal(self, context: Context, event: Event) -> set[str]:
         if not len(Update_manager.download_list):
             return self.execute(context)
 
@@ -411,7 +412,7 @@ class AR_OT_update(Operator):
         context.area.tag_redraw()
         return {'PASS_THROUGH'}
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         if not (Update_manager.version_file and Update_manager.update_data_chunks):
             return {'CANCELLED'}
         ActRec_pref = get_preferences(context)
@@ -425,7 +426,7 @@ class AR_OT_update(Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         res = Update_manager.update_respond
         if res:
             res.close()
@@ -447,13 +448,13 @@ class AR_OT_restart(Operator, ExportHelper):
     filter_folder: BoolProperty(default=True, options={'HIDDEN'})
     filter_blender: BoolProperty(default=True, options={'HIDDEN'})
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         if self.save and not bpy.data.filepath:
             return ExportHelper.invoke(self, context, event)
         else:
             return self.execute(context)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         path = bpy.data.filepath
         if self.save:
@@ -471,7 +472,7 @@ class AR_OT_restart(Operator, ExportHelper):
         bpy.ops.wm.quit_blender()
         return {"FINISHED"}
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         pass
 
 
@@ -486,20 +487,20 @@ class AR_OT_show_restart_menu(Operator):
                ("save", "Save & Restart", "Save & Restart Blender"),
                ("restart", "Restart", "Restart Blender")])
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         if self.restart_options == "save":
             bpy.ops.ar.restart(save=True)
         elif self.restart_options == "restart":
             bpy.ops.ar.restart()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         bpy.ops.ar.show_restart_menu("INVOKE_DEFAULT")
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         layout = self.layout
         if ActRec_pref.restart:

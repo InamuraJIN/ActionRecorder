@@ -1045,8 +1045,13 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         return {"CANCELLED"}
 
     def handle_button_property(
-            self, context: Context, button_pointer, button_prop, base_object, object_class, attr: str
-    ) -> Optional[set[str]]:
+            self,
+            context: Context,
+            button_pointer,
+            button_prop,
+            base_object,
+            object_class,
+            attr: str) -> Optional[set[str]]:
         """
         add the given property (= button_pointer + button_prop) as a macro if possible
 
