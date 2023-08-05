@@ -9,7 +9,7 @@ import json
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties
 from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
@@ -31,14 +31,14 @@ class AR_OT_gloabal_recategorize_action(shared.Id_based, Operator):
     bl_description = "Reallocate the selected Action to another Category"
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
         ids = functions.get_global_action_ids(ActRec_pref, self.id, self.index)
@@ -58,7 +58,7 @@ class AR_OT_gloabal_recategorize_action(shared.Id_based, Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
         layout = self.layout
@@ -87,12 +87,12 @@ class AR_OT_global_import(Operator, ImportHelper):
         default=True
     )
 
-    def get_macros_from_file(self, context: bpy.types.Context, zip_file: zipfile.ZipFile, path: str) -> list:
+    def get_macros_from_file(self, context: Context, zip_file: zipfile.ZipFile, path: str) -> list:
         """
         Extract macros from the path inside the given zip-file
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
             zip_file (zipfile.ZipFile): zip file to extract the macros from
             path (str): path to the file with macros inside the zip file
 
@@ -109,7 +109,7 @@ class AR_OT_global_import(Operator, ImportHelper):
             macros.append(data)
         return macros
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
@@ -188,7 +188,7 @@ class AR_OT_global_import(Operator, ImportHelper):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         layout = self.layout
         layout.operator(
@@ -223,7 +223,7 @@ class AR_OT_global_import(Operator, ImportHelper):
                 sub2_col.enabled = False
                 sub2_col.label(text=action.shortcut)
 
-    def cancel(self, context: bpy.types.Context):
+    def cancel(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
 
@@ -304,7 +304,7 @@ class AR_OT_global_import_settings(Operator):
             item.sort(key=lambda x: int(x.split("/")[-1].split('~')[0]))
         return categories
 
-    def map_shortcut_to_actions(self, context: bpy.types.Context, keymap_data: dict) -> dict:
+    def map_shortcut_to_actions(self, context: Context, keymap_data: dict) -> dict:
         """
         maps the keymap to the corresponding action id
 
@@ -322,7 +322,7 @@ class AR_OT_global_import_settings(Operator):
         context.window_manager.keyconfigs.addon.keymaps.remove(km)
         return shortcut_map
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
 
@@ -390,7 +390,7 @@ class AR_OT_global_export(Operator, ExportHelper):
         """
         return self.get("export_all", False)
 
-    def set_export_all(self, value: bool):
+    def set_export_all(self, value: bool) -> None:
         """
         setter for export all
         transfer the value to all categories and actions
@@ -429,7 +429,7 @@ class AR_OT_global_export(Operator, ExportHelper):
         default=True
     )
 
-    def append_keymap(self, data, export_action_ids):
+    def append_keymap(self, data: dict, export_action_ids: list) -> None:
         default_km = keymaps.get('default')
         for kmi in default_km.keymap_items:
             if kmi.idname == "ar.global_execute_action" and kmi.properties['id'] in export_action_ids:
@@ -449,11 +449,11 @@ class AR_OT_global_export(Operator, ExportHelper):
                 })
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions)
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         # Make copy of categories and actions ot export_categories and export_actions
         ActRec_pref = get_preferences(context)
         for category in ActRec_pref.categories:
@@ -473,7 +473,7 @@ class AR_OT_global_export(Operator, ExportHelper):
                     new_action.shortcut = action_keymap.to_string()
         return ExportHelper.invoke(self, context, event)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if not os.path.exists(os.path.dirname(self.filepath)):
             self.report({'ERROR', "Directory doesn't exist"})
@@ -511,11 +511,11 @@ class AR_OT_global_export(Operator, ExportHelper):
         self.cancel(context)
         return {'FINISHED'}
 
-    def cancel(self, context: bpy.types.Context):
+    def cancel(self, context: Context) -> None:
         self.export_categories.clear()
         self.all_categories = True
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.prop(self, 'include_keymap')
         layout.prop(self, 'export_all', text="All")
@@ -548,7 +548,7 @@ class AR_OT_global_save(Operator):
     bl_label = "Save"
     bl_description = "Save all Global Actions to the Storage"
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         functions.save(get_preferences(context))
         return {"FINISHED"}
 
@@ -558,7 +558,7 @@ class AR_OT_global_load(Operator):
     bl_label = "Load"
     bl_description = "Load all Actions from the Storage"
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         functions.load(ActRec_pref)
         context.area.tag_redraw()
@@ -572,16 +572,16 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     @ classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def global_to_local(self, ActRec_pref: bpy.types.AddonPreferences, action: 'AR_global_actions'):
+    def global_to_local(self, ActRec_pref: AddonPreferences, action: 'AR_global_actions') -> None:
         """
         copy the given global action to a local action
 
         Args:
-            ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+            ActRec_pref (AddonPreferences): preferences of this addon
             action (AR_global_actions): action to copy
         """
         id = uuid.uuid1().hex if action.id in set(x.id for x in ActRec_pref.local_actions) else action.id
@@ -593,7 +593,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         functions.add_data_to_collection(ActRec_pref.local_actions, data)
         ActRec_pref.active_local_action_index = len(ActRec_pref.local_actions)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
             self.global_to_local(ActRec_pref, ActRec_pref.global_actions[id])
@@ -614,18 +614,21 @@ class AR_OT_global_remove(shared.Id_based, Operator):
     bl_description = "Remove the selected actions"
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         ids = ActRec_pref.get("global_actions.selected_ids", [])
         selected_actions_str = ", ".join(ActRec_pref.global_actions[id].label for id in ids)
         return "Remove the selected actions\nActions: %s" % (selected_actions_str)
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def execute(self, context: bpy.types.Context):
+    def invoke(self, context: Context, event: Event) -> set[str]:
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
             if functions.get_action_keymap(id) is not None:
@@ -637,9 +640,6 @@ class AR_OT_global_remove(shared.Id_based, Operator):
         self.clear()
         return {"FINISHED"}
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        return context.window_manager.invoke_confirm(self, event)
-
 
 class AR_OT_global_move_up(shared.Id_based, Operator):
     bl_idname = "ar.global_move_up"
@@ -647,11 +647,11 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
     bl_description = "Move the selected actions Up"
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
@@ -671,11 +671,11 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
     bl_description = "Move the selected actions Down"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
@@ -697,11 +697,11 @@ class AR_OT_global_rename(shared.Id_based, Operator):
     label: StringProperty()
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", [])) == 1
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ids = functions.get_global_action_ids(ActRec_pref, self.id, self.index)
         self.clear()
@@ -728,13 +728,13 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
-    def description(cls, context: bpy.types.Context, properties):
+    def description(cls, context: Context, properties: OperatorProperties):
         ActRec_pref = functions.get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, properties.id, properties.index)
         action = ActRec_pref.global_actions[id]
         return action.description
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, self.index)
         self.clear()
@@ -750,7 +750,7 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
 class AR_OT_global_icon(icon_manager.Icontable, shared.Id_based, Operator):
     bl_idname = "ar.global_icon"
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, self.index)
         if id is None:
@@ -762,7 +762,7 @@ class AR_OT_global_icon(icon_manager.Icontable, shared.Id_based, Operator):
         self.search = ''
         return context.window_manager.invoke_props_dialog(self, width=1000)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ActRec_pref.global_actions[self.id].icon = ActRec_pref.selected_icon
         ActRec_pref.selected_icon = 0  # Icon: NONE
@@ -782,7 +782,7 @@ class AR_OT_add_ar_shortcut(Operator):
 
     id: StringProperty()
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         # REFACTOR indentation
         self.layout.label(text=self.bl_label)
         for kmi in keymap.keymaps['default'].keymap_items:
@@ -791,15 +791,15 @@ class AR_OT_add_ar_shortcut(Operator):
                 kmi.active = True
                 break
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         if self.id and functions.get_action_keymap(self.id) is None:
             functions.add_empty_action_keymap(self.id)
         return context.window_manager.invoke_popup(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         return {"FINISHED"}
 
-    def cancel(self, context: bpy.types.Context):
+    def cancel(self, context: Context) -> None:
         #  Use cancel as execution of changed keymap (not intended use of invoke_popup)
         ActRec_pref = get_preferences(context)
         kmi = functions.get_action_keymap(self.id)
@@ -818,7 +818,7 @@ class AR_OT_remove_ar_shortcut(Operator):
 
     id: StringProperty()
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if functions.get_action_keymap(self.id) is None:
             return {"CANCELLED"}
@@ -841,12 +841,12 @@ class AR_OT_global_edit_description(Operator):
     )
     action_label: StringProperty()
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.label(text="Action: %s" % self.action_label)
         layout.prop(self, 'description')
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = functions.get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, -1)
         action = ActRec_pref.global_actions[id]
@@ -854,7 +854,7 @@ class AR_OT_global_edit_description(Operator):
         self.description = action.description
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = functions.get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, -1)
         ActRec_pref.global_actions[id].description = self.description

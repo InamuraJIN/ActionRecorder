@@ -65,7 +65,7 @@ class AR_OT_preferences_recover_directory(Operator):
     preference_name: StringProperty(options={'HIDDEN'})
     path_extension: StringProperty(options={'HIDDEN'})
 
-    def execute(self, context) -> set[str]:
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         setattr(ActRec_pref, self.preference_name, os.path.join(ActRec_pref.addon_directory, self.path_extension))
         return {'FINISHED'}

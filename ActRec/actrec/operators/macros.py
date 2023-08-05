@@ -6,10 +6,11 @@ import time
 import numpy
 import threading
 from typing import Optional
+from logging import Logger
 
 # blender modules
 import bpy
-from bpy.types import Operator, PointerProperty, UILayout
+from bpy.types import Operator, PointerProperty, UILayout, Context, Event
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty, FloatProperty, BoolProperty
 
 # relative imports
@@ -26,7 +27,7 @@ class Macro_based(shared.Id_based):
     action_index: IntProperty(default=-1)
     ignore_selection = False
 
-    def clear(self):
+    def clear(self) -> None:
         self.action_index = -1
         super().clear()
 
@@ -41,11 +42,11 @@ class AR_OT_macro_add(shared.Id_based, Operator):
     report_length: IntProperty(default=0)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
@@ -217,18 +218,18 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
     macro_index: IntProperty(name="Macro Index", default=-1)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         if self.object == "" and context.object is not None and len(self.objects) == 0:
             self.object = context.object.name
         if len(self.objects) == 0:
             self.objects.add()
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.prop(self, 'type')
         if self.type == 'Timer':
@@ -258,12 +259,12 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
             op.index = self.index
             op.macro_index = self.macro_index
 
-    def check(self, context):
+    def check(self, context: Context) -> None:
         while (index := self.objects.find("")) >= 0:
             self.objects.remove(index)
         self.objects.add()
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
@@ -314,7 +315,7 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         self.clear()
         return {"FINISHED"}
 
-    def clear(self):
+    def clear(self) -> None:
         self.object = ""
         self.objects.clear()
         super().clear()
@@ -327,7 +328,7 @@ class AR_OT_macro_event_load_script(Macro_based, Operator):
 
     macro_index: IntProperty(name="Macro Index", default=-1)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         if self.macro_index < 0:
             self.clear()
             return {'CANCELLED'}
@@ -370,7 +371,7 @@ class AR_OT_macro_remove(Macro_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -380,7 +381,7 @@ class AR_OT_macro_remove(Macro_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
@@ -401,7 +402,7 @@ class AR_OT_macro_move_up(Macro_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -411,7 +412,7 @@ class AR_OT_macro_move_up(Macro_based, Operator):
         return ((len(action.macros) >= 2 and action.active_macro_index - 1 >= 0 or ignore)
                 and not ActRec_pref.local_record_macros)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
@@ -437,7 +438,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -447,7 +448,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
         return ((len(action.macros) >= 2 and action.active_macro_index + 1 < len(action.macros) or ignore)
                 and not ActRec_pref.local_record_macros)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
@@ -467,7 +468,7 @@ class AR_OT_macro_move_down(Macro_based, Operator):
 
 
 class Font_analysis():
-    def __init__(self, font_path: str):
+    def __init__(self, font_path: str) -> None:
         self.path = font_path
 
         if importlib.util.find_spec('fontTools') is None:
@@ -497,7 +498,7 @@ class Font_analysis():
         )
 
     @classmethod
-    def install(cls, logger) -> bool:
+    def install(cls, logger: Logger) -> bool:
         """
         install fonttools to blender modules if not installed
 
@@ -551,10 +552,10 @@ class AR_OT_macro_multiline_support(Operator):
     bl_options = {'INTERNAL'}
     bl_description = "Adds multiline support the edit macro dialog"
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self, width=350)
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         layout = self.layout
 
@@ -577,11 +578,11 @@ class AR_OT_macro_multiline_support(Operator):
             row.operator('ar.macro_install_multiline_support', text="Install")
             row.prop(ActRec_pref, 'multiline_support_dont_ask')
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
         return {'FINISHED'}
 
-    def cancel(self, context: bpy.types.Context):
+    def cancel(self, context: Context) -> None:
         # Also recall when done is not clicked
         bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
 
@@ -598,11 +599,11 @@ class AR_OT_macro_install_multiline_support(Operator):
     success = []
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.multiline_support_installing
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         def install(success: list, logger):
             success.append(Font_analysis.install(logger))
 
@@ -615,7 +616,7 @@ class AR_OT_macro_install_multiline_support(Operator):
         ActRec_pref.multiline_support_installing = True
         return {'RUNNING_MODAL'}
 
-    def modal(self, context: bpy.types.Context, event: bpy.types.Event):
+    def modal(self, context: Context, event: Event) -> set[str]:
 
         if event.type != 'TIMER':
             return {'PASS_THROUGH'}
@@ -624,7 +625,7 @@ class AR_OT_macro_install_multiline_support(Operator):
             return self.execute(context)
         return {'RUNNING_MODAL'}
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         self.thread.join()
         ActRec_pref.multiline_support_installing = False
@@ -641,7 +642,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     bl_description = "Double click to Edit"
     bl_options = {'UNDO'}
 
-    def set_clear_operator(self, value: bool):
+    def set_clear_operator(self, value: bool) -> None:
         """
         setter of clear_operator.
         Delete the parameters of an operator command. Otherwise the complete command is cleared.
@@ -673,7 +674,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
             self.command = "".join(line.text for line in self.lines)
         return self.get('command', '')
 
-    def set_command(self, value: str):
+    def set_command(self, value: str) -> None:
         """
         set the command and convert it into multiple lines, which fit into the width of the popup
 
@@ -700,7 +701,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
             self.last_command = "".join(line.text for line in self.lines)
         return self.get('last_command', '')
 
-    def set_last_command(self, value: str):
+    def set_last_command(self, value: str) -> None:
         """
         set the last command and convert it into multiple lines, which fit into the width of the popup
         last command is the last added command
@@ -725,7 +726,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         """
         return self.get("use_last_command", False)
 
-    def set_use_last_command(self, value: bool):
+    def set_use_last_command(self, value: bool) -> None:
         """
         set the state, whether to use the last command
 
@@ -763,7 +764,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
     time = 0
     is_operator = False
 
-    def items_ui_type(self, context: bpy.types.Context):
+    def items_ui_type(self, context: Context) -> list[tuple]:
         enum_items = [("NONE", "None", "not specified, will be using the active type", "BLANK1", 0)]
         if context is None or context.area is None:
             return enum_items
@@ -789,11 +790,11 @@ class AR_OT_macro_edit(Macro_based, Operator):
     )
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         action_index = self.action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
@@ -893,7 +894,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         self.clear()
         return {"FINISHED"}
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         ActRec_pref = functions.get_preferences(context)
 
@@ -922,7 +923,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         else:
             op.text = self.command
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action = ActRec_pref.local_actions[self.action_index]
         macro = action.macros[self.index]
@@ -940,7 +941,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         self.cancel(context)
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.edit = False
         self.multiline_asked = False
         self.use_last_command = False
@@ -965,14 +966,14 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
     }
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
 
         return (getattr(context, "button_operator", None)
                 or getattr(context, "button_pointer", None)
                 and getattr(context, "button_prop", None)
                 )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         if not len(ActRec_pref.local_actions):
@@ -1044,13 +1045,13 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         return {"CANCELLED"}
 
     def handle_button_property(
-            self, context: bpy.types.Context, button_pointer, button_prop, base_object, object_class, attr: str
+            self, context: Context, button_pointer, button_prop, base_object, object_class, attr: str
     ) -> Optional[set[str]]:
         """
         add the given property (= button_pointer + button_prop) as a macro if possible
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
             button_pointer (Any from bpy.types): button_pointer attribute from the context
             button_prop (Any from bpy.types): button_prop attribute from the context
             base_object (Any from bpy.types): object that is an attribute of context

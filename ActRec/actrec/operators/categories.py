@@ -4,7 +4,7 @@ from collections import defaultdict
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties
 from bpy.props import StringProperty, EnumProperty, IntProperty
 
 # relative imports
@@ -112,12 +112,12 @@ class AR_OT_category_interface(Operator):
     ]
     area_dict = functions.enum_list_id_to_name_dict(area_items)
 
-    def mode_items(self, context: bpy.types.Context) -> list:
+    def mode_items(self, context: Context) -> list:
         """
         get all available modes for the selected area (self.area)
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
 
         Returns:
             list: modes of the area
@@ -152,12 +152,12 @@ class AR_OT_category_interface(Operator):
 
     category_visibility = []
 
-    def apply_visibility(self, ActRec_pref: bpy.types.AddonPreferences, category_visibility: list, id: str):
+    def apply_visibility(self, ActRec_pref: AddonPreferences, category_visibility: list, id: str) -> None:
         """
         applies visibility for the selected category
 
         Args:
-            ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+            ActRec_pref (AddonPreferences): preferences of this addon
             category_visibility (list): list of pattern (area, mode) where the category should be visible
             id (str): id of the category to select
         """
@@ -174,7 +174,7 @@ class AR_OT_category_interface(Operator):
                     new_mode = new_area.modes.add()
                     new_mode.type = mode
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context):
         layout = self.layout
         layout.prop(self, 'label', text="Label")
         layout.prop(self, 'area')
@@ -211,11 +211,11 @@ class AR_OT_category_add(AR_OT_category_interface, Operator):
     bl_idname = "ar.category_add"
     bl_label = "Add Category"
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         AR_OT_category_interface.category_visibility.clear()
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         new = ActRec_pref.categories.add()
         new.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
@@ -234,7 +234,7 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -248,7 +248,7 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
                  ))
         )
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = get_preferences(context)
         id = self.id = functions.get_category_id(ActRec_pref, self.id, self.index)
         category = ActRec_pref.categories.get(id, None)
@@ -258,7 +258,7 @@ class AR_OT_category_edit(shared.Id_based, AR_OT_category_interface, Operator):
         AR_OT_category_interface.category_visibility = functions.read_category_visibility(ActRec_pref, id)
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         category = ActRec_pref.categories[self.id]
         category.label = functions.check_for_duplicates(
@@ -286,7 +286,7 @@ If the category has no applied visibilities it will be shown in all available pa
     mode: StringProperty()
     area: StringProperty()
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         AR_OT_category_interface.category_visibility.append((self.area, self.mode))
         return {"FINISHED"}
 
@@ -299,7 +299,7 @@ class AR_OT_category_delete_visibility(Operator):
 
     index: IntProperty()
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         AR_OT_category_interface.category_visibility.pop(self.index)
         return {"FINISHED"}
 
@@ -310,7 +310,7 @@ class AR_OT_category_delete(shared.Id_based, Operator):
     bl_description = "Delete the selected Category"
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         id = functions.get_category_id(ActRec_pref, "", -1)
         return "Delete the selected Category\nCategory: %s" % (ActRec_pref.categories[id].label)
@@ -318,7 +318,7 @@ class AR_OT_category_delete(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -332,10 +332,10 @@ class AR_OT_category_delete(shared.Id_based, Operator):
                  ))
         )
 
-    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
@@ -353,7 +353,7 @@ class AR_OT_category_delete(shared.Id_based, Operator):
             context.area.tag_redraw()
         return {"FINISHED"}
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = functions.get_preferences(context)
         layout = self.layout
         layout.label(
@@ -372,14 +372,14 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
         return len(ActRec_pref.categories) and (ignore or ui_functions.category_visible(
             ActRec_pref, context, ActRec_pref.categories[ActRec_pref.selected_category]))
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
         self.clear()
@@ -410,7 +410,7 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context: bpy.types.Context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -424,7 +424,7 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
                  ))
         )
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
         self.clear()

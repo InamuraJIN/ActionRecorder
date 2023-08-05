@@ -6,7 +6,7 @@ import numpy
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty
 
 # relative imports
@@ -27,14 +27,14 @@ class AR_OT_local_to_global(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
         layout = self.layout
@@ -50,14 +50,14 @@ class AR_OT_local_to_global(Operator):
 
     def local_to_global(
             self,
-            ActRec_pref: bpy.types.Preferences,
+            ActRec_pref: AddonPreferences,
             category: 'AR_category',
             action: 'AR_global_actions') -> None:
         """
         copy the given local action to a global action
 
         Args:
-            ActRec_pref (bpy.types.Preferences): preferences of this addon
+            ActRec_pref (AddonPreferences): preferences of this addon
             category (AR_category): category to copy the action to
             action (AR_global_actions): action to copy
         """
@@ -72,7 +72,7 @@ class AR_OT_local_to_global(Operator):
         new_action = category.actions.add()
         new_action.id = id
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
 
@@ -105,11 +105,11 @@ class AR_OT_local_add(Operator):
     )
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         new = ActRec_pref.local_actions.add()
         new.id  # create new id, uses internal getter
@@ -129,7 +129,7 @@ class AR_OT_local_remove(shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, "", -1)
         label = "NONE"
@@ -138,11 +138,11 @@ class AR_OT_local_remove(shared.Id_based, Operator):
         return "Remove the selected Action\nAction: %s" % (label)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
-    def execute(self, context):
+    def execute(self, context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -166,7 +166,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -176,7 +176,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -190,7 +190,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.clear()
 
 
@@ -203,7 +203,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -213,7 +213,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -227,7 +227,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.clear()
 
 
@@ -245,11 +245,11 @@ class AR_OT_local_load(Operator):
     texts: CollectionProperty(type=properties.AR_local_load_text)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros and not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         texts = self.texts
         texts.clear()
         for text in bpy.data.texts:
@@ -258,7 +258,7 @@ class AR_OT_local_load(Operator):
                 txt.name = text.name
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         # REFACTOR indentation
         layout = self.layout
         layout.prop(self, 'source', expand=True)
@@ -271,7 +271,7 @@ class AR_OT_local_load(Operator):
                     row.label(text=text.name)
                     row.prop(text, 'apply', text='')
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         logger.info("Load Local Actions")
@@ -310,7 +310,7 @@ class AR_OT_local_load(Operator):
         self.cancel(context)
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.texts.clear()
 
 
@@ -320,11 +320,11 @@ class AR_OT_local_selection_up(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.active_local_action_index - 1 >= 0:
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index - 1
@@ -338,11 +338,11 @@ class AR_OT_local_selection_down(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.active_local_action_index + 1 < len(ActRec_pref.local_actions):
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index + 1
@@ -359,7 +359,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -369,7 +369,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
@@ -389,18 +389,18 @@ class AR_OT_local_record(shared.Id_based, Operator):
     record_start_index: IntProperty()
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.local_record_macros:
             return "Stops Recording the Macros"
         return "Starts Recording the Macros"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
@@ -494,11 +494,11 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
@@ -508,7 +508,7 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
         self.search = ''
         return context.window_manager.invoke_props_dialog(self, width=1000)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action = ActRec_pref.local_actions[self.id]
         action.icon = ActRec_pref.selected_icon
@@ -531,7 +531,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -541,7 +541,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
