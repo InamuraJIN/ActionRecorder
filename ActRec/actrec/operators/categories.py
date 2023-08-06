@@ -221,6 +221,8 @@ class AR_OT_category_add(AR_OT_category_interface, Operator):
         new.label = functions.check_for_duplicates((c.label for c in ActRec_pref.categories), self.label)
         self.apply_visibility(ActRec_pref, AR_OT_category_interface.category_visibility, new.id)
         ui_functions.register_category(ActRec_pref, len(ActRec_pref.categories) - 1)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -350,6 +352,8 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         categories.remove(categories.find(id))
         if len(categories):
             categories[0].selected = True
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -397,6 +401,8 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
             swap_category = categories[y]
         functions.swap_collection_items(categories, i, y)
         ActRec_pref.categories[y].selected = True
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -440,6 +446,8 @@ class AR_OT_category_move_down(shared.Id_based, Operator):
                 swap_category = categories[y]
             functions.swap_collection_items(categories, i, y)
             ActRec_pref.categories[y].selected = True
+            if ActRec_pref.autosave:
+                functions.save(ActRec_pref)
             context.area.tag_redraw()
             return {"FINISHED"}
         return {'CANCELLED'}

@@ -120,6 +120,8 @@ class AR_OT_local_add(Operator):
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(new)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 

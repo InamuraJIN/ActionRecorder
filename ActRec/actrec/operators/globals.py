@@ -603,6 +603,8 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))
         functions.save_local_to_scene(ActRec_pref, context.scene)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -636,6 +638,8 @@ class AR_OT_global_remove(shared.Id_based, Operator):
             ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -660,6 +664,8 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
                     continue
                 index = category.actions.find(id_action.id)
                 category.actions.move(index, index - 1)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -684,6 +690,8 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
                     continue
                 index = category.actions.find(id_action.id)
                 category.actions.move(index, index + 1)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
