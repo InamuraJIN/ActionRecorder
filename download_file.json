@@ -10,7 +10,7 @@
         "ActRec/actrec/menus/__init__.py": [4, 0, 6],
         "ActRec/actrec/menus/locals.py": [4, 0, 8],
         "ActRec/actrec/menus/categories.py": [4, 0, 8],
-        "ActRec/actrec/operators/__init__.py": [4, 0, 1],
+        "ActRec/actrec/operators/__init__.py": [4, 0, 8],
         "ActRec/actrec/operators/categories.py": [4, 0, 8],
         "ActRec/actrec/operators/globals.py": [4, 0, 8],
         "ActRec/actrec/operators/helper.py": [4, 0, 8],
