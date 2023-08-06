@@ -61,7 +61,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         if not self.command:  # get the command from the latest Blender report
             reports = functions.get_report_text(context).splitlines()
             length = len(reports)
-            if self.report_length == length:
+            if self.report_length != length:
                 new_report = True
                 self.report_length = length
                 reports.reverse()
