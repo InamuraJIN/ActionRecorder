@@ -50,11 +50,11 @@ def on_start(dummy: Scene = None) -> None:
         needed because blender handler inputs the scene as argument for a handler function. Defaults to None.
     """
     ActRec_pref = get_preferences(bpy.context)
-    # REFACTOR indentation
-    if ActRec_pref.auto_update and Update_manager.version_file_thread is None:
-        t = threading.Thread(target=no_stream_download_version_file, args=[__module__], daemon=True)
-        t.start()
-        Update_manager.version_file_thread = t
+    if not (ActRec_pref.auto_update and Update_manager.version_file_thread is None):
+        return
+    t = threading.Thread(target=no_stream_download_version_file, args=[__module__], daemon=True)
+    t.start()
+    Update_manager.version_file_thread = t
 
 
 @persistent
@@ -68,11 +68,11 @@ def on_scene_update(dummy: Scene = None) -> None:
         needed because blender handler inputs the scene as argument for a handler function. Defaults to None.
     """
     t = Update_manager.version_file_thread
-    # REFACTOR indentation
-    if t and Update_manager.version_file.get("version", None):
-        t.join()
-        bpy.app.handlers.depsgraph_update_post.remove(on_scene_update)
-        bpy.app.handlers.load_post.remove(on_start)
+    if not (t and Update_manager.version_file.get("version", None)):
+        return
+    t.join()
+    bpy.app.handlers.depsgraph_update_post.remove(on_scene_update)
+    bpy.app.handlers.load_post.remove(on_start)
 
 
 def check_for_update(version_file: Optional[dict]) -> tuple[bool, Union[str, tuple[int, int, int]]]:
@@ -117,7 +117,6 @@ def update(
     Returns:
         Optional[bool]: the downloaded file or None if an error occurred
     """
-    # REFACTOR indentation
     finished_downloaded = False
     progress = 0
     length = 1
@@ -177,13 +176,13 @@ def install_update(ActRec_pref: AddonPreferences, download_chunks: dict, version
         # remove ActRec/ from path, because the Add-on is inside of another directory on GitHub
         relative_path = path.replace("\\", "/").split("/", 1)[1]
         remove_path = os.path.join(ActRec_pref.addon_directory, relative_path)
-        # REFACTOR indentation
-        if os.path.exists(remove_path):
-            for root, dirs, files in os.walk(remove_path, topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
+        if not os.path.exists(remove_path):
+            continue
+        for root, dirs, files in os.walk(remove_path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
     version = tuple(ActRec_pref.version.split("."))
     download_chunks.clear()
     version_file.clear()
@@ -221,7 +220,6 @@ def get_version_file(res: requests.Response) -> Union[bool, dict, None]:
         [True] needed to be called again;
         [dict] data of the version file in JSON-format
     """
-    # REFACTOR indentation
     try:
         total_length = res.headers.get('content-length', None)
         if total_length is None:
@@ -229,15 +227,15 @@ def get_version_file(res: requests.Response) -> Union[bool, dict, None]:
             content = res.content
             res.close()
             return json.loads(content)
-        else:
-            for chunk in res.iter_content(chunk_size=1024):
-                Update_manager.version_file['chunk'] += chunk
-            length = res.raw._fp_bytes_read
-            if int(total_length) == length:
-                res.close()
-                logger.info("Finished Download: version_file")
-                return json.loads(Update_manager.version_file['chunk'])
-            return True
+
+        for chunk in res.iter_content(chunk_size=1024):
+            Update_manager.version_file['chunk'] += chunk
+        length = res.raw._fp_bytes_read
+        if int(total_length) == length:
+            res.close()
+            logger.info("Finished Download: version_file")
+            return json.loads(Update_manager.version_file['chunk'])
+        return True
     except Exception as err:
         logger.warning("no Connection (%s)" % err)
         res.close()

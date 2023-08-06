@@ -133,14 +133,14 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         Args:
             value (bool): state of macro
         """
-        # REFACTOR indentation
-        if self.is_available:
-            context = bpy.context
-            ActRec_pref = get_preferences(context)
-            if not ActRec_pref.local_record_macros:
-                if self.get('active', True) != value:
-                    functions.save_local_to_scene(ActRec_pref, context.scene)
-                self['active'] = value
+        if not self.is_available:
+            return
+        context = bpy.context
+        ActRec_pref = get_preferences(context)
+        if not ActRec_pref.local_record_macros:
+            if self.get('active', True) != value:
+                functions.save_local_to_scene(ActRec_pref, context.scene)
+            self['active'] = value
 
     def get_command(self) -> str:
         """

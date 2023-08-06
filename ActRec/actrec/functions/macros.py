@@ -33,14 +33,13 @@ def get_local_macro_index(action: 'AR_local_actions', id: str, index: int) -> in
     Returns:
         int: found macro index or active macro index if not found
     """
-    # REFACTOR indentation
     macro = action.macros.find(id)
-    if macro == -1:
-        if len(action.macros) > index and index >= 0:  # fallback to input index
-            macro = index
-        else:
-            macro = action.active_macro_index  # fallback to selection
-    return macro
+    if macro != -1:
+        return macro
+    if len(action.macros) > index and index >= 0:  # fallback to input index
+        return index
+    else:
+        return action.active_macro_index  # fallback to selection
 
 
 def convert_value_to_python(value) -> tuple:
@@ -98,43 +97,44 @@ def track_scene(dummy: Scene = None) -> None:
     Args:
         dummy (Scene, optional): unused. Defaults to None.
     """
-    # REFACTOR indentation
     context = bpy.context
     ActRec_pref = get_preferences(context)
     operators = context.window_manager.operators
     length = len(operators)
-    if length:
-        if length > ActRec_pref.operators_list_length:
-            ActRec_pref.operators_list_length = length
-            op = operators[-1]
-            shared_data.tracked_actions.append(
-                ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, executed_operator_to_dict(op)]
-            )
-        else:
-            len_tracked = len(shared_data.tracked_actions)
-            if not len_tracked:
-                return
-            i = 1
-            op = operators[-1]
-            operators_length = len(operators)
-            while 'REGISTER' not in op.bl_options and operators_length > i:
-                i += 1
-                op = operators[-i]
-            last_register_op = last_tracked = shared_data.tracked_actions[-1]
-            i = 1
-            while last_register_op[2] != op.bl_idname and len_tracked > i:
-                i += 1
-                last_register_op = shared_data.tracked_actions[-i]
-            props = executed_operator_to_dict(op)
-            if last_register_op[2] == op.bl_idname and props != last_register_op[3]:
-                last_register_op[3] = props
-            else:
-                if last_tracked[2] == "CONTEXT":
-                    last_tracked[3] += 1
-                else:
-                    shared_data.tracked_actions.append([True, True, "CONTEXT", 1])
-    else:
+    if not length:
         ActRec_pref.operators_list_length = 0
+        return
+
+    if length > ActRec_pref.operators_list_length:
+        ActRec_pref.operators_list_length = length
+        op = operators[-1]
+        shared_data.tracked_actions.append(
+            ['REGISTER' in op.bl_options, 'UNDO' in op.bl_options, op.bl_idname, executed_operator_to_dict(op)]
+        )
+        return
+
+    len_tracked = len(shared_data.tracked_actions)
+    if not len_tracked:
+        return
+    i = 1
+    op = operators[-1]
+    operators_length = len(operators)
+    while 'REGISTER' not in op.bl_options and operators_length > i:
+        i += 1
+        op = operators[-i]
+    last_register_op = last_tracked = shared_data.tracked_actions[-1]
+    i = 1
+    while last_register_op[2] != op.bl_idname and len_tracked > i:
+        i += 1
+        last_register_op = shared_data.tracked_actions[-i]
+    props = executed_operator_to_dict(op)
+    if last_register_op[2] == op.bl_idname and props != last_register_op[3]:
+        last_register_op[3] = props
+    else:
+        if last_tracked[2] == "CONTEXT":
+            last_tracked[3] += 1
+        else:
+            shared_data.tracked_actions.append([True, True, "CONTEXT", 1])
 
 
 def get_report_text(context: Context) -> str:
@@ -229,7 +229,6 @@ def compare_op_dict(op1_props: dict, op2_props: dict) -> bool:
     Returns:
         bool: equal compare result
     """
-    # REFACTOR indentation
     for key, str_value in op1_props.items():
         value = op2_props.get(key, None)
         if value is None:
@@ -350,8 +349,6 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
             list with elements format (Type: int, Registered: bool, Undo: bool, type: str, name: str, value[s]: dict)
             Type: 0 - Context, 1 Operator
     """
-    # REFACTOR indentation
-    # REFACTOR rework this function because it's a mess
     # create numpy.array for efficient access
     reports = numpy.array(reports)
     tracked_actions = numpy.array(tracked_actions)
@@ -422,12 +419,8 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
                             or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
                 data.append((0, True, undo, source_path, attribute, value))
                 report_i += 1
-            if tracked[2] == 'CONTEXT':
-                tracked[3] -= 1
-                if tracked[3] == 0:
-                    tracked_i += 1
-            elif not continue_report or not tracked[0]:
-                tracked_i += 1
+            tracked[3] -= (tracked[2] == 'CONTEXT')
+            tracked_i += (tracked[2] == 'CONTEXT' and tracked[3] == 0) or (not continue_report or not tracked[0])
         else:
             report_i += 1
             if not continue_report:
@@ -544,18 +537,22 @@ def get_copy_of_object(data: dict, obj: 'blender_object', attribute: str, depth=
     Returns:
         dict: copied blender object
     """
-    # REFACTOR indentation
-    if depth and obj:
-        if hasattr(obj, attribute):
-            return {attribute: getattr(obj, attribute)}
-        if hasattr(obj, 'bl_rna'):
-            for prop in obj.bl_rna.properties[1:]:
-                if prop.type == 'COLLECTION' or prop.type == 'POINTER':
-                    sub_obj = getattr(obj, prop.identifier)
-                    if obj != sub_obj:
-                        res = get_copy_of_object({}, sub_obj, attribute, depth - 1)
-                        if res != {}:
-                            data[prop.identifier] = res
+    if not (depth and obj):
+        return data
+    if hasattr(obj, attribute):
+        return {attribute: getattr(obj, attribute)}
+    if not hasattr(obj, 'bl_rna'):
+        return data
+    for prop in obj.bl_rna.properties[1:]:
+        if not (prop.type == 'COLLECTION' or prop.type == 'POINTER'):
+            continue
+        sub_obj = getattr(obj, prop.identifier)
+        if obj == sub_obj:
+            continue
+        res = get_copy_of_object({}, sub_obj, attribute, depth - 1)
+        if res == {}:
+            continue
+        data[prop.identifier] = res
     return data
 
 
@@ -595,15 +592,16 @@ def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: l
             tuple: format (object class, source_path as str, attribute, value)
             None: object couldn't be compared
     """
-    # REFACTOR indentation
     if hasattr(obj, attribute) and getattr(obj, attribute) != copy_dict[attribute]:
         return (obj.__class__, ".".join(source_path), attribute, value)
     for key in copy_dict:
-        if hasattr(obj, key):
-            if isinstance(copy_dict[key], dict):
-                res = compare_object_report(getattr(obj, key), copy_dict[key], [*source_path, key], attribute, value)
-                if res:
-                    return res
+        if not hasattr(obj, key):
+            continue
+        if not isinstance(copy_dict[key], dict):
+            continue
+        res = compare_object_report(getattr(obj, key), copy_dict[key], [*source_path, key], attribute, value)
+        if res:
+            return res
     return
 
 
@@ -655,18 +653,18 @@ def split_operator_report(operator_str: str) -> Tuple[str, str, dict]:
     Returns:
         Tuple[str, str, dict]: format (op_type, op_name, op_values)
     """
-    # REFACTOR indentation
     op_type, op_name = operator_str.replace("bpy.ops.", "").split("(")[0].split(".")
     op_values = {}
     key = ""
     for x in "(".join(operator_str.split("(")[1:])[:-1].split(", "):
-        if x:
-            split = x.split("=")
-            if split[0].strip().isidentifier() and len(split) > 1:
-                key = split[0]
-                op_values[key] = split[1]
-            else:
-                op_values[key] += ", %s" % (split[0])
+        if not x:
+            continue
+        split = x.split("=")
+        if split[0].strip().isidentifier() and len(split) > 1:
+            key = split[0]
+            op_values[key] = split[1]
+        else:
+            op_values[key] += ", %s" % (split[0])
     return op_type, op_name, op_values
 
 
@@ -727,11 +725,14 @@ def improve_operator_report(
     Returns:
         str: format bpy.ops.<type>.<name>(values)
     """
-    # REFACTOR indentation, use dict
-    if op_evaluation:
-        if op_type == "outliner":
-            if op_name == "collection_drop":
-                return "bpy.ops.ar.helper_object_to_collection()"
-    return "bpy.ops.%s.%s(%s)" % (op_type, op_name, dict_to_kwarg_str(op_values))
+    default = "bpy.ops.%s.%s(%s)" % (op_type, op_name, dict_to_kwarg_str(op_values))
+    if not op_evaluation:
+        return default
+    mapping = {
+        "outliner": {
+            "collection_drop": "bpy.ops.ar.helper_object_to_collection()"
+        }
+    }
+    return mapping.get(op_type, {}).get(op_name, default)
 
 # endregion

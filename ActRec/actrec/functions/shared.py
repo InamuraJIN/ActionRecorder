@@ -66,7 +66,6 @@ def get_pointer_property_as_dict(property: PointerProperty, exclude: list, depth
     Returns:
         dict: python dict based on property
     """
-    # REFACTOR indentation
     data = {}  # PointerProperty
     main_exclude = []
     sub_exclude = defaultdict(list)
@@ -79,12 +78,13 @@ def get_pointer_property_as_dict(property: PointerProperty, exclude: list, depth
     main_exclude = set(main_exclude)
     for attr in property.bl_rna.properties[1:]:  # exclude rna_type
         identifier = attr.identifier
-        if identifier not in main_exclude:
-            data[identifier] = property_to_python(
-                getattr(property, identifier),
-                sub_exclude.get(identifier, []),
-                depth - 1
-            )
+        if identifier in main_exclude:
+            continue
+        data[identifier] = property_to_python(
+            getattr(property, identifier),
+            sub_exclude.get(identifier, []),
+            depth - 1
+        )
     return data
 
 
@@ -106,38 +106,37 @@ def property_to_python(property: Property, exclude: list = [], depth: int = 5) -
     Returns:
         Union[list, dict, str]: converts Collection, Arrays to lists and PointerProperty to dict
     """
-    # REFACTOR indentation
     # CollectionProperty are a list of PointerProperties
     if depth <= 0:
         return "max depth"
-    if hasattr(property, 'id_data'):
-        id_object = property.id_data
-
-        # exclude conversions of same property
-        if property == id_object:
-            return property
-
-        class_name = property.__class__.__name__
-        if class_name == 'bpy_prop_collection_idprop':
-            # CollectionProperty
-            return [property_to_python(item, exclude, depth) for item in property]
-        elif class_name == 'bpy_prop_collection':
-            # CollectionProperty
-            if hasattr(property, "bl_rna"):
-                data = get_pointer_property_as_dict(property, exclude, depth)
-                data["items"] = [property_to_python(item, exclude, depth) for item in property]
-                return data
-            else:
-                return [property_to_python(item, exclude, depth) for item in property]
-        elif class_name == 'bpy_prop_array':
-            # ArrayProperty
-            return [property_to_python(item, exclude, depth) for item in property]
-        else:
-            # PointerProperty
-            return get_pointer_property_as_dict(property, exclude, depth)
     if isinstance(property, set):  # Catch EnumProperty with EnumFlag
-        property = list(property)
-    return property
+        return list(property)
+    if not hasattr(property, 'id_data'):
+        return property
+
+    id_object = property.id_data
+
+    # exclude conversions of same property
+    if property == id_object:
+        return property
+
+    class_name = property.__class__.__name__
+    if class_name == 'bpy_prop_collection_idprop':
+        # CollectionProperty
+        return [property_to_python(item, exclude, depth) for item in property]
+    if class_name == 'bpy_prop_collection':
+        # CollectionProperty
+        if hasattr(property, "bl_rna"):
+            data = get_pointer_property_as_dict(property, exclude, depth)
+            data["items"] = [property_to_python(item, exclude, depth) for item in property]
+            return data
+        else:
+            return [property_to_python(item, exclude, depth) for item in property]
+    if class_name == 'bpy_prop_array':
+        # ArrayProperty
+        return [property_to_python(item, exclude, depth) for item in property]
+    # PointerProperty
+    return get_pointer_property_as_dict(property, exclude, depth)
 
 
 def apply_data_to_item(property: Property, data, key="") -> None:
@@ -292,38 +291,37 @@ def get_name_of_command(context: Context, command: str) -> Optional[str]:
     Returns:
         Optional[str]: name or none if name not found
     """
-    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         try:
             return eval("%s.get_rna_type().name" % command.split("(")[0])
         except (KeyError):
             return None
-    elif command.startswith("bpy.context."):
-        split = command.split(' = ')
-        if len(split) > 1:
-            *path, prop = split[0].replace("bpy.context.", "").split(".")
-            obj = context
-            if obj:
-                for x in path:
-                    if hasattr(obj, x):
-                        obj = getattr(obj, x)
-                    else:
-                        break
-                else:
-                    if obj:
-                        props = obj.bl_rna.properties
-                        if prop in props:
-                            prop = props[prop].name
 
-            value = split[1]
-            if value.startswith("bpy.data."):
-                value = value.split("[")[-1].replace("]", "")[1:-1]
-
-            return "%s = %s" % (prop, value)
-        else:
-            return ".".join(split[0].split('.')[-2:])
-    else:
+    if not command.startswith("bpy.context."):
         return None
+
+    split = command.split(' = ')
+    if len(split) <= 1:
+        return ".".join(split[0].split('.')[-2:])
+
+    *path, prop = split[0].replace("bpy.context.", "").split(".")
+    obj = context
+    if obj:
+        for x in path:
+            if not hasattr(obj, x):
+                break
+            obj = getattr(obj, x)
+        else:
+            if obj:
+                props = obj.bl_rna.properties
+                if prop in props:
+                    prop = props[prop].name
+
+    value = split[1]
+    if value.startswith("bpy.data."):
+        value = value.split("[")[-1].replace("]", "")[1:-1]
+
+    return "%s = %s" % (prop, value)
 
 
 def extract_properties(properties: str) -> list:
@@ -363,26 +361,25 @@ def update_command(command: str) -> Union[str, bool]:
     Returns:
         Union[str, bool, None]: update string, return False if command doesn't exists anymore
     """
-    # REFACTOR indentation
-    if command.startswith("bpy.ops."):
-        command, values = command.split("(", 1)
-        values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
-        for i in range(len(values)):
-            values[i] = values[i].split("=")
-        try:
-            props = eval("%s.get_rna_type().properties[1:]" % command)
-        except (KeyError):
-            return False
-        inputs = []
-        for prop in props:
-            for value in values:
-                if value[0] == prop.identifier:
-                    inputs.append("%s=%s" % (value[0], value[1]))
-                    values.remove(value)
-                    break
-        return "%s(%s)" % (command, ", ".join(inputs))
-    else:
+    if not command.startswith("bpy.ops."):
         return False
+    command, values = command.split("(", 1)
+    values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
+    for i in range(len(values)):
+        values[i] = values[i].split("=")
+    try:
+        props = eval("%s.get_rna_type().properties[1:]" % command)
+    except (KeyError):
+        return False
+    inputs = []
+    for prop in props:
+        for value in values:
+            if value[0] != prop.identifier:
+                continue
+            inputs.append("%s=%s" % (value[0], value[1]))
+            values.remove(value)
+            break
+    return "%s(%s)" % (command, ", ".join(inputs))
 
 
 def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int) -> None:
@@ -450,27 +447,27 @@ def play(
     Returns:
         Exception, str: error
     """
-    # REFACTOR indentation
     macros = [macro for macro in macros if macro.active]
 
     # non-realtime events, execute before macros get executed
     for i, macro in enumerate(macros):
         split = macro.command.split(":")
-        if split[0] == 'ar.event':
-            data = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Render Complete':
-                shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
-                break
+        if split[0] != 'ar.event':
+            continue
+        data = json.loads(":".join(split[1:]))
+        if data['Type'] == 'Render Complete':
+            shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
+            break
 
     base_area = context.area
 
-    for i, macro in enumerate(macros):  # realtime events
+    for i, macro in enumerate(macros):
         split = macro.command.split(":")
-        if split[0] == 'ar.event':
+        if split[0] == 'ar.event':  # Handle Ar Events
             data: dict = json.loads(":".join(split[1:]))
             if data['Type'] in {'Render Complete'}:
                 return
-            elif data['Type'] == 'Timer':
+            if data['Type'] == 'Timer':
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
@@ -482,18 +479,17 @@ def play(
                     first_interval=data['Time']
                 )
                 return
-            elif data['Type'] == 'Loop':
+            if data['Type'] == 'Loop':
                 end_index = i + 1
                 loop_count = 1
                 for j, process_macro in enumerate(macros[i + 1:], i + 1):
-                    if process_macro.active:
-                        split = process_macro.command.split(":")
-                        if split[0] == 'ar.event':  # realtime events
-                            process_data = json.loads(":".join(split[1:]))
-                            if process_data['Type'] == 'Loop':
-                                loop_count += 1
-                            elif process_data['Type'] == 'EndLoop':
-                                loop_count -= 1
+                    if not process_macro.active:
+                        continue
+                    split = process_macro.command.split(":")
+                    if split[0] != 'ar.event':
+                        continue
+                    process_data = json.loads(":".join(split[1:]))
+                    loop_count += 2 * (process_data['Type'] == 'Loop') - (process_data['Type'] == 'EndLoop')  # 1 or -1
                     if loop_count == 0:
                         end_index = j
                         break
@@ -580,7 +576,9 @@ def play(
             if command.startswith("bpy.ops."):
                 split = command.split("(")
                 command = "%s(\"%s\", %s" % (
-                    split[0], macro.operator_execution_context, "(".join(split[1:]))
+                    split[0],
+                    macro.operator_execution_context,
+                    "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 command = command.replace("bpy.context.", "context.")
 
@@ -613,8 +611,7 @@ def play(
                     window=temp_window,
                     screen=temp_screen,
                     area=temp_area,
-                    region=temp_region
-            ):
+                    region=temp_region):
                 if action.execution_mode == "GROUP":
                     exec(command)
                 else:
@@ -746,7 +743,6 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     Returns:
         list[str]: multiline text
     """
-    # REFACTOR indentation
     if text == "" or not font.use_dynamic_text:
         return [text]
     characters_width = font.get_width_of_text(text)
@@ -760,27 +756,26 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
         width = sum(characters_width[start: total_length])
         if width <= limit:
             lines[-1] += psb
-        else:
-            if sum(characters_width[total_line_length: total_length]) > limit:
-                start += line_length
-                while psb != "":
-                    i = int(bl_math.clamp(limit / width * len(psb), 0, len(psb)))
-                    if len(psb) != i:
-                        if sum(characters_width[start: start + i]) <= limit:
-                            while sum(characters_width[start: start + i]) <= limit:
-                                i += 1
-                            i -= 1
-                        else:
-                            while sum(characters_width[start: start + i]) >= limit:
-                                i -= 1
-                            i += 1
-                    lines.append(psb[:i])
-                    psb = psb[i:]
-                    start += i
-                    width = sum(characters_width[start: total_length])
-            else:
-                lines.append(psb)
-                start += line_length + len(psb)
+            continue
+        if sum(characters_width[total_line_length: total_length]) <= limit:
+            lines.append(psb)
+            start += line_length + len(psb)
+            continue
+        start += line_length
+        while psb != "":
+            i = int(bl_math.clamp(limit / width * len(psb), 0, len(psb)))
+            if len(psb) != i:
+                if sum(characters_width[start: start + i]) <= limit:
+                    while sum(characters_width[start: start + i]) <= limit:
+                        i += 1
+                    i -= 1
+                else:
+                    while sum(characters_width[start: start + i]) >= limit:
+                        i -= 1
+            lines.append(psb[:i])
+            psb = psb[i:]
+            start += i
+            width = sum(characters_width[start: total_length])
     if (lines[0] == ""):
         lines.pop(0)
     return lines

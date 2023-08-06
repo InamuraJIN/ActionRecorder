@@ -75,12 +75,12 @@ def load_icons(ActRec_pref: AddonPreferences) -> None:
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
         filepath = os.path.join(directory, icon)
-        # REFACTOR indentation
-        if os.path.exists(filepath) and os.path.isfile(filepath):
-            register_icon(
-                preview_collections['ar_custom'],
-                "AR_%s" % ".".join(icon.split(".")[:-1]), filepath, True
-            )
+        if not (os.path.exists(filepath) and os.path.isfile(filepath)):
+            continue
+        register_icon(
+            preview_collections['ar_custom'],
+            "AR_%s" % ".".join(icon.split(".")[:-1]), filepath, True
+        )
 
 
 def load_icon(ActRec_pref: AddonPreferences, filepath: str, only_new: bool = False) -> None:
@@ -259,7 +259,6 @@ class AR_OT_delete_custom_icon(Operator):
             return self.get("selected", False) or self.get("select_all", False)
 
         def set_selected(self, value: bool) -> None:
-            # REFACTOR indentation
             if not self.get("select_all", False):
                 self["selected"] = value
 
@@ -292,19 +291,16 @@ class AR_OT_delete_custom_icon(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         for ele in self.icons:
-            if ele.selected or self.select_all:
-                icon_path = ele.icon_name[3:]
-                filenames = os.listdir(ActRec_pref.icon_path)
-                names = [os.path.splitext(os.path.basename(path))[
-                    0] for path in filenames]
-                if icon_path in names:
-                    os.remove(os.path.join(ActRec_pref.icon_path,
-                              filenames[names.index(icon_path)]))
-                unregister_icon(
-                    preview_collections['ar_custom'], ele.icon_name)
+            if not (ele.selected or self.select_all):
+                continue
+            icon_path = ele.icon_name[3:]
+            filenames = os.listdir(ActRec_pref.icon_path)
+            names = [os.path.splitext(os.path.basename(path))[0] for path in filenames]
+            if icon_path in names:
+                os.remove(os.path.join(ActRec_pref.icon_path, filenames[names.index(icon_path)]))
+            unregister_icon(preview_collections['ar_custom'], ele.icon_name)
         return {"FINISHED"}
 
     def draw(self, context: Context) -> None:

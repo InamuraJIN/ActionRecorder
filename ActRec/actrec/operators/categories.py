@@ -161,7 +161,6 @@ class AR_OT_category_interface(Operator):
             category_visibility (list): list of pattern (area, mode) where the category should be visible
             id (str): id of the category to select
         """
-        # REFACTOR indentation
         category = ActRec_pref.categories[id]
         visibility = defaultdict(list)
         for area, mode in category_visibility:
@@ -169,10 +168,11 @@ class AR_OT_category_interface(Operator):
         for area, modes in visibility.items():
             new_area = category.areas.add()
             new_area.type = area
-            if 'all' not in modes:
-                for mode in modes:
-                    new_mode = new_area.modes.add()
-                    new_mode.type = mode
+            if 'all' in modes:
+                continue
+            for mode in modes:
+                new_mode = new_area.modes.add()
+                new_mode.type = mode
 
     def draw(self, context: Context) -> None:
         layout = self.layout
@@ -184,27 +184,27 @@ class AR_OT_category_interface(Operator):
         ops.area = self.area
         ops.mode = self.mode
         cls = AR_OT_category_interface
-        # REFACTOR indentation
-        if len(cls.category_visibility) > 0:
-            box = layout.box()
+        if len(cls.category_visibility) <= 0:
+            return
+        box = layout.box()
+        row = box.row()
+        row.label(text="Area")
+        row.label(text="Mode")
+        row.label(icon='BLANK1')
+        for i, (area, mode) in enumerate(cls.category_visibility):
             row = box.row()
-            row.label(text="Area")
-            row.label(text="Mode")
-            row.label(icon='BLANK1')
-            for i, (area, mode) in enumerate(cls.category_visibility):
-                row = box.row()
-                row.label(text=cls.area_dict[area])
-                mode_str = ""
-                area_modes = cls.mode_dict.get(area)
-                if area_modes:
-                    mode_str = area_modes[mode]
-                row.label(text=mode_str)
-                row.operator(
-                    AR_OT_category_delete_visibility.bl_idname,
-                    text='',
-                    icon='PANEL_CLOSE',
-                    emboss=False
-                ).index = i
+            row.label(text=cls.area_dict[area])
+            mode_str = ""
+            area_modes = cls.mode_dict.get(area)
+            if area_modes:
+                mode_str = area_modes[mode]
+            row.label(text=mode_str)
+            row.operator(
+                AR_OT_category_delete_visibility.bl_idname,
+                text='',
+                icon='PANEL_CLOSE',
+                emboss=False
+            ).index = i
 
 
 class AR_OT_category_add(AR_OT_category_interface, Operator):
@@ -341,16 +341,16 @@ class AR_OT_category_delete(shared.Id_based, Operator):
         id = functions.get_category_id(ActRec_pref, self.id, self.index)
         self.clear()
         category = categories.get(id, None)
-        # REFACTOR indentation
-        if category:
-            category = categories[id]
-            for id_action in category.actions:
-                ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id_action.id))
-            ui_functions.unregister_category(ActRec_pref, len(categories) - 1)
-            categories.remove(categories.find(id))
-            if len(categories):
-                categories[0].selected = True
-            context.area.tag_redraw()
+        if not category:
+            return {"FINISHED"}
+        category = categories[id]
+        for id_action in category.actions:
+            ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id_action.id))
+        ui_functions.unregister_category(ActRec_pref, len(categories) - 1)
+        categories.remove(categories.find(id))
+        if len(categories):
+            categories[0].selected = True
+        context.area.tag_redraw()
         return {"FINISHED"}
 
     def draw(self, context: Context) -> None:
@@ -386,20 +386,19 @@ class AR_OT_category_move_up(shared.Id_based, Operator):
         categories = ActRec_pref.categories
         i = categories.find(id)
         y = i - 1  # upper index
-        # REFACTOR indentation
-        if i >= 0 and y >= 0 and ui_functions.category_visible(ActRec_pref, context, categories[i]):
+        if not (i >= 0 and y >= 0 and ui_functions.category_visible(ActRec_pref, context, categories[i])):
+            return {'CANCELLED'}
+        swap_category = categories[y]
+        # get next visible category
+        while not ui_functions.category_visible(ActRec_pref, context, swap_category):
+            y -= 1
+            if y < 0:
+                return {"CANCELLED"}
             swap_category = categories[y]
-            # get next visible category
-            while not ui_functions.category_visible(ActRec_pref, context, swap_category):
-                y -= 1
-                if y < 0:
-                    return {"CANCELLED"}
-                swap_category = categories[y]
-            functions.swap_collection_items(categories, i, y)
-            ActRec_pref.categories[y].selected = True
-            context.area.tag_redraw()
-            return {"FINISHED"}
-        return {'CANCELLED'}
+        functions.swap_collection_items(categories, i, y)
+        ActRec_pref.categories[y].selected = True
+        context.area.tag_redraw()
+        return {"FINISHED"}
 
 
 class AR_OT_category_move_down(shared.Id_based, Operator):

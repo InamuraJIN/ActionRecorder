@@ -23,14 +23,13 @@ def get_category_id(ActRec_pref: AddonPreferences, id: str, index: int) -> str:
     Returns:
         str: id of the category, fallback to selected category if not found
     """
-    # REFACTOR indentation
-    if ActRec_pref.categories.find(id) == -1:
-        if index >= 0 and len(ActRec_pref.categories) > index:
-            return ActRec_pref.categories[index].id
-        else:
-            return ActRec_pref.selected_category
-    else:
+    if ActRec_pref.categories.find(id) != -1:
         return id
+
+    if index >= 0 and len(ActRec_pref.categories) > index:
+        return ActRec_pref.categories[index].id
+    else:
+        return ActRec_pref.selected_category
 
 
 def read_category_visibility(ActRec_pref: AddonPreferences, id: str) -> Optional[list]:
@@ -44,14 +43,14 @@ def read_category_visibility(ActRec_pref: AddonPreferences, id: str) -> Optional
     Returns:
         Optional[list]: dict on success, None on fail
     """
-    # REFACTOR indentation
     visibility = []
     category = ActRec_pref.categories.get(id, None)
-    if category:
-        for area in category.areas:
-            for mode in area.modes:
-                visibility.append((area.type, mode.type))
-            if len(area.modes) == 0:
-                visibility.append((area.type, 'all'))
-        return visibility
+    if not category:
+        return
+    for area in category.areas:
+        for mode in area.modes:
+            visibility.append((area.type, mode.type))
+        if len(area.modes) == 0:
+            visibility.append((area.type, 'all'))
+    return visibility
 # endregion

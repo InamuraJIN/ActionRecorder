@@ -140,11 +140,11 @@ def register():
 
 def unregister():
     addon = bpy.context.window_manager.keyconfigs.addon
-    # REFACTOR indentation
-    if addon:
-        default_km = keymaps.get('default')
-        if default_km:
-            save_action_keymap(default_km.keymap_items)
-        for km in keymaps.values():
-            addon.keymaps.remove(km)
+    if not addon:
+        return
+    default_km = keymaps.get('default')
+    if default_km:
+        save_action_keymap(default_km.keymap_items)
+    for km in keymaps.values():
+        addon.keymaps.remove(km)
 # endregion

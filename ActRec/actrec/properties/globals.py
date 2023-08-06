@@ -24,7 +24,7 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         """
         return self.get("selected", False)
 
-    def set_selected(self, value: bool):
+    def set_selected(self, value: bool) -> None:
         """
         set selected macro or if ctrl is pressed multiple macros can be selected
         if ctrl is not pressed all selected macros get deselected except the new selected.
@@ -32,29 +32,30 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         Args:
             value (bool): state of selection
         """
-        # REFACTOR indentation
         ActRec_pref = get_preferences(bpy.context)
         selected_ids = list(ActRec_pref.get("global_actions.selected_ids", []))
         # implementation similar to a UIList (only one selection of all can be active),
         # with extra multi selection by pressing ctrl
-        if len(selected_ids) > 1:
-            value = True
-        if value:
-            # uses check_ctrl operator to check for ctrl event
-            ctrl_value = bpy.ops.ar.check_ctrl('INVOKE_DEFAULT')
-            # {'CANCELLED'} == ctrl is not pressed
-            if selected_ids and ctrl_value == {'CANCELLED'}:
-                ActRec_pref["global_actions.selected_ids"] = []
-                for selected_id in selected_ids:
-                    action = ActRec_pref.global_actions.get(selected_id, None)
-                    if action:
-                        action.selected = False
-                selected_ids.clear()
-            selected_ids.append(self.id)
-            ActRec_pref["global_actions.selected_ids"] = selected_ids
+        if not (self.id in selected_ids):
             self['selected'] = value
-        elif not (self.id in selected_ids):
-            self['selected'] = value
+            return
+
+        value |= (len(selected_ids) > 1)  # used as bool or
+        if not value:
+            return
+
+        # uses check_ctrl operator to check for ctrl event
+        ctrl_value = bpy.ops.ar.check_ctrl('INVOKE_DEFAULT')
+        # {'CANCELLED'} == ctrl is not pressed
+        if selected_ids and ctrl_value == {'CANCELLED'}:
+            ActRec_pref["global_actions.selected_ids"] = []
+            for selected_id in selected_ids:
+                action = ActRec_pref.global_actions.get(selected_id, None)
+                action.selected = (not bool(action))
+            selected_ids.clear()
+        selected_ids.append(self.id)
+        ActRec_pref["global_actions.selected_ids"] = selected_ids
+        self['selected'] = value
 
     selected: BoolProperty(
         default=False,
@@ -76,7 +77,7 @@ class AR_global_import_action(PropertyGroup):
         """
         return self.get('use', True) and self.get('category.use', True)
 
-    def set_use(self, value: bool):
+    def set_use(self, value: bool) -> None:
         """
         set state whether the action will be used to import
 
@@ -108,7 +109,7 @@ class AR_global_import_category(PropertyGroup):
         """
         return self.get("use", True)
 
-    def set_use(self, value: bool):
+    def set_use(self, value: bool) -> None:
         """
         set state whether the category will be used to import
 
@@ -144,7 +145,7 @@ class AR_global_export_action(shared.Id_based, PropertyGroup):
         """
         return self.get("use", True) and self.get('category.use', True) or self.get('export_all', False)
 
-    def set_use(self, value: bool):
+    def set_use(self, value: bool) -> None:
         """
         set state whether the action will be used to export
 
@@ -175,18 +176,18 @@ class AR_global_export_categories(shared.Id_based, PropertyGroup):
         """
         return self.get("use", True) or self.get("export_all", False)
 
-    def set_use(self, value: bool):
+    def set_use(self, value: bool) -> None:
         """
         set state whether the category will be used to export
 
         Args:
             value (bool): category export state
         """
-        # REFACTOR indentation
-        if not self.get("export_all", False):
-            self['use'] = value
-            for action in self.actions:
-                action['category.use'] = value
+        if self.get("export_all", False):
+            return
+        self['use'] = value
+        for action in self.actions:
+            action['category.use'] = value
 
     label: StringProperty()
     actions: CollectionProperty(type=AR_global_export_action)

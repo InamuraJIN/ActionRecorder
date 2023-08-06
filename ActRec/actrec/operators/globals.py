@@ -110,7 +110,6 @@ class AR_OT_global_import(Operator, ImportHelper):
         return macros
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
         # Try to load import settings and check if file is valid
@@ -122,65 +121,67 @@ class AR_OT_global_import(Operator, ImportHelper):
             self.report({'ERROR'}, "Selected file is incompatible")
             return {'CANCELLED'}
 
-        if ActRec_pref.import_extension == ".zip" or ActRec_pref.import_extension == ".json":
-
-            if self.mode == "overwrite":
-                for i in range(len(ActRec_pref.categories)):
-                    ui_functions.unregister_category(ActRec_pref, i)
-                ActRec_pref.global_actions.clear()
-                ActRec_pref.categories.clear()
-
-            if ActRec_pref.import_extension == ".zip":
-                # Only used because old Version used .zip to export and directory and file structure
-                # Categories where saved as directories and Actions where saved as files in the specific directory
-                data = defaultdict(list)
-                zip_file = zipfile.ZipFile(self.filepath, mode='r')
-                for category in ActRec_pref.import_settings:
-                    if category.use and any(action.use for action in category.actions):
-                        actions = list(
-                            filter(lambda x: x.use, category.actions))
-                        category_actions = [
-                            {
-                                'id': uuid.uuid1().hex,
-                                'label': action.label,
-                                'macros': self.get_macros_from_file(context, zip_file, action.identifier),
-                                'icon': int(action.identifier.split("~")[-1].split(".")[0])
-                            }for action in actions
-                        ]
-                        data['categories'].append({
-                            'id': uuid.uuid1().hex,
-                            'label': category.label,
-                            'actions': [{"id": action['id']} for action in category_actions]
-                        })
-                        data['actions'] += category_actions
-                functions.import_global_from_dict(ActRec_pref, data)
-            elif ActRec_pref.import_extension == ".json":
-                with open(self.filepath, 'r', encoding='utf-8') as file:
-                    data = json.loads(file.read())
-                category_ids = set(category.identifier for category in ActRec_pref.import_settings if category.use)
-                action_ids = []
-                for category in ActRec_pref.import_settings:
-                    action_ids += [action.identifier for action in category.actions if action.use]
-                action_ids = set(action_ids)
-
-                data['categories'] = [category for category in data['categories'] if category['id'] in category_ids]
-                data['actions'] = [action for action in data['actions'] if action['id'] in action_ids]
-                current_action_ids = set(action.id for action in ActRec_pref.global_actions)
-                current_category_ids = set(action.id for action in ActRec_pref.categories)
-                for action in data['actions']:
-                    if action['id'] not in current_action_ids:
-                        continue
-                    action['id'] = uuid.uuid1().hex
-                for category in data['categories']:
-                    if category['id'] not in current_category_ids:
-                        continue
-                    category['id'] = uuid.uuid1().hex
-                functions.import_global_from_dict(ActRec_pref, data)
-                if self.include_keymap:
-                    default_km = keymaps.get('default')
-                    keymap.load_action_keymap_data(data, default_km.keymap_items)
-        else:
+        if ActRec_pref.import_extension not in {".zip", ".json"}:
+            ActRec_pref.import_settings.clear()
             self.report({'ERROR'}, "Select a .json or .zip file {%s}" % self.filepath)
+            return {'CANCELLED'}
+
+        if self.mode == "overwrite":
+            for i in range(len(ActRec_pref.categories)):
+                ui_functions.unregister_category(ActRec_pref, i)
+            ActRec_pref.global_actions.clear()
+            ActRec_pref.categories.clear()
+
+        if ActRec_pref.import_extension == ".zip":
+            # Only used because old Version used .zip to export and directory and file structure
+            # Categories where saved as directories and Actions where saved as files in the specific directory
+            data = defaultdict(list)
+            zip_file = zipfile.ZipFile(self.filepath, mode='r')
+            for category in ActRec_pref.import_settings:
+                if category.use and any(action.use for action in category.actions):
+                    actions = list(
+                        filter(lambda x: x.use, category.actions))
+                    category_actions = [
+                        {
+                            'id': uuid.uuid1().hex,
+                            'label': action.label,
+                            'macros': self.get_macros_from_file(context, zip_file, action.identifier),
+                            'icon': int(action.identifier.split("~")[-1].split(".")[0])
+                        }for action in actions
+                    ]
+                    data['categories'].append({
+                        'id': uuid.uuid1().hex,
+                        'label': category.label,
+                        'actions': [{"id": action['id']} for action in category_actions]
+                    })
+                    data['actions'] += category_actions
+            functions.import_global_from_dict(ActRec_pref, data)
+        elif ActRec_pref.import_extension == ".json":
+            with open(self.filepath, 'r', encoding='utf-8') as file:
+                data = json.loads(file.read())
+            category_ids = set(category.identifier for category in ActRec_pref.import_settings if category.use)
+            action_ids = []
+            for category in ActRec_pref.import_settings:
+                action_ids += [action.identifier for action in category.actions if action.use]
+            action_ids = set(action_ids)
+
+            data['categories'] = [category for category in data['categories'] if category['id'] in category_ids]
+            data['actions'] = [action for action in data['actions'] if action['id'] in action_ids]
+            current_action_ids = set(action.id for action in ActRec_pref.global_actions)
+            current_category_ids = set(action.id for action in ActRec_pref.categories)
+            for action in data['actions']:
+                if action['id'] not in current_action_ids:
+                    continue
+                action['id'] = uuid.uuid1().hex
+            for category in data['categories']:
+                if category['id'] not in current_category_ids:
+                    continue
+                category['id'] = uuid.uuid1().hex
+            functions.import_global_from_dict(ActRec_pref, data)
+            if self.include_keymap:
+                default_km = keymaps.get('default')
+                keymap.load_action_keymap_data(data, default_km.keymap_items)
+
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
         if ActRec_pref.autosave:
@@ -326,54 +327,53 @@ class AR_OT_global_import_settings(Operator):
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
 
-        # REFACTOR indentation
-        if os.path.exists(self.filepath):
-            if self.filepath.endswith(".zip"):
-                # Only used because old Version used .zip to export and directory and file structure
-                # Categories where saved as directories and Actions where saved as files in the specific directory
-                ActRec_pref.import_extension = ".zip"
-                categories_paths = self.import_sorted_zip(self.filepath)
-                if isinstance(categories_paths, str):
-                    if not self.from_operator:
-                        self.report(
-                            {'ERROR'}, "The selected file is not compatible (%s)" % categories_paths)
-                    return {'CANCELLED'}
-                for key, item in sorted(categories_paths.items(), key=lambda x: int(x[0].split('~')[0])):
-                    new_category = ActRec_pref.import_settings.add()
-                    new_category.identifier = key
-                    new_category.label = key.split('~')[1]
-                    for file in item:
-                        new_action = new_category.actions.add()
-                        new_action.identifier = file
-                        new_action.label = file.split("/")[-1].split('~')[1]
-                return {"FINISHED"}
-            elif self.filepath.endswith(".json"):
-                ActRec_pref.import_extension = ".json"
-                try:
-                    with open(self.filepath, 'r', encoding='utf-8') as file:
-                        data = json.loads(file.read())
-                    actions = {action['id']: action for action in data['actions']}
-                    shortcut_map = self.map_shortcut_to_actions(context, data)
-                    for category in data['categories']:
-                        new_category = ActRec_pref.import_settings.add()
-                        new_category.identifier = category['id']
-                        new_category.label = category['label']
-                        for id in category['actions']:
-                            action = actions[id['id']]
-                            new_action = new_category.actions.add()
-                            new_action.identifier = action['id']
-                            new_action.label = action['label']
-                            new_action.shortcut = shortcut_map.get(action['id'], "")
-                    return {"FINISHED"}
-                except Exception as err:
-                    logger.error("selected .json file not compatible (%s)" % err)
-                    self.report({'ERROR'}, "The selected file is not compatible (%s)" % self.filepath)
-                    return {'CANCELLED'}
+        if not os.path.exists(self.filepath):
+            if not self.from_operator:
+                self.report({'ERROR'}, "You need to select a .json or .zip file")
+            self.from_operator = False
+            return {'CANCELLED'}
 
-        if not self.from_operator:
-            self.report({'ERROR'}, "You need to select a .json or .zip file")
-        self.from_operator = False
-        return {'CANCELLED'}
+        if self.filepath.endswith(".zip"):
+            # Only used because old Version used .zip to export and directory and file structure
+            # Categories where saved as directories and Actions where saved as files in the specific directory
+            ActRec_pref.import_extension = ".zip"
+            categories_paths = self.import_sorted_zip(self.filepath)
+            if isinstance(categories_paths, str):
+                if not self.from_operator:
+                    self.report(
+                        {'ERROR'}, "The selected file is not compatible (%s)" % categories_paths)
+                return {'CANCELLED'}
+            for key, item in sorted(categories_paths.items(), key=lambda x: int(x[0].split('~')[0])):
+                new_category = ActRec_pref.import_settings.add()
+                new_category.identifier = key
+                new_category.label = key.split('~')[1]
+                for file in item:
+                    new_action = new_category.actions.add()
+                    new_action.identifier = file
+                    new_action.label = file.split("/")[-1].split('~')[1]
+            return {"FINISHED"}
+        elif self.filepath.endswith(".json"):
+            ActRec_pref.import_extension = ".json"
+            try:
+                with open(self.filepath, 'r', encoding='utf-8') as file:
+                    data = json.loads(file.read())
+                actions = {action['id']: action for action in data['actions']}
+                shortcut_map = self.map_shortcut_to_actions(context, data)
+                for category in data['categories']:
+                    new_category = ActRec_pref.import_settings.add()
+                    new_category.identifier = category['id']
+                    new_category.label = category['label']
+                    for id in category['actions']:
+                        action = actions[id['id']]
+                        new_action = new_category.actions.add()
+                        new_action.identifier = action['id']
+                        new_action.label = action['label']
+                        new_action.shortcut = shortcut_map.get(action['id'], "")
+                return {"FINISHED"}
+            except Exception as err:
+                logger.error("selected .json file not compatible (%s)" % err)
+                self.report({'ERROR'}, "The selected file is not compatible (%s)" % self.filepath)
+                return {'CANCELLED'}
 
 
 class AR_OT_global_export(Operator, ExportHelper):
@@ -597,11 +597,11 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
             self.global_to_local(ActRec_pref, ActRec_pref.global_actions[id])
-            # REFACTOR indentation ?
-            if ActRec_pref.global_to_local_mode == 'move':
-                ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
-                for category in ActRec_pref.categories:
-                    category.actions.remove(category.actions.find(id))
+            if ActRec_pref.global_to_local_mode != 'move':
+                continue
+            ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
+            for category in ActRec_pref.categories:
+                category.actions.remove(category.actions.find(id))
         functions.save_local_to_scene(ActRec_pref, context.scene)
         context.area.tag_redraw()
         self.clear()
@@ -656,10 +656,10 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
             for id_action in category.actions:
-                # REFACTOR indentation
-                if id_action.id in ids:
-                    index = category.actions.find(id_action.id)
-                    category.actions.move(index, index - 1)
+                if id_action.id not in ids:
+                    continue
+                index = category.actions.find(id_action.id)
+                category.actions.move(index, index - 1)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -680,10 +680,10 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
         ids = set(functions.get_global_action_ids(ActRec_pref, self.id, self.index))
         for category in ActRec_pref.categories:
             for id_action in reversed(list(category.actions)):
-                # REFACTOR indentation
-                if id_action.id in ids:
-                    index = category.actions.find(id_action.id)
-                    category.actions.move(index, index + 1)
+                if id_action.id not in ids:
+                    continue
+                index = category.actions.find(id_action.id)
+                category.actions.move(index, index + 1)
         context.area.tag_redraw()
         self.clear()
         return {"FINISHED"}
@@ -708,17 +708,17 @@ class AR_OT_global_rename(shared.Id_based, Operator):
         label = self.label
         self.label = ""
 
-        # REFACTOR indentation
-        if len(ids) == 1:
-            id = ids[0]
-            action = ActRec_pref.global_actions.get(id, None)
-            if action:
-                ActRec_pref.global_actions[id].label = label
-                if ActRec_pref.autosave:
-                    functions.save(ActRec_pref)
-                context.area.tag_redraw()
-                return {"FINISHED"}
-        return {'CANCELLED'}
+        if len(ids) != 1:
+            return {'CANCELLED'}
+        id = ids[0]
+        action = ActRec_pref.global_actions.get(id, None)
+        if not action:
+            return {'CANCELLED'}
+        ActRec_pref.global_actions[id].label = label
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
+        context.area.tag_redraw()
+        return {"FINISHED"}
 
 
 class AR_OT_global_execute_action(shared.Id_based, Operator):
@@ -783,13 +783,13 @@ class AR_OT_add_ar_shortcut(Operator):
     id: StringProperty()
 
     def draw(self, context: Context) -> None:
-        # REFACTOR indentation
         self.layout.label(text=self.bl_label)
         for kmi in keymap.keymaps['default'].keymap_items:
-            if kmi.idname == "ar.global_execute_action" and kmi.properties.id == self.id:
-                self.layout.prop(kmi, "type", text="", full_event=True)
-                kmi.active = True
-                break
+            if not (kmi.idname == "ar.global_execute_action" and kmi.properties.id == self.id):
+                continue
+            self.layout.prop(kmi, "type", text="", full_event=True)
+            kmi.active = True
+            break
 
     def invoke(self, context: Context, event: Event) -> set[str]:
         if self.id and functions.get_action_keymap(self.id) is None:

@@ -256,12 +256,12 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
         Args:
             origin_path (str): path of the new storage file
         """
-        # REFACTOR indentation
         self['storage_path'] = origin_path
-        if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
-            os.makedirs(os.path.dirname(origin_path), exist_ok=True)
-            with open(origin_path, 'w') as storage_file:
-                storage_file.write('{}')
+        if os.path.exists(origin_path) and os.path.isfile(origin_path):
+            return
+        os.makedirs(os.path.dirname(origin_path), exist_ok=True)
+        with open(origin_path, 'w') as storage_file:
+            storage_file.write('{}')
 
     storage_path: StringProperty(
         name="Storage Path",
@@ -291,7 +291,6 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
         Args:
             context (Context): active blender context
         """
-        # REFACTOR indentation ?
         ActRec_pref = get_preferences(context)
         layout = self.layout
         col = layout.column()

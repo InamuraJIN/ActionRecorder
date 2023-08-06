@@ -26,7 +26,7 @@ class AR_local_actions(shared.AR_action, PropertyGroup):
         macros_length = len(self.macros)
         return value if value < macros_length else macros_length - 1
 
-    def set_active_macro_index(self, value: int):
+    def set_active_macro_index(self, value: int) -> None:
         """
         sets the active index of the local macro.
         if value is out of range the last index of the macros is passed on.

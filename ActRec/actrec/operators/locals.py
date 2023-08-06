@@ -16,6 +16,8 @@ from . import shared
 from ..functions.shared import get_preferences
 # endregion
 
+CONTEXT_REPORT = 0
+OPERATOR_REPORT = 1
 
 # region Operators
 
@@ -259,20 +261,20 @@ class AR_OT_local_load(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context: Context) -> None:
-        # REFACTOR indentation
         layout = self.layout
         layout.prop(self, 'source', expand=True)
-        if self.source == 'text':
-            box = layout.box()
-            texts = [txt.name for txt in bpy.data.texts]
-            for text in self.texts:
-                if text.name in texts:
-                    row = box.row()
-                    row.label(text=text.name)
-                    row.prop(text, 'apply', text='')
+        if self.source != 'text':
+            return
+        box = layout.box()
+        texts = [txt.name for txt in bpy.data.texts]
+        for text in self.texts:
+            if text.name not in texts:
+                continue
+            row = box.row()
+            row.label(text=text.name)
+            row.prop(text, 'apply', text='')
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         logger.info("Load Local Actions")
         if self.source == 'scene':
@@ -283,24 +285,25 @@ class AR_OT_local_load(Operator):
         else:
             data = []
             for text in self.texts:
-                if text.apply:
-                    if bpy.data.texts.find(text.name) == -1:
-                        continue
-                    text = bpy.data.texts[text.name]
-                    lines = [line.body for line in text.lines]
-                    header = {}
-                    for prop in lines[0].split("#")[-1].split(","):
+                if not text.apply:
+                    continue
+                if bpy.data.texts.find(text.name) == -1:
+                    continue
+                text = bpy.data.texts[text.name]
+                lines = [line.body for line in text.lines]
+                header = {}
+                for prop in lines[0].split("#")[-1].split(","):
+                    key, value = prop.split(":")
+                    header[key.strip()] = eval(value.strip())
+                macros = []
+                for line in lines[1:]:
+                    split_line = line.split("#")
+                    macro = {'command': "#".join(split_line[:-1])}
+                    for prop in split_line[-1].split(","):
                         key, value = prop.split(":")
-                        header[key.strip()] = eval(value.strip())
-                    macros = []
-                    for line in lines[1:]:
-                        split_line = line.split("#")
-                        macro = {'command': "#".join(split_line[:-1])}
-                        for prop in split_line[-1].split(","):
-                            key, value = prop.split(":")
-                            macro[key.strip()] = eval(value.strip())
-                        macros.append(macro)
-                    data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
+                        macro[key.strip()] = eval(value.strip())
+                    macros.append(macro)
+                data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
         functions.load_local_action(ActRec_pref, data)
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -401,7 +404,6 @@ class AR_OT_local_record(shared.Id_based, Operator):
         return len(ActRec_pref.local_actions)
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
@@ -411,81 +413,83 @@ class AR_OT_local_record(shared.Id_based, Operator):
             self.index = index
             self.record_start_index = functions.get_report_text(context).count('\n')
             context.scene.ar.record_undo_end = not context.scene.ar.record_undo_end
-        else:  # end recording and add reports as macros
-            reports = functions.get_report_text(context).splitlines()[self.record_start_index:]
-            reports = [report for report in reports if report.startswith('bpy.')]
-            if not len(reports):
-                self.clear()
-                return {"FINISHED"}
-            reports = numpy.array(functions.merge_report_tracked(reports, shared_data.tracked_actions), dtype=object)
-            shared_data.tracked_actions.clear()
-            logger.info("Record Reports: %s", reports)
+            return {"FINISHED"}
 
-            record_undo_end = context.scene.ar.record_undo_end
-            redo_steps = 0
-            while record_undo_end == bpy.context.scene.ar.record_undo_end and bpy.ops.ed.undo.poll():
-                bpy.ops.ed.undo()
-                redo_steps += 1
-            context = bpy.context
-            i = 0
-
-            data = []
-            skip_op_redo = True
-            len_reports = len(reports)
-            while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
-                bpy_type, register, undo, parent, name, value = reports[i]
-                if bpy_type == 0:  # Context Reports
-                    # register, undo are always True for Context reports
-                    copy_dict = functions.create_object_copy(context, parent, name)
-                    if bpy.ops.ed.redo.poll():
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
-
-                    if not skip_op_redo and bpy.ops.ed.undo.poll():
-                        bpy.ops.ed.undo()
-                        redo_steps += 1
-                        context = bpy.context
-
-                elif bpy_type == 1:  # Operator Reports
-                    if register:
-                        evaluation = functions.evaluate_operator(parent, name, value)
-
-                    if len_reports > i + 1:
-                        skip_op_redo = reports[i + 1][0] == 1
-                    else:
-                        skip_op_redo = True
-                    if undo and skip_op_redo and bpy.ops.ed.redo.poll():
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    if register:
-                        data.append(functions.improve_operator_report(context, parent, name, value, evaluation))
-                i += 1
-
-            while redo_steps > 0 and bpy.ops.ed.redo.poll():
-                bpy.ops.ed.redo()
-            context = bpy.context
-
-            error_reports = []
-            action = ActRec_pref.local_actions[index]
-            for report in data:
-                functions.add_report_as_macro(context, ActRec_pref, action, report, error_reports)
-            if error_reports:
-                self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
-            functions.save_local_to_scene(ActRec_pref, bpy.context.scene)
-            if not ActRec_pref.hide_local_text:
-                functions.local_action_to_text(action)
-            context.area.tag_redraw()
+        # end recording and add reports as macros
+        reports = functions.get_report_text(context).splitlines()[self.record_start_index:]
+        reports = [report for report in reports if report.startswith('bpy.')]
+        if not len(reports):
             self.clear()
+            return {"FINISHED"}
+        reports = numpy.array(functions.merge_report_tracked(reports, shared_data.tracked_actions), dtype=object)
+        shared_data.tracked_actions.clear()
+        logger.info("Record Reports: %s", reports)
+
+        record_undo_end = context.scene.ar.record_undo_end
+        redo_steps = 0
+        while record_undo_end == bpy.context.scene.ar.record_undo_end and bpy.ops.ed.undo.poll():
+            bpy.ops.ed.undo()
+            redo_steps += 1
+        context = bpy.context
+        i = 0
+
+        data = []
+        skip_op_redo = True
+        len_reports = len(reports)
+        while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
+            bpy_type, register, undo, parent, name, value = reports[i]
+            if bpy_type == CONTEXT_REPORT:
+                # register, undo are always True for Context reports
+                copy_dict = functions.create_object_copy(context, parent, name)
+                if bpy.ops.ed.redo.poll():
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
+
+                if not skip_op_redo and bpy.ops.ed.undo.poll():
+                    bpy.ops.ed.undo()
+                    redo_steps += 1
+                    context = bpy.context
+
+            elif bpy_type == OPERATOR_REPORT:
+                if register:
+                    evaluation = functions.evaluate_operator(parent, name, value)
+
+                if len_reports > i + 1:
+                    skip_op_redo = reports[i + 1][0] == 1
+                else:
+                    skip_op_redo = True
+                if undo and skip_op_redo and bpy.ops.ed.redo.poll():
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                if register:
+                    data.append(functions.improve_operator_report(context, parent, name, value, evaluation))
+            i += 1
+
+        while redo_steps > 0 and bpy.ops.ed.redo.poll():
+            bpy.ops.ed.redo()
+        context = bpy.context
+
+        error_reports = []
+        action = ActRec_pref.local_actions[index]
+        for report in data:
+            functions.add_report_as_macro(context, ActRec_pref, action, report, error_reports)
+        if error_reports:
+            self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
+        functions.save_local_to_scene(ActRec_pref, bpy.context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
+        context.area.tag_redraw()
+        self.clear()
         return {"FINISHED"}
 
 

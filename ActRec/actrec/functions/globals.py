@@ -18,7 +18,7 @@ from . import shared
 # region Functions
 
 
-def save(ActRec_pref: AddonPreferences):
+def save(ActRec_pref: AddonPreferences) -> None:
     """
     save the global actions and categories to the storage file
 
@@ -49,27 +49,27 @@ def load(ActRec_pref: AddonPreferences) -> bool:
     Returns:
         bool: success
     """
-    # REFACTOR indentation
-    if os.path.exists(ActRec_pref.storage_path):
-        with open(ActRec_pref.storage_path, 'r', encoding='utf-8') as storage_file:
-            text = storage_file.read()
-            if not text:
-                text = "{}"
-            data = json.loads(text)
-        logger.info('load global actions')
-        # cleanup
-        for i in range(len(ActRec_pref.categories)):
-            ui_functions.unregister_category(ActRec_pref, i)
-        ActRec_pref.categories.clear()
-        ActRec_pref.global_actions.clear()
-        # load data
-        if data:
-            import_global_from_dict(ActRec_pref, data)
-            return True
+    if not os.path.exists(ActRec_pref.storage_path):
+        return False
+    with open(ActRec_pref.storage_path, 'r', encoding='utf-8') as storage_file:
+        text = storage_file.read()
+        if not text:
+            text = "{}"
+        data = json.loads(text)
+    logger.info('load global actions')
+    # cleanup
+    for i in range(len(ActRec_pref.categories)):
+        ui_functions.unregister_category(ActRec_pref, i)
+    ActRec_pref.categories.clear()
+    ActRec_pref.global_actions.clear()
+    # load data
+    if data:
+        import_global_from_dict(ActRec_pref, data)
+        return True
     return False
 
 
-def import_global_from_dict(ActRec_pref: AddonPreferences, data: dict):
+def import_global_from_dict(ActRec_pref: AddonPreferences, data: dict) -> None:
     """
     import the global actions and categories from a dict
 
@@ -105,14 +105,12 @@ def get_global_action_id(ActRec_pref: AddonPreferences, id: str, index: int) -> 
     Returns:
         Union[str, None]: str: action id; None: fail
     """
-    # REFACTOR indentation
-    if ActRec_pref.global_actions.find(id) == -1:
-        if index >= 0 and len(ActRec_pref.global_actions) > index:
-            return ActRec_pref.global_actions[index].id
-        else:
-            return None
-    else:
+    if ActRec_pref.global_actions.find(id) != -1:
         return id
+    if index >= 0 and len(ActRec_pref.global_actions) > index:
+        return ActRec_pref.global_actions[index].id
+    else:
+        return None
 
 
 def get_global_action_ids(ActRec_pref: AddonPreferences, id: str, index: int) -> list:
@@ -181,7 +179,7 @@ def is_action_keymap_empty(kmi: bpy.types.KeyMapItem) -> bool:
     return kmi.type == "NONE"
 
 
-def remove_action_keymap(id: str):
+def remove_action_keymap(id: str) -> None:
     """
     removes the keymapitem for the action with the given id
 

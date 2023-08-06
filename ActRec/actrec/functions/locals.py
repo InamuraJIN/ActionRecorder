@@ -102,14 +102,13 @@ def get_local_action_index(ActRec_pref: AddonPreferences, id: str, index: int) -
     Returns:
         int: valid index of a local actions or active local action index on fallback
     """
-    # REFACTOR indentation
     action = ActRec_pref.local_actions.find(id)
-    if action == -1:
-        if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index
-            action = index
-        else:
-            action = ActRec_pref.active_local_action_index  # fallback to selection
-    return action
+    if action != -1:
+        return action
+    if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index
+        return index
+    else:
+        return ActRec_pref.active_local_action_index  # fallback to selection
 
 
 # endregion

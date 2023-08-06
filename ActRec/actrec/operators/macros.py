@@ -47,7 +47,6 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         return not ActRec_pref.local_record_macros
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
 
         if not len(ActRec_pref.local_actions):
@@ -62,12 +61,12 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         if not self.command:  # get the command from the latest Blender report
             reports = functions.get_report_text(context).splitlines()
             length = len(reports)
-            if self.report_length != length:
+            if self.report_length == length:
                 new_report = True
                 self.report_length = length
                 reports.reverse()
                 for report in reports:
-                    if report.startswith("bpy.ops.") or report.startswith("bpy.context."):
+                    if report.startswith(("bpy.ops.", "bpy.context.")):
                         command = report
                         break
         else:  # command was passed through with the operator parameter
@@ -78,7 +77,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
         # improve command by comparing to tracked_actions
         # tracked actions is written by the function track_scene in functions.macros
         # which keeps track of all executed Operator in detail but none information about changed Properties
-        if command and (True if new_report else ActRec_pref.last_macro_command != command):
+        if command and (new_report or ActRec_pref.last_macro_command != command):
             if command.startswith("bpy.context."):
                 tracked_actions = []
                 if not self.command:
@@ -160,6 +159,7 @@ class AR_OT_macro_add(shared.Id_based, Operator):
                 macro.command = ""
                 action.active_macro_index = -1
                 bpy.ops.ar.macro_edit('INVOKE_DEFAULT', index=index, edit=True)
+
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(action)
@@ -682,12 +682,12 @@ class AR_OT_macro_edit(Macro_based, Operator):
             value (str): command as single line
         """
         self['command'] = value
-        # REFACTOR indentation
-        if not self.use_last_command:
-            self.lines.clear()
-            for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
-                new = self.lines.add()
-                new['text'] = line
+        if self.use_last_command:
+            return
+        self.lines.clear()
+        for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
+            new = self.lines.add()
+            new['text'] = line
 
     def get_last_command(self) -> str:
         """
@@ -710,12 +710,12 @@ class AR_OT_macro_edit(Macro_based, Operator):
             value (str): last command as single line
         """
         self['last_command'] = value
-        # REFACTOR indentation
-        if self.use_last_command:
-            self.lines.clear()
-            for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
-                new = self.lines.add()
-                new['text'] = line
+        if not self.use_last_command:
+            return
+        self.lines.clear()
+        for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
+            new = self.lines.add()
+            new['text'] = line
 
     def get_use_last_command(self) -> str:
         """
@@ -795,7 +795,6 @@ class AR_OT_macro_edit(Macro_based, Operator):
         return not ActRec_pref.local_record_macros
 
     def invoke(self, context: Context, event: Event) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         action_index = self.action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
@@ -818,62 +817,43 @@ class AR_OT_macro_edit(Macro_based, Operator):
             split = macro.command.split(":")
             if split[0] == 'ar.event':  # Event Macro
                 data = json.loads(":".join(split[1:]))
-                if data['Type'] == 'Timer':
-                    bpy.ops.ar.macro_add_event(
-                        'INVOKE_DEFAULT',
-                        type=data['Type'],
-                        macro_index=self.index,
-                        time=data['Time']
-                    )
-                elif data['Type'] == 'Loop':
-                    if data['StatementType'] == 'python':
-                        bpy.ops.ar.macro_add_event(
-                            'INVOKE_DEFAULT',
-                            type=data['Type'],
-                            macro_index=self.index,
-                            statement_type='python',
-                            python_statement=data["PyStatement"]
-                        )
-                    elif data['StatementType'] == 'count':
+                default_kwargs = {
+                    'type': data['Type'],
+                    'macro_index': self.index
+                }
+                kwargs_mapping = {
+                    'Timer': lambda: {
+                        'time': data['Time']
+                    },
+                    'Loop.python': lambda: {
+                        'statement_type': 'python',
+                        'python_statement': data["PyStatement"]
+                    },
+                    'Loop.count': lambda: {
                         # DEPRECATED Convert old count loop into new repeat loop
-                        start = data["Startnumber"]
-                        end = data["Endnumber"]
-                        step = data["Stepnumber"]
-                        count = int((end - start)/step)
-                        bpy.ops.ar.macro_add_event(
-                            'INVOKE_DEFAULT',
-                            type=data['Type'],
-                            macro_index=self.index,
-                            statement_type='repeat',
-                            repeat_count=count
-                        )
-                    else:
-                        bpy.ops.ar.macro_add_event(
-                            'INVOKE_DEFAULT',
-                            type=data['Type'],
-                            macro_index=self.index,
-                            statement_type='repeat',
-                            repeat_count=data["RepeatCount"]
-                        )
-                elif data['Type'] == 'Select Object':
-                    bpy.ops.ar.macro_add_event(
-                        'INVOKE_DEFAULT',
-                        type=data['Type'],
-                        macro_index=self.index,
-                        object=data['Object'],
-                        objects=[{'name': obj_name} for obj_name in data['Objects']],
-                        keep_selection=data['KeepSelection']
-
-                    )
-                elif data['Type'] == 'Run Script':
-                    bpy.ops.ar.macro_add_event(
-                        'INVOKE_DEFAULT',
-                        type=data['Type'],
-                        macro_index=self.index,
-                        script_name=data['ScriptName']
-                    )
-                else:
-                    bpy.ops.ar.macro_add_event('INVOKE_DEFAULT', type=data['Type'], macro_index=self.index)
+                        'statement_type': 'repeat',
+                        'repeat_count': int((data["Endnumber"] - data["Startnumber"])/data["Stepnumber"])
+                    },
+                    'Loop.repeat': lambda: {
+                        'statement_type': 'repeat',
+                        'repeat_count': data["RepeatCount"]
+                    },
+                    'Select Object': lambda: {
+                        'object': data['Object'],
+                        'objects': [{'name': obj_name} for obj_name in data['Objects']],
+                        'keep_selection': data['KeepSelection']
+                    },
+                    'Run Script': lambda: {
+                        'script_name': data['ScriptName']
+                    }
+                }
+                data_type = data['Type']
+                if data_type == 'Loop':
+                    data_type += '.%s' % data["StatementType"]
+                bpy.ops.ar.macro_add_event(
+                    'INVOKE_DEFAULT',
+                    **default_kwargs,
+                    **kwargs_mapping.get(data_type, lambda: {})())
                 self.clear()
                 return {"FINISHED"}
 
@@ -974,7 +954,6 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 )
 
     def execute(self, context: Context) -> set[str]:
-        # REFACTOR indentation
         ActRec_pref = get_preferences(context)
         if not len(ActRec_pref.local_actions):
             bpy.ops.ar.local_add()

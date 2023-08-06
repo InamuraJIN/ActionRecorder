@@ -38,7 +38,6 @@ def category_visible(
     Returns:
         bool: true if category is visible
     """
-    # REFACTOR indentation
     if ActRec_pref.show_all_categories or not len(category.areas):
         return True
     if context.area is None:
@@ -46,17 +45,19 @@ def category_visible(
     area_type = context.area.ui_type
     area_space = context.area.type
     for area in category.areas:
-        if area.type == area_type:
-            if len(area.modes) == 0:
-                return True
-            if area_space == 'VIEW_3D':
-                mode = ""
-                if context.object:
-                    mode = context.object.mode
-            else:
-                mode = getattr(context.space_data,
-                               space_mode_attribute[area_space])
-            return mode in set(mode.type for mode in area.modes)
+        if area.type != area_type:
+            continue
+        if len(area.modes) == 0:
+            return True
+        if area_space == 'VIEW_3D':
+            mode = ""
+            if context.object:
+                mode = context.object.mode
+        else:
+            mode = getattr(
+                context.space_data,
+                space_mode_attribute[area_space])
+        return mode in set(mode.type for mode in area.modes)
     return False
 
 
