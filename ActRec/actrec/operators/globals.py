@@ -25,9 +25,9 @@ from ..keymap import keymaps
 # region Operators
 
 
-class AR_OT_gloabal_recategorize_action(shared.Id_based, Operator):
+class AR_OT_global_recategorize_action(shared.Id_based, Operator):
     bl_idname = "ar.global_recategorize_action"
-    bl_label = "Recategoize Action Button"
+    bl_label = "Recategorize Action Button"
     bl_description = "Reallocate the selected Action to another Category"
 
     @classmethod
@@ -697,38 +697,6 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
         return {"FINISHED"}
 
 
-class AR_OT_global_rename(shared.Id_based, Operator):
-    bl_idname = "ar.global_rename"
-    bl_label = "Rename Button"
-    bl_description = "Rename the selected Button"
-
-    label: StringProperty()
-
-    @classmethod
-    def poll(cls, context: Context) -> bool:
-        ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", [])) == 1
-
-    def execute(self, context: Context) -> set[str]:
-        ActRec_pref = get_preferences(context)
-        ids = functions.get_global_action_ids(ActRec_pref, self.id, self.index)
-        self.clear()
-        label = self.label
-        self.label = ""
-
-        if len(ids) != 1:
-            return {'CANCELLED'}
-        id = ids[0]
-        action = ActRec_pref.global_actions.get(id, None)
-        if not action:
-            return {'CANCELLED'}
-        ActRec_pref.global_actions[id].label = label
-        if ActRec_pref.autosave:
-            functions.save(ActRec_pref)
-        context.area.tag_redraw()
-        return {"FINISHED"}
-
-
 class AR_OT_global_execute_action(shared.Id_based, Operator):
     bl_idname = 'ar.global_execute_action'
     bl_label = 'ActRec Action Button'
@@ -836,45 +804,51 @@ class AR_OT_remove_ar_shortcut(Operator):
         return {"FINISHED"}
 
 
-class AR_OT_global_edit_description(Operator):
-    bl_idname = "ar.global_edit_description"
-    bl_label = "Edit Description"
+class AR_OT_global_edit(Operator):
+    bl_idname = "ar.global_edit"
+    bl_label = "Edit Action"
+    bl_description = "Edit the label and description of this Action"
     bl_options = {'INTERNAL'}
-    bl_description = "Edit the description of this Action"
 
     id: StringProperty()
     description: StringProperty(
         name="Description",
         description="Sets the description that gets shown when hovered over this action"
     )
-    action_label: StringProperty()
+    label: StringProperty(
+        name="Label",
+        description="Sets the label of this action"
+    )
 
     def draw(self, context: Context) -> None:
         layout = self.layout
-        layout.label(text="Action: %s" % self.action_label)
+        layout.prop(self, 'label')
         layout.prop(self, 'description')
 
     def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = functions.get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, -1)
         action = ActRec_pref.global_actions[id]
-        self.action_label = action.label
+        self.label = action.label
         self.description = action.description
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = functions.get_preferences(context)
         id = functions.get_global_action_id(ActRec_pref, self.id, -1)
-        ActRec_pref.global_actions[id].description = self.description
+        action = ActRec_pref.global_actions[id]
+        action.label = self.label
+        action.description = self.description
         if ActRec_pref.autosave:
             functions.save(ActRec_pref)
+        context.area.tag_redraw()
         return {'FINISHED'}
 
 # endregion
 
 
 classes = [
-    AR_OT_gloabal_recategorize_action,
+    AR_OT_global_recategorize_action,
     AR_OT_global_import,
     AR_OT_global_import_settings,
     AR_OT_global_export,
@@ -884,12 +858,11 @@ classes = [
     AR_OT_global_remove,
     AR_OT_global_move_up,
     AR_OT_global_move_down,
-    AR_OT_global_rename,
     AR_OT_global_execute_action,
     AR_OT_global_icon,
     AR_OT_add_ar_shortcut,
     AR_OT_remove_ar_shortcut,
-    AR_OT_global_edit_description
+    AR_OT_global_edit
 ]
 
 # region Registration

@@ -49,7 +49,7 @@ def menu_draw(self, context: Context) -> None:
             layout.operator("ar.remove_ar_shortcut").id = button_operator.id
         else:
             layout.operator("ar.add_ar_shortcut").id = button_operator.id
-        layout.operator("ar.global_edit_description").id = button_operator.id
+        layout.operator("ar.global_edit").id = button_operator.id
 
 
 class WM_MT_button_context(Menu):

@@ -36,12 +36,9 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
         selected_ids = list(ActRec_pref.get("global_actions.selected_ids", []))
         # implementation similar to a UIList (only one selection of all can be active),
         # with extra multi selection by pressing ctrl
-        if not (self.id in selected_ids):
-            self['selected'] = value
-            return
-
         value |= (len(selected_ids) > 1)  # used as bool or
         if not value:
+            self['selected'] = False
             return
 
         # uses check_ctrl operator to check for ctrl event
