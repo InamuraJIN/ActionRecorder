@@ -48,6 +48,8 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
             ActRec_pref["global_actions.selected_ids"] = []
             for selected_id in selected_ids:
                 action = ActRec_pref.global_actions.get(selected_id, None)
+                if action is None:
+                    continue
                 action.selected = (not bool(action))
             selected_ids.clear()
         selected_ids.append(self.id)
