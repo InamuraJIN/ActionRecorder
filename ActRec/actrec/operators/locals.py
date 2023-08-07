@@ -90,6 +90,8 @@ class AR_OT_local_to_global(Operator):
             functions.remove_local_action_from_text(ActRec_pref.local_actions[ActRec_pref.active_local_action_index])
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
         functions.save_local_to_scene(ActRec_pref, context.scene)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -120,8 +122,6 @@ class AR_OT_local_add(Operator):
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
             functions.local_action_to_text(new)
-        if ActRec_pref.autosave:
-            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
