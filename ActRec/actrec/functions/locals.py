@@ -1,6 +1,7 @@
 # region Imports
 # external modules
 import json
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -11,29 +12,33 @@ from bpy.types import AddonPreferences, Scene
 from .. import shared_data
 from . import shared
 from .shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
 # region Functions
 
 
-def save_local_to_scene(ActRec_pref: AddonPreferences, scene: Scene) -> None:
+def save_local_to_scene(ActRec_pref: AR_preferences, scene: Scene) -> None:
     """
     saves all local actions to the given scene
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         scene (Scene): Blender scene to write to
     """
     scene.ar.local = json.dumps(shared.property_to_python(ActRec_pref.local_actions))
 
 
-def load_local_action(ActRec_pref: AddonPreferences, data: list) -> None:
+def load_local_action(ActRec_pref: AR_preferences, data: list) -> None:
     """
     load the given data to the local actions
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         data (list): data to apply
     """
     actions = ActRec_pref.local_actions
@@ -90,12 +95,12 @@ def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = N
             return
 
 
-def get_local_action_index(ActRec_pref: AddonPreferences, id: str, index: int) -> int:
+def get_local_action_index(ActRec_pref: AR_preferences, id: str, index: int) -> int:
     """
     get local action index based on the given id or index (checks if index is in range)
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): id to get index from
         index (int): index for fallback
 

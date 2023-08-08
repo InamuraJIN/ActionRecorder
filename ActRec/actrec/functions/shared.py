@@ -11,6 +11,7 @@ import functools
 import ensurepip
 import subprocess
 import traceback
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -21,6 +22,10 @@ from bpy.types import PointerProperty, Property, CollectionProperty, Context, Ad
 # relative imports
 from ..log import logger
 from .. import shared_data
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 __module__ = __package__.split(".")[0]
@@ -828,7 +833,7 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     return (False, ":(")
 
 
-def get_preferences(context: Context) -> AddonPreferences:
+def get_preferences(context: Context) -> AR_preferences:
     """
     get addon preferences of this addon, which are stored in Blender
 
@@ -836,7 +841,7 @@ def get_preferences(context: Context) -> AddonPreferences:
         context (Context): active blender context
 
     Returns:
-        AddonPreferences: preferences of this addon
+        AR_preferences: preferences of this addon
     """
     return context.preferences.addons[__module__].preferences
 

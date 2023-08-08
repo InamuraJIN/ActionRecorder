@@ -1,6 +1,7 @@
 # region Imports
 # externals modules
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -11,6 +12,10 @@ from . import globals
 from .. import panels
 from ..functions.shared import get_preferences
 from ..log import logger
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 classes = []
@@ -24,14 +29,14 @@ space_mode_attribute = {
 
 
 def category_visible(
-        ActRec_pref: AddonPreferences,
+        ActRec_pref: AR_preferences,
         context: Context,
         category: 'AR_category') -> bool:
     """
     checks if category is visible based on the given context
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         context (Context): active blender context
         category (AR_category): category to check
 
@@ -61,12 +66,12 @@ def category_visible(
     return False
 
 
-def get_visible_categories(ActRec_pref: AddonPreferences, context: Context) -> list['AR_category']:
+def get_visible_categories(ActRec_pref: AR_preferences, context: Context) -> list['AR_category']:
     """
     get list of all visible categories
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         context (Context): active blender context
 
     Returns:
@@ -75,23 +80,23 @@ def get_visible_categories(ActRec_pref: AddonPreferences, context: Context) -> l
     return [category for category in ActRec_pref.categories if category_visible(ActRec_pref, context, category)]
 
 
-def register_category(ActRec_pref: AddonPreferences, index: int) -> None:
+def register_category(ActRec_pref: AR_preferences, index: int) -> None:
     """
     register a category based on the index in all spaces (panels.ui_space_types)
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         index (int): index of category to register
     """
     register_unregister_category(index)
 
 
-def unregister_category(ActRec_pref: AddonPreferences, index: int) -> None:
+def unregister_category(ActRec_pref: AR_preferences, index: int) -> None:
     """
     unregister a category based on the index in all spaces (panels.ui_space_types)
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         index (int): index of category to unregister
     """
     register_unregister_category(index, register=False)

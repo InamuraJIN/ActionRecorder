@@ -1,6 +1,7 @@
 # region Imports
 # external modules
 import os
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -14,6 +15,10 @@ from bpy.utils.previews import ImagePreviewCollection
 from .log import logger
 from .functions.shared import get_preferences
 from . import functions
+if TYPE_CHECKING:
+    from .preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 preview_collections = {}
@@ -63,14 +68,14 @@ def get_custom_icons_value_map() -> dict:
     return {item.icon_id: key for key, item in preview_collections['ar_custom'].items()}
 
 
-def load_icons(ActRec_pref: AddonPreferences) -> None:
+def load_icons(ActRec_pref: AR_preferences) -> None:
     """
     loads all saved icons from the icon folder, which can be located by the user.
     the icon are saved as png and with their icon name
     supported blender image formats https://docs.blender.org/manual/en/latest/files/media/image_formats.html
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
     """
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
@@ -83,13 +88,13 @@ def load_icons(ActRec_pref: AddonPreferences) -> None:
         )
 
 
-def load_icon(ActRec_pref: AddonPreferences, filepath: str, only_new: bool = False) -> None:
+def load_icon(ActRec_pref: AR_preferences, filepath: str, only_new: bool = False) -> None:
     """
     load image form filepath as custom addon icon and resize to 32x32 (Blender icon size)
     supported blender image formats https://docs.blender.org/manual/en/latest/files/media/image_formats.html
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         filepath (str): filepath to the image file
         only_new (bool, optional): if icon is already register by name, it won't be registered again. Defaults to False.
     """

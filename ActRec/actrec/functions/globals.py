@@ -2,7 +2,7 @@
 # external modules
 import json
 import os
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -12,18 +12,22 @@ from bpy.types import AddonPreferences
 from ..log import logger
 from .. import ui_functions, keymap
 from . import shared
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
 # region Functions
 
 
-def save(ActRec_pref: AddonPreferences) -> None:
+def save(ActRec_pref: AR_preferences) -> None:
     """
     save the global actions and categories to the storage file
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
     """
     data = {}
     data['categories'] = shared.property_to_python(
@@ -39,12 +43,12 @@ def save(ActRec_pref: AddonPreferences) -> None:
     logger.info('saved global actions')
 
 
-def load(ActRec_pref: AddonPreferences) -> bool:
+def load(ActRec_pref: AR_preferences) -> bool:
     """
     load the global actions and categories from the storage file
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
 
     Returns:
         bool: success
@@ -69,12 +73,12 @@ def load(ActRec_pref: AddonPreferences) -> bool:
     return False
 
 
-def import_global_from_dict(ActRec_pref: AddonPreferences, data: dict) -> None:
+def import_global_from_dict(ActRec_pref: AR_preferences, data: dict) -> None:
     """
     import the global actions and categories from a dict
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         data (dict): dict to use
     """
     existing_category_len = len(ActRec_pref.categories)
@@ -93,12 +97,12 @@ def import_global_from_dict(ActRec_pref: AddonPreferences, data: dict) -> None:
         ActRec_pref.global_actions[0].selected = True
 
 
-def get_global_action_id(ActRec_pref: AddonPreferences, id: str, index: int) -> Union[str, None]:
+def get_global_action_id(ActRec_pref: AR_preferences, id: str, index: int) -> Union[str, None]:
     """
     get global action id based on id (check for existence) or index
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): id to check
         index (int): index of action
 
@@ -113,12 +117,12 @@ def get_global_action_id(ActRec_pref: AddonPreferences, id: str, index: int) -> 
         return None
 
 
-def get_global_action_ids(ActRec_pref: AddonPreferences, id: str, index: int) -> list:
+def get_global_action_ids(ActRec_pref: AR_preferences, id: str, index: int) -> list:
     """
     get global action is inside a list or selected global actions if not found
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): id to check
         index (int): index of action
 

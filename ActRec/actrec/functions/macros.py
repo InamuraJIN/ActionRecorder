@@ -3,6 +3,7 @@
 import numpy
 from typing import Tuple, Union
 import mathutils
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -14,6 +15,10 @@ from . import shared
 from .. import shared_data
 from ..log import logger
 from .shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
@@ -433,7 +438,7 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
 
 def add_report_as_macro(
         context: Context,
-        ActRec_pref: bpy.types.AddonPreferences,
+        ActRec_pref: AR_preferences,
         action: 'AR_local_action',
         report: str,
         error_reports: list,
@@ -443,7 +448,7 @@ def add_report_as_macro(
 
     Args:
         context (Context): active blender context
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         action (AR_local_action): action to add macro to
         report (str): report to add as macro
         error_reports (list): error_report to add report if it doesn't match the pattern

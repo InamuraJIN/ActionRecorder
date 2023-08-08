@@ -3,6 +3,7 @@
 import json
 import uuid
 import numpy
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -14,6 +15,10 @@ from .. import functions, properties, icon_manager, shared_data
 from ..log import logger
 from . import shared
 from ..functions.shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 CONTEXT_REPORT = 0
@@ -52,14 +57,14 @@ class AR_OT_local_to_global(Operator):
 
     def local_to_global(
             self,
-            ActRec_pref: AddonPreferences,
+            ActRec_pref: AR_preferences,
             category: 'AR_category',
             action: 'AR_global_actions') -> None:
         """
         copy the given local action to a global action
 
         Args:
-            ActRec_pref (AddonPreferences): preferences of this addon
+            ActRec_pref (AR_preferences): preferences of this addon
             category (AR_category): category to copy the action to
             action (AR_global_actions): action to copy
         """

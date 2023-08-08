@@ -1,6 +1,7 @@
 # region Imports
 # externals modules
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -11,6 +12,10 @@ from bpy.props import StringProperty, EnumProperty, IntProperty
 from .. import functions, ui_functions
 from . import shared
 from ..functions.shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
@@ -152,12 +157,12 @@ class AR_OT_category_interface(Operator):
 
     category_visibility = []
 
-    def apply_visibility(self, ActRec_pref: AddonPreferences, category_visibility: list, id: str) -> None:
+    def apply_visibility(self, ActRec_pref: AR_preferences, category_visibility: list, id: str) -> None:
         """
         applies visibility for the selected category
 
         Args:
-            ActRec_pref (AddonPreferences): preferences of this addon
+            ActRec_pref (AR_preferences): preferences of this addon
             category_visibility (list): list of pattern (area, mode) where the category should be visible
             id (str): id of the category to select
         """

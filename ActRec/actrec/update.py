@@ -9,6 +9,7 @@ from collections import defaultdict
 import threading
 from contextlib import suppress
 import sys
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -21,6 +22,10 @@ from bpy.app.handlers import persistent
 from . import config
 from .log import logger
 from .functions.shared import get_preferences
+if TYPE_CHECKING:
+    from .preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
@@ -98,7 +103,7 @@ def check_for_update(version_file: Optional[dict]) -> tuple[bool, Union[str, tup
 
 
 def update(
-        ActRec_pref: AddonPreferences,
+        ActRec_pref: AR_preferences,
         path: str,
         update_respond: Optional[requests.Response],
         download_chunks: dict,
@@ -107,7 +112,7 @@ def update(
     runs the update process and shows the download process with a progress bar if possible
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         path (str): path to the file to update
         update_respond (Optional[requests.Response]): open response to file,
         needed if file is to large to download in one function call (chunk size 1024)
@@ -153,13 +158,13 @@ def update(
         return None
 
 
-def install_update(ActRec_pref: AddonPreferences, download_chunks: dict, version_file: dict) -> None:
+def install_update(ActRec_pref: AR_preferences, download_chunks: dict, version_file: dict) -> None:
     """
     installs all downloaded files successively and removes old files if needed
     + cleans up all unused data
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         download_chunks (dict): contains all downloaded files and their data
         version_file (dict): contains data about the addon version, the version of each file and the open request
     """
@@ -243,14 +248,14 @@ def get_version_file(res: requests.Response) -> Union[bool, dict, None]:
 
 
 def apply_version_file_result(
-        ActRec_pref: AddonPreferences,
+        ActRec_pref: AR_preferences,
         version_file: dict,
         update: tuple[bool, Union[tuple, str]]) -> None:
     """
     updates the version in the addon preferences if needed and closes the open request from version file
 
     Args:
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         version_file (dict): contains data about the addon version, the version of each file and the open request
         update (tuple[bool, Union[tuple, str]]):
         [0] update is available;
@@ -314,13 +319,13 @@ def no_stream_download_version_file(module_name: str) -> None:
 # region UI functions
 
 
-def draw_update_button(layout: UILayout, ActRec_pref: AddonPreferences) -> None:
+def draw_update_button(layout: UILayout, ActRec_pref: AR_preferences) -> None:
     """
     draws the update button and show a progress bar when files get downloaded
 
     Args:
         layout (UILayout): context where to draw the button
-        ActRec_pref (AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
     """
     if ActRec_pref.update_progress >= 0:
         row = layout.row()

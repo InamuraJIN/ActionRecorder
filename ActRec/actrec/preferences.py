@@ -2,6 +2,7 @@
 # external modules
 import os
 import importlib
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -12,7 +13,11 @@ import rna_keymap_ui
 # relative imports
 from . import properties, functions, config, update, keymap, log, shared_data
 from .log import logger, log_sys
-from .functions.shared import get_preferences
+
+if TYPE_CHECKING:
+    def get_preferences(): return
+else:
+    from .functions.shared import get_preferences
 # endregion
 
 # region Preferences

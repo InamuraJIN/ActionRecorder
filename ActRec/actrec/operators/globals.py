@@ -6,6 +6,7 @@ import zipfile
 from collections import defaultdict
 import uuid
 import json
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
@@ -19,6 +20,10 @@ from . import shared
 from ..functions.shared import get_preferences
 from ..log import logger
 from ..keymap import keymaps
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 
@@ -576,12 +581,12 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def global_to_local(self, ActRec_pref: AddonPreferences, action: 'AR_global_actions') -> None:
+    def global_to_local(self, ActRec_pref: AR_preferences, action: 'AR_global_actions') -> None:
         """
         copy the given global action to a local action
 
         Args:
-            ActRec_pref (AddonPreferences): preferences of this addon
+            ActRec_pref (AR_preferences): preferences of this addon
             action (AR_global_actions): action to copy
         """
         id = uuid.uuid1().hex if action.id in set(x.id for x in ActRec_pref.local_actions) else action.id
