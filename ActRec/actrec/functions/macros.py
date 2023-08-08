@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
-from bpy.types import Operator, Scene, Context
+from bpy.types import Operator, Scene, Context, AddonPreferences
 
 # relative imports
 from . import shared
