@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.10]
 
     steps:
       - uses: actions/checkout@v2
@@ -35,7 +35,7 @@ jobs:
       - name: Print Log
         run: echo "${{ steps.update.outputs.log }}"
       - name: Update files on GitHub
-        uses: test-room-7/action-update-file@v1
+        uses: test-room-7/action-update-file@v1.8.0
         with:
           file-path: |
               ActRec/__init__.py
