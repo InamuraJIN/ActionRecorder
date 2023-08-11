@@ -157,7 +157,7 @@ class AR_global_export_action(shared.Id_based, PropertyGroup):
     label: StringProperty()
     use: BoolProperty(
         default=True,
-        name="Import Action",
+        name="Export Action",
         description="Decide whether to export the action",
         get=get_use,
         set=set_use

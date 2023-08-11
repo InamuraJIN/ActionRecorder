@@ -140,6 +140,19 @@
         }
       ],
       "areas": []
+    },
+    {
+      "id": "57112416270c11ee81a4709cd10f7430",
+      "label": "Dev",
+      "actions": [
+        {
+          "id": "7e0467da271111eeb6a5709cd10f7430"
+        },
+        {
+          "id": "463d9765355411ee969e709cd10f7430"
+        }
+      ],
+      "areas": []
     }
   ],
   "actions": [
@@ -148,6 +161,7 @@
       "icon_name": "CANCEL",
       "id": "c7a1f271164611eca91770c94ef23b30",
       "label": "Delete",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -166,6 +180,7 @@
       "icon_name": "NONE",
       "id": "c7a6be1f164611ec9a5570c94ef23b30",
       "label": "Align_Y",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -204,6 +219,7 @@
       "icon_name": "NONE",
       "id": "c7a6e49c164611ec8f2170c94ef23b30",
       "label": "Align_X",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -242,6 +258,7 @@
       "icon_name": "NONE",
       "id": "c7a70b8f164611ec915d70c94ef23b30",
       "label": "Align_Z",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -280,6 +297,7 @@
       "icon_name": "MESH_UVSPHERE",
       "id": "c7a73281164611eca36c70c94ef23b30",
       "label": "AddCubeSphere",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -348,6 +366,7 @@
       "icon_name": "AUTOMERGE_ON",
       "id": "c7a759ee164611ecb84c70c94ef23b30",
       "label": "Merge",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -376,6 +395,7 @@
       "icon_name": "ALIGN_CENTER",
       "id": "c7a780f7164611ecb42870c94ef23b30",
       "label": "CheckerEdoge",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -404,6 +424,7 @@
       "icon_name": "MOD_CAST",
       "id": "c7a7a7d9164611ecb20d70c94ef23b30",
       "label": "Crease&Shap",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -432,6 +453,7 @@
       "icon_name": "MESH_CIRCLE",
       "id": "c7a7cecf164611ecbea570c94ef23b30",
       "label": "CreaseClear",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -460,6 +482,7 @@
       "icon_name": "GROUP_VERTEX",
       "id": "c7a7ced2164611ec9dcf70c94ef23b30",
       "label": "ResetShape",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -478,6 +501,7 @@
       "icon_name": "PIVOT_ACTIVE",
       "id": "c7a7f5bd164611ec8b7d70c94ef23b30",
       "label": "Origin To Select",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -536,6 +560,7 @@
       "icon_name": "META_CUBE",
       "id": "c7a81cb8164611ecb9ca70c94ef23b30",
       "label": "Seam&UV",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -574,6 +599,7 @@
       "icon_name": "FACE_MAPS",
       "id": "c7a81cbc164611ec8a5a70c94ef23b30",
       "label": "FaceUV",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -632,6 +658,7 @@
       "icon_name": "UV_DATA",
       "id": "c7a843b2164611ec929870c94ef23b30",
       "label": "ClearSeam",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -670,6 +697,7 @@
       "icon_name": "NONE",
       "id": "c7a86aa8164611ec881c70c94ef23b30",
       "label": "Align_X",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -688,6 +716,7 @@
       "icon_name": "NONE",
       "id": "c7a86aaa164611ec9dee70c94ef23b30",
       "label": "Align_Y",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -706,6 +735,7 @@
       "icon_name": "TEXTURE_DATA",
       "id": "c7a8918b164611ecb21d70c94ef23b30",
       "label": "AlignLayout",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -764,6 +794,7 @@
       "icon_name": "MESH_CUBE",
       "id": "c7a8b816164611ecab0970c94ef23b30",
       "label": "AddCube",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -792,6 +823,7 @@
       "icon_name": "LIGHT_AREA",
       "id": "c7a8b81c164611eca23670c94ef23b30",
       "label": "AddPlane_Light",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -860,6 +892,7 @@
       "icon_name": "POINTCLOUD_DATA",
       "id": "c7a9067c164611ecb3fd70c94ef23b30",
       "label": "Scatter",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -948,6 +981,7 @@
       "icon_name": "ALIGN_JUSTIFY",
       "id": "c7a92d7d164611eca77970c94ef23b30",
       "label": "AlignmentEdgeLoop",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -976,6 +1010,7 @@
       "icon_name": "XRAY",
       "id": "e07e26bb982411ed8c27a8a1598ce02d",
       "label": "BackUP",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -1004,6 +1039,7 @@
       "icon_name": "NODE_MATERIAL",
       "id": "146b8a47986011ed86faa8a1598ce02d",
       "label": "Subd Smooth",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -1042,6 +1078,7 @@
       "icon_name": "NODE_MATERIAL",
       "id": "c7a40353164611ecbaad70c94ef23b30",
       "label": "Subd Smooth",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -1090,6 +1127,7 @@
       "icon_name": "RESTRICT_SELECT_OFF",
       "id": "4275b287986211edb4bca8a1598ce02d",
       "label": "SelectCube",
+      "description": "Play this Action Button",
       "macros": [
         {
           "icon": 0,
@@ -1117,6 +1155,134 @@
           "id": "c7a8b81b164611eca09a70c94ef23b30",
           "label": "Active Object = bpy.context.scene.objects.get(\"Cube\")",
           "command": "bpy.context.view_layer.objects.active = bpy.data.objects[\"Cube\"]",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 0,
+      "icon_name": "NONE",
+      "id": "7e0467da271111eeb6a5709cd10f7430",
+      "label": "QB-Setup",
+      "description": "Play this Action Button",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "20fc0d51270c11ee88a4709cd10f7430",
+          "label": "Add Bake Group",
+          "command": "bpy.ops.qb.bake_group_add()",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "INVOKE_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "20fc0d53270c11eebe7c709cd10f7430",
+          "label": "Load Objects",
+          "command": "bpy.ops.qb.object_load()",
+          "active": true,
+          "ui_type": "",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "52d5b482271111ee98ba709cd10f7430",
+          "label": "Add",
+          "command": "bpy.ops.qb.map_add(type='GLOSSINESS')",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "53b4cb06271111eeb32c709cd10f7430",
+          "label": "Add",
+          "command": "bpy.ops.qb.map_add(type='ROUGHNESS')",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "5640f971271111eeb198709cd10f7430",
+          "label": "Add",
+          "command": "bpy.ops.qb.map_add(type='CHANNEL_PACK')",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "6b6d9576271111ee9722709cd10f7430",
+          "label": "g_channel = 'NONE'",
+          "command": "bpy.context.scene.qbaker.maps[2].channel_pack.g_channel = 'NONE'",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "6d82b34f271111eea4a5709cd10f7430",
+          "label": "b_channel = 'NONE'",
+          "command": "bpy.context.scene.qbaker.maps[2].channel_pack.b_channel = 'NONE'",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "730792e0271111eebad9709cd10f7430",
+          "label": "a_channel = 'ROUGHNESS'",
+          "command": "bpy.context.scene.qbaker.maps[2].channel_pack.a_channel = 'ROUGHNESS'",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "74f3d651271111eeb094709cd10f7430",
+          "label": "r_channel = 'GLOSSINESS'",
+          "command": "bpy.context.scene.qbaker.maps[2].channel_pack.r_channel = 'GLOSSINESS'",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "EXEC_DEFAULT"
+        },
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "9461e3c0270e11ee957c709cd10f7430",
+          "label": "Bake",
+          "command": "bpy.ops.qb.bake()",
+          "active": true,
+          "ui_type": "VIEW_3D",
+          "operator_execution_context": "INVOKE_DEFAULT"
+        }
+      ]
+    },
+    {
+      "icon": 690,
+      "icon_name": "FOLDER_REDIRECT",
+      "id": "463d9765355411ee969e709cd10f7430",
+      "label": "Open Tempdir",
+      "description": "Play this Action Button",
+      "macros": [
+        {
+          "icon": 0,
+          "icon_name": "NONE",
+          "id": "57b3f69c355411ee955b709cd10f7430",
+          "label": "Open Explorer",
+          "command": "bpy.ops.ar.preferences_open_explorer(path=bpy.app.tempdir)",
           "active": true,
           "ui_type": "",
           "operator_execution_context": "EXEC_DEFAULT"
