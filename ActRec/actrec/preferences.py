@@ -373,11 +373,17 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
             for addon_keymap in keymap.keymaps.values():
-                km = kc.keymaps[addon_keymap.name].active()
+                km = kc.keymaps.get(addon_keymap.name)
+                if not km:
+                    continue
+                km = km.active()
                 col2.context_pointer_set("keymap", km)
-                for kmi in km.keymap_items:
-                    if not any(kmi.idname == item.idname for item in keymap.keymaps['default'].keymap_items):
-                        continue
+                ar_keymaps = filter(
+                    lambda x: any(x.name == kmi.name and x.idname == kmi.idname
+                                  for kmi in keymap.keymap_items['default']),
+                    km.keymap_items
+                )
+                for kmi in [*ar_keymaps, *functions.get_all_action_keymaps(km)]:
                     rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()

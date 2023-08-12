@@ -9,6 +9,7 @@ from bpy.types import Menu, Context
 # relative imports
 from .. import keymap
 from ..functions.shared import get_preferences
+from .. import functions
 # endregion
 
 
@@ -44,8 +45,12 @@ def menu_draw(self, context: Context) -> None:
         layout.operator("ar.copy_to_actrec", text="Copy to Action Recorder (Single)").copy_single = True
     button_operator = getattr(context, "button_operator", None)
     if button_operator and button_operator.bl_rna.identifier == "AR_OT_global_execute_action":
-        if any(kmi.idname == "ar.global_execute_action" and kmi.properties.id == button_operator.id
-               for kmi in keymap.keymaps['default'].keymap_items):
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
+        kmi = km.keymap_items.find_from_operator(
+            "ar.global_execute_action",
+            properties=button_operator
+        )
+        if kmi:
             layout.operator("ar.remove_ar_shortcut").id = button_operator.id
         else:
             layout.operator("ar.add_ar_shortcut").id = button_operator.id

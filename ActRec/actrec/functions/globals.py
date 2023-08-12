@@ -2,11 +2,11 @@
 # external modules
 import json
 import os
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, Iterable
 
 # blender modules
 import bpy
-from bpy.types import AddonPreferences
+from bpy.types import AddonPreferences, Context, KeyMapItem, KeyMap
 
 # relative imports
 from ..log import logger
@@ -32,11 +32,25 @@ def save(ActRec_pref: AR_preferences) -> None:
     data = {}
     data['categories'] = shared.property_to_python(
         ActRec_pref.categories,
-        exclude=["name", "selected", "actions.name", "areas.name", "areas.modes.name"]
+        exclude=[
+            "name",
+            "selected",
+            "actions.name",
+            "areas.name",
+            "areas.modes.name"
+        ]
     )
     data['actions'] = shared.property_to_python(
         ActRec_pref.global_actions,
-        exclude=["name", "selected", "alert", "execution_mode", "macros.name", "macros.is_available", "macros.alert"]
+        exclude=[
+            "name",
+            "selected",
+            "alert",
+            "execution_mode",
+            "macros.name",
+            "macros.is_available",
+            "macros.alert"
+        ]
     )
     with open(ActRec_pref.storage_path, 'w', encoding='utf-8') as storage_file:
         json.dump(data, storage_file, ensure_ascii=False, indent=2)
@@ -135,47 +149,53 @@ def get_global_action_ids(ActRec_pref: AR_preferences, id: str, index: int) -> l
     return [id]
 
 
-def add_empty_action_keymap(id: str) -> bpy.types.KeyMapItem:
+def add_empty_action_keymap(id: str, km: KeyMap) -> KeyMapItem:
     """
     adds an empty keymap for a global action
 
     Args:
         id (str): id of the action
+        context (Context): active blender context
 
     Returns:
-        bpy.types.KeyMapItem: created keymap or found keymap of action
+        KeyMapItem: created keymap or found keymap of action
     """
     logger.info("add empty action")
-    kmi = get_action_keymap(id)
+    kmi = get_action_keymap(id, km)
     if kmi is None:
-        kmi = keymap.keymaps['default'].keymap_items.new("ar.global_execute_action", "NONE", "PRESS")
+        kmi = km.keymap_items.new(
+            "ar.global_execute_action",
+            "NONE",
+            "PRESS",
+            head=True
+        )
         kmi.properties.id = id
     return kmi
 
 
-def get_action_keymap(id: str) -> Union[bpy.types.KeyMapItem, None]:
+def get_action_keymap(id: str, km: KeyMap) -> Union[KeyMapItem, None]:
     """
     get the keymap of the action with the given id
 
     Args:
         id (str): id of the action
+        context (Context): active blender context
 
     Returns:
-        Union[bpy.types.KeyMapItem, None]: KeyMapItem on success; None on fail
+        Union[KeyMapItem, None]: KeyMapItem on success; None on fail
     """
-    items = keymap.keymaps['default'].keymap_items
-    for kmi in items:
+    for kmi in km.keymap_items:
         if kmi.idname == "ar.global_execute_action" and kmi.properties.id == id:
             return kmi
     return None
 
 
-def is_action_keymap_empty(kmi: bpy.types.KeyMapItem) -> bool:
+def is_action_keymap_empty(kmi: KeyMapItem) -> bool:
     """
     checks is the given keymapitem is empty
 
     Args:
-        kmi (bpy.types.KeyMapItem): keymapitem to check
+        kmi (KeyMapItem): keymapitem to check
 
     Returns:
         bool: is empty
@@ -183,14 +203,18 @@ def is_action_keymap_empty(kmi: bpy.types.KeyMapItem) -> bool:
     return kmi.type == "NONE"
 
 
-def remove_action_keymap(id: str) -> None:
+def remove_action_keymap(id: str, km: KeyMap) -> None:
     """
     removes the keymapitem for the action with the given id
 
     Args:
         id (str): id of the action
+        context (Context): active blender context
     """
-    kmi = get_action_keymap(id)
-    items = keymap.keymaps['default'].keymap_items
-    items.remove(kmi)
+    kmi = get_action_keymap(id, km)
+    km.keymap_items.remove(kmi)
+
+
+def get_all_action_keymaps(km: KeyMap) -> Iterable[KeyMapItem]:
+    return filter(lambda x: x.idname == "ar.global_execute_action", km.keymap_items)
 # endregion

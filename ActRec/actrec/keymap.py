@@ -2,44 +2,20 @@
 # external modules
 import os
 import json
+from collections import defaultdict
 
 # blender modules
 import bpy
-from bpy.types import KeyMapItems
+from bpy.types import KeyMapItems, KeyMap
 
 # relative imports
 from .log import logger
 # endregion
 
 keymaps = {}
-keymap_path = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "keymap.json"
-)
+keymap_items = defaultdict(list)
 
 # region functions
-
-
-def load_action_keymap(items: KeyMapItems) -> None:
-    """
-    reads the global action keymap from file located inside the addon folder.
-
-    Needed because shortcut of global actions can be added dynamically
-    and therefore needed to be known while Blender register.
-
-    Args:
-        items (KeyMapItems): "Keymap items to register loaded keymap to"
-    """
-    if not os.path.exists(keymap_path):
-        return
-    with open(keymap_path, 'r', encoding='utf-8') as keymap_file:
-        text = keymap_file.read()
-        if not text:
-            text = "{}"
-        data = json.loads(text)
-        logger.info('load actions keymap')
-
-    load_action_keymap_data(data, items)
 
 
 def load_action_keymap_data(data: list, items: KeyMapItems) -> None:
@@ -62,55 +38,31 @@ def load_action_keymap_data(data: list, items: KeyMapItems) -> None:
             alt=key['alt'],
             oskey=key['oskey'],
             key_modifier=key['key_modifier'],
-            repeat=key['repeat']
+            repeat=key['repeat'],
+            head=True
         )
         kmi.properties.id = key['id']
         kmi.active = key['active']
         kmi.map_type = key['map_type']
 
 
-def action_keymap_to_data(items: KeyMapItems) -> dict:
-    """
-    converts an global action keymap into a dict of JSON Format
-
-    Args:
-        items (KeyMapItems): Keymap items to convert to dict
-
-    Returns:
-        dict: JSON Format
-    """
-    return {
-        'keymap': [{
-            'id': kmi.properties['id'],
-            'active': kmi.active,
-            'type': kmi.type,
-            'value': kmi.value,
-            'any': kmi.any,
-            'shift': kmi.shift,
-            'ctrl': kmi.ctrl,
-            'alt': kmi.alt,
-            'oskey': kmi.oskey,
-            'key_modifier': kmi.key_modifier,
-            'repeat': kmi.repeat,
-            'map_type': kmi.map_type
-        } for kmi in items if kmi.idname == "ar.global_execute_action"]
-    }
-
-
-def save_action_keymap(items: KeyMapItems) -> None:
-    """
-    writes the global action keymap to a file located inside the addon folder.
-
-    Needed because shortcut of global actions can be added dynamically
-    and therefore needed to be known while Blender register.
-
-    Args:
-        items (KeyMapItems): "Keymap items to unregister loaded global keymaps from"
-    """
-    data = action_keymap_to_data(items)
-    with open(keymap_path, 'w', encoding='utf-8') as storage_file:
-        json.dump(data, storage_file, ensure_ascii=False, indent=2)
-    logger.info('saved actions keymap')
+def append_keymap(self, data: dict, export_action_ids: list, km: KeyMap) -> None:
+    for kmi in km.keymap_items:
+        if kmi.idname == "ar.global_execute_action" and kmi.properties.id in export_action_ids:
+            data['keymap'].append({
+                'id': kmi.properties['id'],
+                'active': kmi.active,
+                'type': kmi.type,
+                'value': kmi.value,
+                'any': kmi.any,
+                'shift': kmi.shift,
+                'ctrl': kmi.ctrl,
+                'alt': kmi.alt,
+                'oskey': kmi.oskey,
+                'key_modifier': kmi.key_modifier,
+                'repeat': kmi.repeat,
+                'map_type': kmi.map_type
+            })
 
 # endregion
 
@@ -120,31 +72,48 @@ def save_action_keymap(items: KeyMapItems) -> None:
 def register():
     addon = bpy.context.window_manager.keyconfigs.addon
     if addon:
+        keymaps['temp'] = addon.keymaps.new(name='ActionButtons')
         km = addon.keymaps.new(name='Screen')
         keymaps['default'] = km
+        save_items = keymap_items['default']
         items = km.keymap_items
         # operators
-        items.new("ar.macro_add", 'COMMA', 'PRESS', alt=True)
-        items.new("ar.local_play", 'PERIOD', 'PRESS', alt=True)
-        items.new("ar.local_selection_up", 'WHEELUPMOUSE',
-                  'PRESS', shift=True, alt=True)
-        items.new("ar.local_selection_down", 'WHEELDOWNMOUSE',
-                  'PRESS', shift=True, alt=True)
-        load_action_keymap(items)
+        kmi = items.new("ar.macro_add", 'COMMA', 'PRESS', alt=True)
+        save_items.append(kmi)
+        kmi = items.new("ar.local_play", 'PERIOD', 'PRESS', alt=True)
+        save_items.append(kmi)
+        kmi = items.new(
+            "ar.local_selection_up",
+            'WHEELUPMOUSE',
+            'PRESS',
+            shift=True,
+            alt=True
+        )
+        save_items.append(kmi)
+        kmi = items.new(
+            "ar.local_selection_down",
+            'WHEELDOWNMOUSE',
+            'PRESS',
+            shift=True,
+            alt=True
+        )
+        save_items.append(kmi)
         # menu
         kmi = items.new("wm.call_menu_pie", 'A', 'PRESS', shift=True, alt=True)
         kmi.properties.name = 'AR_MT_action_pie'
+        save_items.append(kmi)
         kmi = items.new("wm.call_menu", 'C', 'PRESS', shift=True, alt=True)
         kmi.properties.name = 'AR_MT_Categories'
+        save_items.append(kmi)
 
 
 def unregister():
     addon = bpy.context.window_manager.keyconfigs.addon
     if not addon:
         return
-    default_km = keymaps.get('default')
-    if default_km:
-        save_action_keymap(default_km.keymap_items)
     for km in keymaps.values():
-        addon.keymaps.remove(km)
+        if keymaps.get(km.name):
+            addon.keymaps.remove(km)
+    keymaps.clear()
+    keymap_items.clear()
 # endregion

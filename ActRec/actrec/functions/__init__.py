@@ -14,7 +14,8 @@ from .globals import (
     add_empty_action_keymap,
     is_action_keymap_empty,
     get_action_keymap,
-    remove_action_keymap
+    remove_action_keymap,
+    get_all_action_keymaps
 )
 
 from .locals import (

@@ -19,7 +19,7 @@ from .. import functions, properties, icon_manager, ui_functions, keymap
 from . import shared
 from ..functions.shared import get_preferences
 from ..log import logger
-from ..keymap import keymaps
+from ..keymap import keymaps, keymap_items
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
 else:
@@ -184,8 +184,8 @@ class AR_OT_global_import(Operator, ImportHelper):
                 category['id'] = uuid.uuid1().hex
             functions.import_global_from_dict(ActRec_pref, data)
             if self.include_keymap:
-                default_km = keymaps.get('default')
-                keymap.load_action_keymap_data(data, default_km.keymap_items)
+                km = context.window_manager.keyconfigs.user.keymaps['Screen']
+                keymap.load_action_keymap_data(data, km.keymap_items)
 
         ActRec_pref = get_preferences(context)
         ActRec_pref.import_settings.clear()
@@ -434,25 +434,6 @@ class AR_OT_global_export(Operator, ExportHelper):
         default=True
     )
 
-    def append_keymap(self, data: dict, export_action_ids: list) -> None:
-        default_km = keymaps.get('default')
-        for kmi in default_km.keymap_items:
-            if kmi.idname == "ar.global_execute_action" and kmi.properties['id'] in export_action_ids:
-                data['keymap'].append({
-                    'id': kmi.properties['id'],
-                    'active': kmi.active,
-                    'type': kmi.type,
-                    'value': kmi.value,
-                    'any': kmi.any,
-                    'shift': kmi.shift,
-                    'ctrl': kmi.ctrl,
-                    'alt': kmi.alt,
-                    'oskey': kmi.oskey,
-                    'key_modifier': kmi.key_modifier,
-                    'repeat': kmi.repeat,
-                    'map_type': kmi.map_type
-                })
-
     @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
@@ -509,7 +490,8 @@ class AR_OT_global_export(Operator, ExportHelper):
                 ))
 
         if self.include_keymap:
-            self.append_keymap(data, export_action_ids)
+            km = context.window_manager.keyconfigs.user.keymaps['Screen']
+            keymap.append_keymap(data, export_action_ids, km)
 
         with open(self.filepath, 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
@@ -765,16 +747,18 @@ class AR_OT_add_ar_shortcut(Operator):
 
     def draw(self, context: Context) -> None:
         self.layout.label(text=self.bl_label)
-        for kmi in keymap.keymaps['default'].keymap_items:
-            if not (kmi.idname == "ar.global_execute_action" and kmi.properties.id == self.id):
+        km = keymap.keymaps['temp']
+        for kmi in km.keymap_items:
+            if kmi.idname != "ar.global_execute_action" or kmi.properties.id != self.id:
                 continue
             self.layout.prop(kmi, "type", text="", full_event=True)
             kmi.active = True
             break
 
     def invoke(self, context: Context, event: Event) -> set[str]:
-        if self.id and functions.get_action_keymap(self.id) is None:
-            functions.add_empty_action_keymap(self.id)
+        km = keymap.keymaps['temp']
+        if self.id and functions.get_action_keymap(self.id, km) is None:
+            functions.add_empty_action_keymap(self.id, km)
         return context.window_manager.invoke_popup(self)
 
     def execute(self, context: Context) -> set[str]:
@@ -782,13 +766,12 @@ class AR_OT_add_ar_shortcut(Operator):
 
     def cancel(self, context: Context) -> None:
         #  Use cancel as execution of changed keymap (not intended use of invoke_popup)
-        ActRec_pref = get_preferences(context)
-        kmi = functions.get_action_keymap(self.id)
-        if self.id == '' or functions.is_action_keymap_empty(kmi):
-            functions.remove_action_keymap(self.id)
-            return
-        if ActRec_pref.autosave:
-            functions.save(ActRec_pref)
+        km = keymap.keymaps['temp']
+        kmi = functions.get_action_keymap(self.id, km)
+        if self.id != '' and not functions.is_action_keymap_empty(kmi):
+            km_user = context.window_manager.keyconfigs.user.keymaps['Screen']
+            km_user.keymap_items.new_from_item(kmi, head=True)
+        functions.remove_action_keymap(self.id, km)
 
 
 class AR_OT_remove_ar_shortcut(Operator):
@@ -800,12 +783,10 @@ class AR_OT_remove_ar_shortcut(Operator):
     id: StringProperty()
 
     def execute(self, context: Context) -> set[str]:
-        ActRec_pref = get_preferences(context)
-        if functions.get_action_keymap(self.id) is None:
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
+        if functions.get_action_keymap(self.id, km) is None:
             return {"CANCELLED"}
-        functions.remove_action_keymap(self.id)
-        if ActRec_pref.autosave:
-            functions.save(ActRec_pref)
+        functions.remove_action_keymap(self.id, km)
         return {"FINISHED"}
 
 
