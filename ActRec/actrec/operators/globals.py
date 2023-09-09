@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
-from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties, PropertyGroup
 from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
@@ -22,8 +22,10 @@ from ..log import logger
 from ..keymap import keymaps, keymap_items
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.globals import AR_global_actions
 else:
     AR_preferences = AddonPreferences
+    AR_global_actions = PropertyGroup
 # endregion
 
 
@@ -563,7 +565,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
 
-    def global_to_local(self, ActRec_pref: AR_preferences, action: 'AR_global_actions') -> None:
+    def global_to_local(self, ActRec_pref: AR_preferences, action: AR_global_actions) -> None:
         """
         copy the given global action to a local action
 

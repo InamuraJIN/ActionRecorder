@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
-from bpy.types import Panel, Menu, Context, AddonPreferences
+from bpy.types import Panel, Menu, Context, AddonPreferences, PropertyGroup
 
 # relative imports
 from . import globals
@@ -14,8 +14,10 @@ from ..functions.shared import get_preferences
 from ..log import logger
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.categories import AR_category
 else:
     AR_preferences = AddonPreferences
+    AR_category = PropertyGroup
 # endregion
 
 classes = []

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
-from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties, PropertyGroup
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty
 
 # relative imports
@@ -17,8 +17,12 @@ from . import shared
 from ..functions.shared import get_preferences
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.categories import AR_category
+    from ..properties.globals import AR_global_actions
 else:
     AR_preferences = AddonPreferences
+    AR_category = PropertyGroup
+    AR_global_actions = PropertyGroup
 # endregion
 
 CONTEXT_REPORT = 0
@@ -58,8 +62,8 @@ class AR_OT_local_to_global(Operator):
     def local_to_global(
             self,
             ActRec_pref: AR_preferences,
-            category: 'AR_category',
-            action: 'AR_global_actions') -> None:
+            category: AR_category,
+            action: AR_global_actions) -> None:
         """
         copy the given local action to a global action
 

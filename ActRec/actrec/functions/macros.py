@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
-from bpy.types import Operator, Scene, Context, AddonPreferences
+from bpy.types import Operator, Scene, Context, AddonPreferences, PropertyGroup, Struct
 
 # relative imports
 from . import shared
@@ -17,15 +17,17 @@ from ..log import logger
 from .shared import get_preferences
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.locals import AR_local_actions
 else:
     AR_preferences = AddonPreferences
+    AR_local_actions = PropertyGroup
 # endregion
 
 
 # region Functions
 
 
-def get_local_macro_index(action: 'AR_local_actions', id: str, index: int) -> int:
+def get_local_macro_index(action: AR_local_actions, id: str, index: int) -> int:
     """
     get macro index of action based on the given id or index (checks if index in range)
     fallback to selection if macro doesn't exists
@@ -439,7 +441,7 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
 def add_report_as_macro(
         context: Context,
         ActRec_pref: AR_preferences,
-        action: 'AR_local_action',
+        action: AR_local_actions,
         report: str,
         error_reports: list,
         ui_type: str = "") -> None:
@@ -449,7 +451,7 @@ def add_report_as_macro(
     Args:
         context (Context): active blender context
         ActRec_pref (AR_preferences): preferences of this addon
-        action (AR_local_action): action to add macro to
+        action (AR_local_actions): action to add macro to
         report (str): report to add as macro
         error_reports (list): error_report to add report if it doesn't match the pattern
         ui_type (str, optional): ui_type where macro get called. Defaults to "".
@@ -505,16 +507,16 @@ def get_id_object(context: Context, source_path: list, attribute: str) -> str:
     return trace_object(context, source_path)
 
 
-def trace_object(base: 'blender_object', path: list[str]) -> 'blender_object':
+def trace_object(base: Struct, path: list[str]) -> Struct:
     """
     trace the base with the given path to a Blender object
 
     Args:
-        base (blender_object): object to trace from
+        base (Struct): object to trace from
         path (list): path to trace
 
     Returns:
-        blender_object: traced object
+        Struct: traced object
     """
     for x in path:
         if x.endswith("]"):  # attribute is collection
@@ -529,13 +531,13 @@ def trace_object(base: 'blender_object', path: list[str]) -> 'blender_object':
     return base
 
 
-def get_copy_of_object(data: dict, obj: 'blender_object', attribute: str, depth=5) -> dict:
+def get_copy_of_object(data: dict, obj: Struct, attribute: str, depth=5) -> dict:
     """
     makes a copy of a given blender object
 
     Args:
         data (dict): data to write part of the copy to
-        obj (blender_object): object to work on
+        obj (Struct): object to work on
         attribute (str): attribute of the object
         depth (int, optional): depth where to break the copy of the object. Defaults to 5.
 
@@ -579,13 +581,17 @@ def create_object_copy(context: Context, source_path: list, attribute: str) -> d
     return res
 
 
-def compare_object_report(obj: 'blender_object', copy_dict: dict, source_path: list, attribute: str, value
-                          ) -> Union[tuple, None]:
+def compare_object_report(
+        obj: Struct,
+        copy_dict: dict,
+        source_path: list,
+        attribute: str,
+        value) -> Union[tuple, None]:
     """
     compare the copy dict values against the given obj
 
     Args:
-        obj (blender_object): object to compare against
+        obj (Struct): object to compare against
         copy_dict (dict): copy of an blender object
         source_path (list): path to trace for deeper compare,
             path from the context (excluded) to the attribute (excluded)

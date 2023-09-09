@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
-from bpy.types import AddonPreferences, Scene
+from bpy.types import AddonPreferences, Scene, PropertyGroup
 
 # relative imports
 from .. import shared_data
@@ -14,8 +14,10 @@ from . import shared
 from .shared import get_preferences
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.locals import AR_local_actions
 else:
     AR_preferences = AddonPreferences
+    AR_local_actions = PropertyGroup
 # endregion
 
 
@@ -47,7 +49,7 @@ def load_local_action(ActRec_pref: AR_preferences, data: list) -> None:
         shared.add_data_to_collection(actions, value)
 
 
-def local_action_to_text(action: 'AR_local_actions', text_name: str = None) -> None:
+def local_action_to_text(action: AR_local_actions, text_name: str = None) -> None:
     """
     write the local action and it's macro to the TextEditor
 
@@ -73,7 +75,7 @@ def local_action_to_text(action: 'AR_local_actions', text_name: str = None) -> N
     )
 
 
-def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = None) -> None:
+def remove_local_action_from_text(action: AR_local_actions, text_name: str = None) -> None:
     """
     remove the local action from the TextEditor
 

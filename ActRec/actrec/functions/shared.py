@@ -17,15 +17,19 @@ from typing import TYPE_CHECKING
 import bpy
 import bl_math
 from bpy.app.handlers import persistent
-from bpy.types import PointerProperty, Property, CollectionProperty, Context, AddonPreferences
+from bpy.types import PointerProperty, Property, CollectionProperty, Context, AddonPreferences, PropertyGroup
 
 # relative imports
 from ..log import logger
 from .. import shared_data
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
+    from ..properties.shared import AR_action
+    from ..operators.macros import Font_analysis
 else:
     AR_preferences = AddonPreferences
+    AR_action = PropertyGroup
+    Font_analysis = object
 # endregion
 
 __module__ = __package__.split(".")[0]
@@ -438,7 +442,8 @@ def execute_individually(context: Context, command: str) -> None:
 def play(
         context: Context,
         macros: CollectionProperty,
-        action: 'AR_action', action_type: str) -> Union[Exception, str, None]:
+        action: AR_action,
+        action_type: str) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
@@ -734,7 +739,7 @@ def get_attribute_default(obj: object, name: str, default: None) -> object | Non
     return obj
 
 
-def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: str = " ,") -> list[str]:
+def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str = " ,") -> list[str]:
     """
     converts a one line text to multiple lines saved as a list
     (needed because Blender doesn't have text boxes)
