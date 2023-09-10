@@ -12,6 +12,7 @@ import ensurepip
 import subprocess
 import traceback
 from typing import TYPE_CHECKING
+from mathutils import Vector, Matrix, Color, Euler, Quaternion
 
 # blender modules
 import bpy

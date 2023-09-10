@@ -12,6 +12,7 @@ from logging import Logger
 import bpy
 from bpy.types import Operator, PointerProperty, UILayout, Context, Event
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty, FloatProperty, BoolProperty
+from idprop.types import IDPropertyArray
 
 # relative imports
 from . import shared
@@ -1046,12 +1047,21 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
             Optional[set[str]]: on success: {"FINISHED"}
         """
         if isinstance(functions.get_attribute(context, attr), object_class):
-            value = functions.convert_value_to_python(getattr(button_pointer, button_prop.identifier))
+            try:
+                prop = getattr(button_pointer, button_prop.identifier)
+                identifier = ".%s" % button_prop.identifier
+            except AttributeError:  # Geometry Nodes need this -> NodesModifier
+                prop = button_pointer[button_prop.identifier]
+                identifier = "[\"%s\"]" % button_prop.identifier
+            value = functions.convert_value_to_python(prop)
             if self.copy_single and bpy.ops.ui.copy_data_path_button.poll():
                 clipboard = context.window_manager.clipboard
                 bpy.ops.ui.copy_data_path_button(full_path=True)
                 single_index = context.window_manager.clipboard.split(
-                    " = ")[0].split(".")[-1].split("[")[-1].replace("]", "")
+                    " = ", 1)[0].rsplit(
+                    ".", 1)[1].rsplit(
+                    "[", 1)[1].replace(
+                    "]", "")
                 context.window_manager.clipboard = clipboard
                 if single_index.isdigit():
                     value = value[int(single_index)]
@@ -1060,6 +1070,8 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                 value = "'%s'" % value
             elif isinstance(value, float):
                 value = round(value, button_prop.precision)
+            elif isinstance(value, IDPropertyArray):
+                value = value.to_list()
             elif isinstance(button_prop, PointerProperty) and value is not None:
                 for identifier, prop in bpy.data.bl_rna.properties.items():
                     if (prop.type == 'COLLECTION'
@@ -1083,10 +1095,10 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
                             break
 
             if self.copy_single:
-                command = "bpy.context.%s.%s[%s] = %s" % (
-                    attr, button_prop.identifier, single_index, str(value))
+                command = "bpy.context.%s%s[%s] = %s" % (
+                    attr, identifier, single_index, str(value))
             else:
-                command = "bpy.context.%s.%s = %s" % (attr, button_prop.identifier, str(value))
+                command = "bpy.context.%s%s = %s" % (attr, identifier, str(value))
             self.copy_single = False
             bpy.ops.ar.macro_add('EXEC_DEFAULT', command=command)
             for area in context.screen.areas:
