@@ -427,9 +427,6 @@ def execute_individually(context: Context, command: str) -> None:
 
     for object in old_selected_objects:
         object.select_set(True)
-        context.selectable_objects = [object]
-        context.object = object
-        context.active_object = object
         context.view_layer.objects.active = object
         exec(command)
         with suppress(ReferenceError):
