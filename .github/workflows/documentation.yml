@@ -3,8 +3,6 @@ name: Deploy Sphinx documentation to Pages
 on:
   workflow_dispatch:
   push:
-    branches: [master] 
-  pull_request:
     branches: [master]
 
 jobs:
@@ -21,3 +19,4 @@ jobs:
       uses: sphinx-notes/pages@v3
       with:
         documentation_path: ./docs/source
+        requirements_path: ./docs/source/requirements.txt
