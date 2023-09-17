@@ -11,15 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - id: files
-        uses: jitterbit/get-changed-files@v1
-        with:
-          format: 'csv'
+      - name: Get changed files
+        id: files
+        run: |
+            git fetch origin master
+            diff=$(git diff --name-only --diff-filter=AM origin/main..HEAD | tr '\n' ',')
+            echo "added_modified=$diff" >> "$GITHUB_OUTPUT"
+            echo "Added & Modified: $diff"
+            diff=$(git diff --name-only --diff-filter=D origin/main..HEAD | tr '\n' ',')
+            echo "removed=$diff" >> "$GITHUB_OUTPUT"
+            echo "Removed: $diff"
       - name: Update to new Version
         id: update
         working-directory: .github/workflows/scripts
