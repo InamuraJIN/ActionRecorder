@@ -19,7 +19,8 @@ jobs:
       - name: Get changed files
         id: files
         run: |
-            git fetch origin master
+            echo $GITHUB_REF_NAME
+            git fetch origin $GITHUB_REF_NAME
             diff=$(git diff --name-only --diff-filter=AM origin/$GITHUB_REF_NAME..HEAD | tr '\n' ',')
             echo "added_modified=$diff" >> "$GITHUB_OUTPUT"
             echo "Added & Modified: $diff"
