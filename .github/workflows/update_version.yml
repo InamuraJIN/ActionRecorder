@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -20,10 +22,10 @@ jobs:
         id: files
         run: |
             git fetch origin $GITHUB_REF_NAME
-            diff=$(git diff --name-only --diff-filter=AM origin/$GITHUB_REF_NAME | tr '\n' ',')
+            diff=$(git diff --name-only --diff-filter=AM origin/$GITHUB_REF_NAME..HEAD | tr '\n' ',')
             echo "added_modified=$diff" >> "$GITHUB_OUTPUT"
             echo "Added & Modified: $diff"
-            diff=$(git diff --name-only --diff-filter=D origin/$GITHUB_REF_NAME | tr '\n' ',')
+            diff=$(git diff --name-only --diff-filter=D origin/$GITHUB_REF_NAME..HEAD | tr '\n' ',')
             echo "removed=$diff" >> "$GITHUB_OUTPUT"
             echo "Removed: $diff"
       - name: Update to new Version
