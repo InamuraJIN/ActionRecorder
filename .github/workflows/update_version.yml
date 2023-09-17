@@ -21,11 +21,10 @@ jobs:
       - name: Get changed files
         id: files
         run: |
-            git fetch origin $GITHUB_REF_NAME
-            diff=$(git diff --name-only --diff-filter=AM origin/$GITHUB_REF_NAME..HEAD | tr '\n' ',')
+            diff=$(git diff --name-only --diff-filter=AM HEAD^..HEAD | tr '\n' ',')
             echo "added_modified=$diff" >> "$GITHUB_OUTPUT"
             echo "Added & Modified: $diff"
-            diff=$(git diff --name-only --diff-filter=D origin/$GITHUB_REF_NAME..HEAD | tr '\n' ',')
+            diff=$(git diff --name-only --diff-filter=D HEAD^..HEAD | tr '\n' ',')
             echo "removed=$diff" >> "$GITHUB_OUTPUT"
             echo "Removed: $diff"
       - name: Update to new Version
