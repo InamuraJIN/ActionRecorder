@@ -333,9 +333,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             )
             ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
+            row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.storage_path
 
             box = col.box()
-            box.label(text=self.storage_path)
+            box_row = box.row()
+            box_row.label(text=self.storage_path)
+            op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
+            op.text = self.storage_path
             col.separator(factor=1.5)
             row = col.row().split(factor=0.5)
             row.label(text="Icon Storage Folder")
@@ -362,9 +366,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             )
             ops.preference_name = "icon_path"
             ops.path_extension = "Icons"
+            row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.icon_path
 
             box = col.box()
-            box.label(text=self.icon_path)
+            box_row = box.row()
+            box_row.label(text=self.icon_path)
+            op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
+            op.text = self.icon_path
             col.separator(factor=1.5)
             row2 = col.row(align=True).split(factor=0.7, align=True)
             row2.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
