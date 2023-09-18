@@ -426,7 +426,8 @@ def merge_report_tracked(reports: list, tracked_actions: list) -> list[tuple]:
                             or all(x in attribute for x in ("active", "index")))  # exclude index set of UIList
                 data.append((0, True, undo, source_path, attribute, value))
                 report_i += 1
-            tracked[3] -= (tracked[2] == 'CONTEXT')
+            if tracked[2] == 'CONTEXT':
+                tracked[3] -= 1
             tracked_i += (tracked[2] == 'CONTEXT' and tracked[3] == 0) or (not continue_report or not tracked[0])
         else:
             report_i += 1
