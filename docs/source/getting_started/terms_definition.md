@@ -20,7 +20,7 @@ It can be shared and used with other project files as well.
 By default it is saved in the `Storage.json` file which is located inside the install directory of the Add-on.
 
 :::{hint}
-By default this would be\
+By default the path to the `Storage`-File is\
 `
 C:\Users\<USER>\AppData\Roaming\Blender Foundation\Blender\3.3\scripts\addons\ActRec\Storage.json
 `
