@@ -13,4 +13,4 @@ Select the Zip file you downloaded<br>
 <img src="https://user-images.githubusercontent.com/60126349/206440103-003f4903-10e4-4a73-a18a-bd7c9a37d66c.png"> <br>
 Click the "Install Add-on" button<br>
 
-Finished! Now you can see a Tab "Action Recorder" in the UI (by pressing N)![Tab ActionRecorder](../images/Tab_ActionRecorder.png)
+Finished! Now you can see a Tab "Action Recorder" in the UI (by pressing `N`)![Tab ActionRecorder](../images/Tab_ActionRecorder.png)

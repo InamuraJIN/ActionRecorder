@@ -6,6 +6,12 @@
 Welcome to Action Recorder documentation!
 ===========================================
 
+.. youtube:: OA0vjP7D4Ec
+   :height: 315
+   :width: 560
+   :align: center
+
+
 | Are you tired of coding long intimidating coding task just for one-off modeling?
 | Or may be you're not good coding at all !
 | Introducing "ActionRecorder" !
@@ -21,6 +27,14 @@ Welcome to Action Recorder documentation!
 .. |DonateLink| image:: https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif
 .. _DonateLink: https://paypal.me/InamuraJIN?locale.x=ja_JP
 
+--------------------
+Quick Start Tutorial
+--------------------
+
+.. youtube:: FqXxuMHuktc
+   :height: 315
+   :width: 560
+   :align: center
 
 .. toctree::
    :maxdepth: 2
@@ -29,6 +43,15 @@ Welcome to Action Recorder documentation!
    
    Home <self>
    getting_started/installation
+   getting_started/terms_definition
+   getting_started/first_action
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: PANELS
+
+   panels/macro
 
 
 
