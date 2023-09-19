@@ -633,7 +633,9 @@ class AR_OT_macro_install_multiline_support(Operator):
         if context and context.area:
             context.area.tag_redraw()
         if len(self.success) and self.success[0]:
+            self.report({'INFO'}, "Successfully installed multiline support")
             return {'FINISHED'}
+        self.report({'ERROR'}, "Could not install multiline support. See Log for further information.")
         return {'CANCELLED'}
 
 
