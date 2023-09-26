@@ -529,6 +529,7 @@ class Font_analysis():
             if importlib.util.find_spec('fontTools') is None:
                 logger.warning("For some reason fontTools couldn't be installed :(")
                 return False
+        return True
 
     def get_width_of_text(self, text: str) -> list[float]:
         """
