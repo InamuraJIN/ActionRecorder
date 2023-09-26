@@ -11,7 +11,7 @@ But they can also contain regular python code.
 
 ## Local
 Available only in the project file.
-The selected action can be executed with the `Play`-Button (Shortcut: `alt + .`)
+The selected action can be executed with the `Play`-Button (Shortcut: `Alt + .`)
 Direct editing of macros is possible.
 If you want to edit the Global macro, move it to Local and then edit it.
 

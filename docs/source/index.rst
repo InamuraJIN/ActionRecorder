@@ -9,7 +9,7 @@ Welcome to Action Recorder documentation!
 .. youtube:: OA0vjP7D4Ec
    :height: 315
    :width: 560
-   :align: center
+   :align: left
 
 
 | Are you tired of coding long intimidating coding task just for one-off modeling?
@@ -34,7 +34,8 @@ Quick Start Tutorial
 .. youtube:: FqXxuMHuktc
    :height: 315
    :width: 560
-   :align: center
+   :align: left
+
 
 .. toctree::
    :maxdepth: 2
@@ -51,7 +52,5 @@ Quick Start Tutorial
    :hidden:
    :caption: PANELS
 
+   panels/local
    panels/macro
-
-
-
