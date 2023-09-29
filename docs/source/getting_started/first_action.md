@@ -45,4 +45,4 @@ If the setting `Create Empty on Error` is checked it will create an empty Macro 
 
 
 ![Alt text](../images/Simple_Macro.svg)\
-We now have a Macro. This can be `activated` and `deactivated` through the check-box. By double-click on the label the macro can be edited through a dialog.
+We now have a Macro. This can be `activated` and `deactivated` through the check-box. By double-click on the label the Macro can be edited through a dialog.
