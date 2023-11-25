@@ -373,15 +373,20 @@ def update_command(command: str) -> Union[str, bool]:
         return False
 
 
-def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int):
+def run_queued_macros(context_copy: dict, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str,
+                      looping_count:int = -1, macros_after_loop: bpy.types.CollectionProperty = None, macros_before_timer: bpy.types.CollectionProperty = None):
     """
     runs macros from a given index of a specific action
 
     Args:
         context_copy (dict): copy of the active context (bpy.context.copy())
+        macros (bpy.types.CollectionProperty): macros to execute
+        action (AR_action): action to track
         action_type (str): "global_actions" or "local_actions"
-        action_id (str): id of the action with the macros to execute
-        start (int): macro to start with in the macro collection
+
+        looping_count (int): repeat times, if called from a loop event.
+        macros_after_loop (bpy.types.Context): macros outside loop. None if not loop
+        macros_before_timer (bpy.types.Context): macros before second+ timer inside loops
     """
     context = bpy.context
     if context_copy is None:
@@ -390,8 +395,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         temp_override = context.temp_override(**context_copy)
     with temp_override:
         ActRec_pref = context.preferences.addons[__module__].preferences
-        action = getattr(ActRec_pref, action_type)[action_id]
-        play(context, action.macros[start:], action, action_type)
+        play(context, macros, action, action_type, looping_count, macros_after_loop, macros_before_timer)
 
 
 def execute_individually(context: bpy.types.Context, command: str):
@@ -421,7 +425,8 @@ def execute_individually(context: bpy.types.Context, command: str):
             object.select_set(True)
 
 
-def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
+def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str,
+         looping_count:int = -1, macros_after_loop: bpy.types.CollectionProperty = None, macros_before_timer: bpy.types.CollectionProperty = None
          ) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
@@ -432,6 +437,10 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
         macros (bpy.types.CollectionProperty): macros to execute
         action (AR_action): action to track
         action_type (str): action type of the given action
+
+        looping_count (int): repeat times, if called from a loop event.
+        macros_after_loop (bpy.types.Context): macros outside loop. None if not loop
+        macros_before_timer (bpy.types.Context): macros before second+ timer inside loops
 
     Returns:
         Exception, str: error
@@ -457,13 +466,21 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             if data['Type'] in {'Render Complete'}:
                 return
             elif data['Type'] == 'Timer':
+                timer_macros = macros
+                if macros_before_timer:
+                    # If not first timer inside loop
+                    # copy previous saved macros(macros_before_timer) + macros already executed (macros[:(-1-i))
+                    timer_macros = macros_before_timer + macros[:(-1-i)]
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
                         context.copy(),
+                        macros[i + 1:],
+                        action,
                         action_type,
-                        action.id,
-                        i + 1
+                        looping_count,
+                        macros_after_loop,
+                        timer_macros
                     ),
                     first_interval=data['Time']
                 )
@@ -502,11 +519,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                         if err:
                             return err
                 else:
-                    for k in range(data["RepeatCount"]):
-                        err = play(context, loop_macros, action, action_type)
-                        if err:
-                            return err
-                return play(context, macros[end_index + 1:], action, action_type)
+                    # We need to treat the loop inside the play function to account for timer's delayed execute
+                    # So we pass play with the macros inside the loop, and then the loop count and the macros after the loop as a parameter
+                    return play(context, loop_macros, action, action_type, data["RepeatCount"], macros[end_index + 1:], macros_before_timer)
             elif data['Type'] == 'Select Object':
                 selected_objects = context.selected_objects
 
@@ -619,6 +634,19 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                 base_area.ui_type = area_type
             return err
 
+    looping_count = looping_count - 1
+    if looping_count > 0:
+        # Play loop from the start
+
+        # If executed from run_queue_macros, needs to use original macros before timer
+        loop_macros = macros_before_timer
+        if loop_macros == None:
+            loop_macros = macros
+        return play(context, loop_macros, action, action_type, looping_count, macros_after_loop)
+    elif looping_count == 0:
+        # End loop, play macros outside loop
+        return play(context, macros_after_loop, action, action_type)
+
 
 @ persistent
 def execute_render_complete(dummy=None):
@@ -641,9 +669,9 @@ def execute_render_complete(dummy=None):
             functools.partial(
                 run_queued_macros,
                 None,
-                action_type,
-                action_id,
-                start_index
+                action.macros[start:], # needs test
+                action,
+                action_type
             ),
             first_interval=0.1
         )
