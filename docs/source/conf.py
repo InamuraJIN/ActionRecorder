@@ -11,12 +11,13 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 import os
 import sys
+from datetime import date
 
 
 project = 'Action Recorder'
-copyright = '2023, InamuraJIN, RivinHD'
+copyright = f'{date.today().year}, InamuraJIN, RivinHD'
 author = 'InamuraJIN, RivinHD'
-release = '4.0.8'
+release = '4.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

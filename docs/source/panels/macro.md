@@ -6,9 +6,47 @@ This is a Macro it can be `activated` and `deactivated` through the checkbox and
 By double clicking on the label the Macro can be edited through a dialog.
 
 ## Editing Macros
+Double click on the Macro to open the editing dialog.
+
+The dialog provides to different styles for operators commands or context changes.
+
+**Operators**
+
+![Editing Macros Operators](../images/MacroEdit_Operator.png)
+
+**Context**
+
+![Editing Macros Context](../images/MacroEdit_Context.png)
+
+### Label
+The text that is displayed for this macro.
+
+### Command
+The actual python code that will be executed for this macro.
+
+### Properties
+The area/windows where this Macro will be executed.
+
+### Copy Text
+Copies the command to the clipboard.
+
+### Execution Context
+The context which the operator will be executed with. 
+Most of the time `Execution` is the right selection.
+
+:::{Hint}
+Sometimes it is helpful to set it to `Invoke` where the operator can access user input or startup a process that will not be executed immediately.
+:::
+
+### Copy Previous
+Is a toggle button which will try to load the action executed before the recorded one if active.
+
+### Clear Operator
+Removes all properties from an operator.
+E.g. `bpy.ops.transform.translate(value=(1,1,1), ...)` becomes `bpy.ops.transform.translate()`.
 
 ## Operations
-![Alt text](../images/MacroEditorOperators.svg)
+![Macro Editor Operations](../images/MacroEditorOperators.svg)
 
 ### Add 
 
@@ -80,4 +118,4 @@ If Install is pressed the Popup will change to the following:\
 ![Multiline Installing](../images/MacroEditor_MultilineInstalling.png)
 
 After the installation finished the following appear:\
-![Multiline Installed](../images/MacroEditor_MultilineInstalled.pngstergrafik.png)
+![Multiline Installed](../images/MacroEditor_MultilineInstalled.png)
