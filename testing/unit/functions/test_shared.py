@@ -1,7 +1,7 @@
 import pytest
 from ActRec.actrec.functions import shared
 import bpy
-import helper
+from .. import helper
 
 
 @pytest.mark.parametrize(

@@ -1,1 +1,1 @@
-blender-addon-tester
+blender-addon-tester @ git+https://github.com/nangtani/blender-addon-tester.git
