@@ -10,7 +10,7 @@ from .categories import (
 )
 
 from .globals import (
-    AR_OT_gloabal_recategorize_action,
+    AR_OT_global_recategorize_action,
     AR_OT_global_import,
     AR_OT_global_import_settings
 )

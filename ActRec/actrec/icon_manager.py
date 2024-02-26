@@ -1,18 +1,24 @@
 # region Imports
 # external modules
 import os
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
 import bpy.utils.previews
-from bpy.types import Operator, PropertyGroup
+from bpy.types import Operator, PropertyGroup, AddonPreferences, Context, Event
 from bpy.props import IntProperty, StringProperty, BoolProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper
+from bpy.utils.previews import ImagePreviewCollection
 
 # relative imports
 from .log import logger
 from .functions.shared import get_preferences
 from . import functions
+if TYPE_CHECKING:
+    from .preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 preview_collections = {}
@@ -62,33 +68,33 @@ def get_custom_icons_value_map() -> dict:
     return {item.icon_id: key for key, item in preview_collections['ar_custom'].items()}
 
 
-def load_icons(ActRec_pref: bpy.types.Preferences):
+def load_icons(ActRec_pref: AR_preferences) -> None:
     """
     loads all saved icons from the icon folder, which can be located by the user.
     the icon are saved as png and with their icon name
     supported blender image formats https://docs.blender.org/manual/en/latest/files/media/image_formats.html
 
     Args:
-        ActRec_pref (bpy.types.Preferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
     """
     directory = ActRec_pref.icon_path
     for icon in os.listdir(directory):
         filepath = os.path.join(directory, icon)
-        # REFACTOR indentation
-        if os.path.exists(filepath) and os.path.isfile(filepath):
-            register_icon(
-                preview_collections['ar_custom'],
-                "AR_%s" % ".".join(icon.split(".")[:-1]), filepath, True
-            )
+        if not (os.path.exists(filepath) and os.path.isfile(filepath)):
+            continue
+        register_icon(
+            preview_collections['ar_custom'],
+            "AR_%s" % ".".join(icon.split(".")[:-1]), filepath, True
+        )
 
 
-def load_icon(ActRec_pref: bpy.types.Preferences, filepath: str, only_new: bool = False):
+def load_icon(ActRec_pref: AR_preferences, filepath: str, only_new: bool = False) -> None:
     """
     load image form filepath as custom addon icon and resize to 32x32 (Blender icon size)
     supported blender image formats https://docs.blender.org/manual/en/latest/files/media/image_formats.html
 
     Args:
-        ActRec_pref (bpy.types.Preferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         filepath (str): filepath to the image file
         only_new (bool, optional): if icon is already register by name, it won't be registered again. Defaults to False.
     """
@@ -103,15 +109,16 @@ def load_icon(ActRec_pref: bpy.types.Preferences, filepath: str, only_new: bool 
     bpy.data.images.remove(image)
 
 
-def register_icon(preview_collection: bpy.utils.previews.ImagePreviewCollection,
-                  name: str,
-                  filepath: str,
-                  only_new: bool):
+def register_icon(
+        preview_collection: ImagePreviewCollection,
+        name: str,
+        filepath: str,
+        only_new: bool) -> None:
     """
     adds image form filepath to the addon icon collection with a custom name
 
     Args:
-        preview_collection (bpy.utils.previews.ImagePreviewCollection): collection to add icon to
+        preview_collection (ImagePreviewCollection): collection to add icon to
         name (str): name of the icon
         filepath (str): filepath to the image file
         only_new (bool): if icon is already register by name, it won't be registered again.
@@ -122,12 +129,12 @@ def register_icon(preview_collection: bpy.utils.previews.ImagePreviewCollection,
         logger.info("Custom Icon <%s> registered" % name)
 
 
-def unregister_icon(preview_collection: bpy.utils.previews.ImagePreviewCollection, name: str):
+def unregister_icon(preview_collection: ImagePreviewCollection, name: str) -> None:
     """
     deletes icon by name from given collection if possible
 
     Args:
-        preview_collection (bpy.utils.previews.ImagePreviewCollection): collection to add icon to
+        preview_collection (ImagePreviewCollection): collection to add icon to
         name (str): name of the icon
     """
     if name in preview_collection:
@@ -156,7 +163,7 @@ class Icontable(Operator):
         description="Reuse the last selected icon"
     )
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         layout = self.layout
         box = layout.box()
@@ -189,7 +196,7 @@ class Icontable(Operator):
                 grid_flow.operator('ar.icon_selector', text="",
                                    icon_value=value).icon = value
 
-    def check(self, context):
+    def check(self, context: Context) -> bool:
         return True
 
 
@@ -201,7 +208,7 @@ class AR_OT_icon_selector(Operator):
 
     icon: IntProperty(default=0)  # Icon: NONE
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ActRec_pref.selected_icon = self.icon
         return {"FINISHED"}
@@ -216,7 +223,7 @@ class AR_OT_add_custom_icon(Operator, ImportHelper):
     filter_folder: BoolProperty(default=True, options={'HIDDEN'})
     activate_pop_up: StringProperty(default="")
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         # supported blender image formats https://docs.blender.org/manual/en/latest/files/media/image_formats.html
         if os.path.isfile(self.filepath) and self.filepath.lower().endswith(tuple(bpy.path.extensions_image)):
@@ -231,7 +238,7 @@ class AR_OT_add_custom_icon(Operator, ImportHelper):
             ))
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         if self.activate_pop_up != "":
             exec("bpy.ops.%s%s" % (
                 ".".join(self.activate_pop_up.split("_OT_")).lower(),
@@ -244,20 +251,19 @@ class AR_OT_delete_custom_icon(Operator):
     bl_label = "Delete Icon"
     bl_description = "Delete a custom Icon"
 
-    def get_select_all(self):
+    def get_select_all(self) -> bool:
         return self.get("select_all", False)
 
-    def set_select_all(self, value):
+    def set_select_all(self, value: bool) -> None:
         self["select_all"] = value
         for icon in self.icons:
             icon["select_all"] = value
 
     class AR_icon(PropertyGroup):
-        def get_selected(self):
+        def get_selected(self) -> None:
             return self.get("selected", False) or self.get("select_all", False)
 
-        def set_selected(self, value):
-            # REFACTOR indentation
+        def set_selected(self, value: bool) -> None:
             if not self.get("select_all", False):
                 self["selected"] = value
 
@@ -274,10 +280,10 @@ class AR_OT_delete_custom_icon(Operator):
     )
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         return len(preview_collections['ar_custom'])
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         coll = self.icons
         coll.clear()
         icon_list = list(preview_collections['ar_custom'])
@@ -289,23 +295,20 @@ class AR_OT_delete_custom_icon(Operator):
             new.icon_name = icon_list[i]
         return context.window_manager.invoke_props_dialog(self)
 
-    def execute(self, context):
-        # REFACTOR indentation
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         for ele in self.icons:
-            if ele.selected or self.select_all:
-                icon_path = ele.icon_name[3:]
-                filenames = os.listdir(ActRec_pref.icon_path)
-                names = [os.path.splitext(os.path.basename(path))[
-                    0] for path in filenames]
-                if icon_path in names:
-                    os.remove(os.path.join(ActRec_pref.icon_path,
-                              filenames[names.index(icon_path)]))
-                unregister_icon(
-                    preview_collections['ar_custom'], ele.icon_name)
+            if not (ele.selected or self.select_all):
+                continue
+            icon_path = ele.icon_name[3:]
+            filenames = os.listdir(ActRec_pref.icon_path)
+            names = [os.path.splitext(os.path.basename(path))[0] for path in filenames]
+            if icon_path in names:
+                os.remove(os.path.join(ActRec_pref.icon_path, filenames[names.index(icon_path)]))
+            unregister_icon(preview_collections['ar_custom'], ele.icon_name)
         return {"FINISHED"}
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.prop(self, 'select_all')
         box = layout.box()

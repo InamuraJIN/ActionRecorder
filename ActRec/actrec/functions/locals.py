@@ -1,38 +1,46 @@
 # region Imports
 # external modules
 import json
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
+from bpy.types import AddonPreferences, Scene, PropertyGroup
 
 # relative imports
 from .. import shared_data
 from . import shared
 from .shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+    from ..properties.locals import AR_local_actions
+else:
+    AR_preferences = AddonPreferences
+    AR_local_actions = PropertyGroup
 # endregion
 
 
 # region Functions
 
 
-def save_local_to_scene(ActRec_pref: bpy.types.AddonPreferences, scene: bpy.types.Scene):
+def save_local_to_scene(ActRec_pref: AR_preferences, scene: Scene) -> None:
     """
     saves all local actions to the given scene
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
-        scene (bpy.types.Scene): Blender scene to write to
+        ActRec_pref (AR_preferences): preferences of this addon
+        scene (Scene): Blender scene to write to
     """
     scene.ar.local = json.dumps(shared.property_to_python(ActRec_pref.local_actions))
 
 
-def load_local_action(ActRec_pref: bpy.types.AddonPreferences, data: list):
+def load_local_action(ActRec_pref: AR_preferences, data: list) -> None:
     """
     load the given data to the local actions
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         data (list): data to apply
     """
     actions = ActRec_pref.local_actions
@@ -41,7 +49,7 @@ def load_local_action(ActRec_pref: bpy.types.AddonPreferences, data: list):
         shared.add_data_to_collection(actions, value)
 
 
-def local_action_to_text(action: 'AR_local_actions', text_name: str = None):
+def local_action_to_text(action: AR_local_actions, text_name: str = None) -> None:
     """
     write the local action and it's macro to the TextEditor
 
@@ -67,9 +75,9 @@ def local_action_to_text(action: 'AR_local_actions', text_name: str = None):
     )
 
 
-def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = None):
+def remove_local_action_from_text(action: AR_local_actions, text_name: str = None) -> None:
     """
-    remove the local action from the TextEditro
+    remove the local action from the TextEditor
 
     Args:
         action (AR_local_actions): action to remove
@@ -89,26 +97,25 @@ def remove_local_action_from_text(action: 'AR_local_actions', text_name: str = N
             return
 
 
-def get_local_action_index(ActRec_pref: bpy.types.AddonPreferences, id: str, index: int) -> int:
+def get_local_action_index(ActRec_pref: AR_preferences, id: str, index: int) -> int:
     """
     get local action index based on the given id or index (checks if index is in range)
 
     Args:
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): id to get index from
         index (int): index for fallback
 
     Returns:
         int: valid index of a local actions or active local action index on fallback
     """
-    # REFACTOR indentation
     action = ActRec_pref.local_actions.find(id)
-    if action == -1:
-        if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index
-            action = index
-        else:
-            action = ActRec_pref.active_local_action_index  # fallback to selection
-    return action
+    if action != -1:
+        return action
+    if index >= 0 and len(ActRec_pref.local_actions) > index:  # fallback to input index
+        return index
+    else:
+        return ActRec_pref.active_local_action_index  # fallback to selection
 
 
 # endregion

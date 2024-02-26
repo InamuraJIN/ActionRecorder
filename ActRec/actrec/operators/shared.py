@@ -1,7 +1,7 @@
 # region Imports
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event
 from bpy.props import StringProperty, IntProperty
 # endregion
 
@@ -14,12 +14,12 @@ class AR_OT_check_ctrl(Operator):
     bl_label = "Check Ctrl"
     bl_options = {'INTERNAL'}
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         if event.ctrl:
             return {"FINISHED"}
         return {"CANCELLED"}
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         return {"FINISHED"}
 
 
@@ -27,7 +27,7 @@ class Id_based(Operator):
     id: StringProperty(name="id", description="id of the action (1. indicator)")
     index: IntProperty(name="index", description="index of the action (2. indicator)", default=-1)
 
-    def clear(self):
+    def clear(self) -> None:
         self.id = ""
         self.index = -1
 
@@ -41,10 +41,10 @@ class AR_OT_copy_text(Operator):
     text: StringProperty(name="copy text", description="Text to copy to clipboard")
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         return context.window_manager is not None
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> set[str]:
         context.window_manager.clipboard = self.text
         return {"FINISHED"}
 

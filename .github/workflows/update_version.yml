@@ -9,20 +9,24 @@ jobs:
   update:
 
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - id: files
-        uses: jitterbit/get-changed-files@v1
-        with:
-          format: 'csv'
+          python-version: "3.10"
+      - name: Get changed files
+        id: files
+        run: |
+            diff=$(git diff --name-only --diff-filter=AM HEAD^..HEAD | tr '\n' ',')
+            echo "added_modified=$diff" >> "$GITHUB_OUTPUT"
+            echo "Added & Modified: $diff"
+            diff=$(git diff --name-only --diff-filter=D HEAD^..HEAD | tr '\n' ',')
+            echo "removed=$diff" >> "$GITHUB_OUTPUT"
+            echo "Removed: $diff"
       - name: Update to new Version
         id: update
         working-directory: .github/workflows/scripts
@@ -35,7 +39,7 @@ jobs:
       - name: Print Log
         run: echo "${{ steps.update.outputs.log }}"
       - name: Update files on GitHub
-        uses: test-room-7/action-update-file@v1
+        uses: test-room-7/action-update-file@v1.8.0
         with:
           file-path: |
               ActRec/__init__.py

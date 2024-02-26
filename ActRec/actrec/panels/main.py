@@ -1,7 +1,7 @@
 # region Imports
 # blender modules
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, Context
 
 # relative imports
 from .. import config
@@ -33,7 +33,7 @@ def panel_factory(space_type: str):
         bl_idname = "AR_PT_local_%s" % space_type
         bl_order = 0
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             if ActRec_pref.update:
@@ -63,19 +63,27 @@ def panel_factory(space_type: str):
         bl_order = 1
 
         @classmethod
-        def poll(cls, context):
+        def poll(cls, context: Context) -> bool:
             ActRec_pref = get_preferences(context)
             return len(ActRec_pref.local_actions)
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             box = layout.box()
             box_row = box.row()
             col = box_row.column()
             selected_action = ActRec_pref.local_actions[ActRec_pref.active_local_action_index]
-            col.template_list('AR_UL_macros', '', selected_action, 'macros',
-                              selected_action, 'active_macro_index', rows=4, sort_lock=True)
+            col.template_list(
+                'AR_UL_macros',
+                '',
+                selected_action,
+                'macros',
+                selected_action,
+                'active_macro_index',
+                rows=4,
+                sort_lock=True
+            )
             col = box_row.column()
             if not ActRec_pref.local_record_macros:
                 col2 = col.column(align=True)
@@ -111,14 +119,19 @@ def panel_factory(space_type: str):
         bl_idname = "AR_PT_global_%s" % space_type
         bl_order = 2
 
-        def draw_header(self, context):
+        def draw_header(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             row = layout.row(align=True)
-            row.prop(ActRec_pref, 'global_hide_menu',
-                     icon='COLLAPSEMENU', text="", emboss=True)
+            row.prop(
+                ActRec_pref,
+                'global_hide_menu',
+                icon='COLLAPSEMENU',
+                text="",
+                emboss=True
+            )
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             if not ActRec_pref.is_loaded:  # loads the actions if not already done
                 ActRec_pref.is_loaded = True
@@ -136,16 +149,12 @@ def panel_factory(space_type: str):
                 row2 = row.row(align=True)
                 row2.operator("ar.global_move_up", text='', icon='TRIA_UP')
                 row2.operator("ar.global_move_down", text='', icon='TRIA_DOWN')
-                row2.operator("ar.global_recategorize_action",
-                              text='', icon='PRESET')
+                row2.operator(
+                    "ar.global_recategorize_action",
+                    text='',
+                    icon='PRESET'
+                )
                 row2.operator("ar.global_remove", text='', icon='TRASH')
-                row = layout.row()
-                row2 = row.split(factor=0.7)
-                col = row2.column()
-                col.enabled = bpy.ops.ar.global_rename.poll()
-                col.prop(ActRec_pref, 'global_rename', text='')
-                row2.operator("ar.global_rename",
-                              text='Rename').label = ActRec_pref.global_rename
     AR_PT_global.__name__ = "AR_PT_global_%s" % space_type
 
     class AR_PT_help(Panel):
@@ -157,35 +166,51 @@ def panel_factory(space_type: str):
         bl_options = {'DEFAULT_CLOSED'}
         bl_order = 3
 
-        def draw_header(self, context):
+        def draw_header(self, context: Context) -> None:
             layout = self.layout
             layout.label(icon='INFO')
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             layout = self.layout
             ActRec_pref = get_preferences(context)
-            layout.operator('wm.url_open', text="Manual",
-                            icon='ASSET_MANAGER').url = config.manual_url
-            layout.operator('wm.url_open', text="Hint",
-                            icon='HELP').url = config.hint_url
-            layout.operator('ar.preferences_open_explorer',
-                            text="Open Log").path = log_sys.path
-            layout.operator('wm.url_open', text="Bug Report",
-                            icon='URL').url = config.bug_report_url
             layout.operator(
-                'wm.url_open', text="Release Notes").url = config.release_notes_url
+                'wm.url_open',
+                text="Manual",
+                icon='ASSET_MANAGER'
+            ).url = config.manual_url
+            layout.operator(
+                'wm.url_open',
+                text="Hint",
+                icon='HELP'
+            ).url = config.hint_url
+            layout.operator(
+                'ar.preferences_open_explorer',
+                text="Open Log"
+            ).path = log_sys.path
+            layout.operator(
+                'wm.url_open',
+                text="Bug Report",
+                icon='URL'
+            ).url = config.bug_report_url
+            layout.operator(
+                'wm.url_open',
+                text="Release Notes"
+            ).url = config.release_notes_url
             row = layout.row()
             if ActRec_pref.update:
                 update.draw_update_button(row, ActRec_pref)
             else:
                 row.operator('ar.update_check', text="Check For Updates")
                 if ActRec_pref.restart:
-                    row.operator('ar.show_restart_menu',
-                                 text="Restart to Finish")
+                    row.operator(
+                        'ar.show_restart_menu',
+                        text="Restart to Finish"
+                    )
             if ActRec_pref.version != '':
                 if ActRec_pref.update:
-                    layout.label(text="new Version available (%s)" %
-                                 ActRec_pref.version)
+                    layout.label(
+                        text="new Version available (%s)" % ActRec_pref.version
+                    )
                 else:
                     layout.label(text="latest Version (%s)" % ActRec_pref.version)
     AR_PT_help.__name__ = "AR_PT_help_%s" % space_type
@@ -199,7 +224,7 @@ def panel_factory(space_type: str):
         bl_options = {'DEFAULT_CLOSED'}
         bl_order = 4
 
-        def draw(self, context):
+        def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
             col = layout.column()
@@ -215,25 +240,41 @@ def panel_factory(space_type: str):
             row.label(text='')
             row = col.row(align=False)
             row.operator("ar.category_edit", text='Edit')
-            row.prop(ActRec_pref, 'show_all_categories', text="",
-                     icon='RESTRICT_VIEW_OFF' if ActRec_pref.show_all_categories else 'RESTRICT_VIEW_ON')
+            row.prop(
+                ActRec_pref,
+                'show_all_categories',
+                text="",
+                icon='RESTRICT_VIEW_OFF' if ActRec_pref.show_all_categories else 'RESTRICT_VIEW_ON'
+            )
             col.label(text="Data Management", icon='FILE_FOLDER')
             col.operator("ar.global_import", text='Import')
             col.operator("ar.global_export", text='Export')
             col.label(text="Storage File Settings", icon="FOLDER_REDIRECT")
             row = col.row()
             row.label(text="AutoSave")
-            row.prop(ActRec_pref, 'autosave', toggle=True,
-                     text="On" if ActRec_pref.autosave else "Off")
+            row.prop(
+                ActRec_pref,
+                'autosave',
+                toggle=True,
+                text="On" if ActRec_pref.autosave else "Off"
+            )
             col.operator("ar.global_save", text='Save to File')
             col.operator("ar.global_load", text='Load from File')
             col.label(text="Local Settings")
             row = col.row(align=True)
             row.operator("ar.local_load", text='Load Local Actions')
-            row.prop(ActRec_pref, 'hide_local_text', text="", toggle=True,
-                     icon="HIDE_ON" if ActRec_pref.hide_local_text else "HIDE_OFF")
-            col.prop(ActRec_pref, 'local_create_empty',
-                     text="Create Empty Macro on Error")
+            row.prop(
+                ActRec_pref,
+                'hide_local_text',
+                text="",
+                toggle=True,
+                icon="HIDE_ON" if ActRec_pref.hide_local_text else "HIDE_OFF"
+            )
+            col.prop(
+                ActRec_pref,
+                'local_create_empty',
+                text="Create Empty Macro on Error"
+            )
     AR_PT_advanced.__name__ = "AR_PT_advanced_%s" % space_type
 
     global classes

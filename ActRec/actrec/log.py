@@ -22,7 +22,7 @@ __module__ = __package__.split(".")[0]
 class Log_system:
     """logging system for the addon"""
 
-    def __init__(self, count: int):
+    def __init__(self, count: int) -> None:
         """
         creates a log object which unregister with blender
 
@@ -64,18 +64,18 @@ class Log_system:
 
         sys.excepthook = self.exception_handler
 
-    def exception_handler(self, exc_type, exc_value, exc_tb):
+    def exception_handler(self, exc_type, exc_value, exc_tb) -> None:
         traceback.print_exception(exc_type, exc_value, exc_tb)
         self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
 
-    def detach_file(self):
+    def detach_file(self) -> None:
         """
         remove file of the logger
         """
         self.file_handler.close()
         self.logger.removeHandler(self.file_handler)
 
-    def append_file(self):
+    def append_file(self) -> None:
         """
         adds a file to the logger
         """
@@ -89,7 +89,7 @@ class Log_system:
         self.file_handler = file_handler
 
 
-def update_log_amount_in_config(amount: int):
+def update_log_amount_in_config(amount: int) -> None:
     """
     writes given amount as log amount into the config file
 

@@ -2,17 +2,22 @@
 # external modules
 import os
 import importlib
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
-from bpy.types import AddonPreferences
+from bpy.types import AddonPreferences, Context
 import rna_keymap_ui
 
 # relative imports
 from . import properties, functions, config, update, keymap, log, shared_data
 from .log import logger, log_sys
-from .functions.shared import get_preferences
+
+if TYPE_CHECKING:
+    def get_preferences(): return
+else:
+    from .functions.shared import get_preferences
 # endregion
 
 # region Preferences
@@ -21,13 +26,13 @@ from .functions.shared import get_preferences
 class AR_preferences(AddonPreferences):
     bl_idname = __package__.split(".")[0]
 
-    def update_is_loaded(self, context: bpy.types.Context):
+    def update_is_loaded(self, context: Context) -> None:
         context.scene.name = context.scene.name
 
     def get_is_loaded(self) -> bool:
         return self.get("is_loaded", False) and shared_data.data_loaded
 
-    def set_is_loaded(self, value):
+    def set_is_loaded(self, value: bool) -> None:
         self["is_loaded"] = value
 
     is_loaded: BoolProperty(
@@ -84,7 +89,7 @@ class AR_preferences(AddonPreferences):
                 os.makedirs(path, exist_ok=True)
             return path
 
-    def set_icon_path(self, origin_path: str):
+    def set_icon_path(self, origin_path: str) -> None:
         """setter of icon_path
         creates new folder if needed
 
@@ -173,14 +178,14 @@ class AR_preferences(AddonPreferences):
     )
     local_record_macros: BoolProperty(name="Record Macros", default=False)
 
-    def hide_show_local_in_texteditor(self, context: bpy.types.Context):
+    def hide_show_local_in_texteditor(self, context: Context):
         """
         update function of hide_local_text
         gets called every time the value of the hide_local_text is changed
         hides/show the local action as text files in the texteditor of Blender
 
         Args:
-            context (bpy.types.Context): unused
+            context (Context): unused
         """
         if self.hide_local_text:
             for text in bpy.data.texts:
@@ -249,19 +254,19 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             self['storage_path'] = path
             return path
 
-    def set_storage_path(self, origin_path: str):
+    def set_storage_path(self, origin_path: str) -> None:
         """
         setter of storage_path
 
         Args:
             origin_path (str): path of the new storage file
         """
-        # REFACTOR indentation
         self['storage_path'] = origin_path
-        if not (os.path.exists(origin_path) and os.path.isfile(origin_path)):
-            os.makedirs(os.path.dirname(origin_path), exist_ok=True)
-            with open(origin_path, 'w') as storage_file:
-                storage_file.write('{}')
+        if os.path.exists(origin_path) and os.path.isfile(origin_path):
+            return
+        os.makedirs(os.path.dirname(origin_path), exist_ok=True)
+        with open(origin_path, 'w') as storage_file:
+            storage_file.write('{}')
 
     storage_path: StringProperty(
         name="Storage Path",
@@ -284,14 +289,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
     selected_category: StringProperty(get=get_selected_category, default='')
     show_all_categories: BoolProperty(name="Show All Categories", default=False)
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         """
         draws the addon preferences
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
         """
-        # REFACTOR indentation ?
         ActRec_pref = get_preferences(context)
         layout = self.layout
         col = layout.column()
@@ -320,7 +324,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
                 icon='FILEBROWSER'
             )
             ops.preference_name = "storage_path"
-            ops.path_extension = ""
+            ops.path_extension = "Storage.json"
 
             ops = row.operator(
                 "ar.preferences_recover_directory",
@@ -329,9 +333,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             )
             ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
+            row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.storage_path
 
             box = col.box()
-            box.label(text=self.storage_path)
+            box_row = box.row()
+            box_row.label(text=self.storage_path)
+            op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
+            op.text = self.storage_path
             col.separator(factor=1.5)
             row = col.row().split(factor=0.5)
             row.label(text="Icon Storage Folder")
@@ -358,9 +366,13 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             )
             ops.preference_name = "icon_path"
             ops.path_extension = "Icons"
+            row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.icon_path
 
             box = col.box()
-            box.label(text=self.icon_path)
+            box_row = box.row()
+            box_row.label(text=self.icon_path)
+            op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
+            op.text = self.icon_path
             col.separator(factor=1.5)
             row2 = col.row(align=True).split(factor=0.7, align=True)
             row2.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
@@ -369,11 +381,17 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
             for addon_keymap in keymap.keymaps.values():
-                km = kc.keymaps[addon_keymap.name].active()
+                km = kc.keymaps.get(addon_keymap.name)
+                if not km:
+                    continue
+                km = km.active()
                 col2.context_pointer_set("keymap", km)
-                for kmi in km.keymap_items:
-                    if not any(kmi.idname == item.idname for item in keymap.keymaps['default'].keymap_items):
-                        continue
+                ar_keymaps = filter(
+                    lambda x: any(x.name == kmi.name and x.idname == kmi.idname
+                                  for kmi in keymap.keymap_items['default']),
+                    km.keymap_items
+                )
+                for kmi in [*ar_keymaps, *functions.get_all_action_keymaps(km)]:
                     rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()

@@ -8,7 +8,7 @@ from bpy.types import UIList
 
 
 class AR_UL_macros(UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index) -> None:
         self.use_filter_show = False
         self.use_filter_sort_lock = True
         row = layout.row(align=True)

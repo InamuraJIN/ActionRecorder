@@ -11,15 +11,26 @@ import functools
 import ensurepip
 import subprocess
 import traceback
+from typing import TYPE_CHECKING
+from mathutils import Vector, Matrix, Color, Euler, Quaternion
 
 # blender modules
 import bpy
 import bl_math
 from bpy.app.handlers import persistent
+from bpy.types import PointerProperty, Property, CollectionProperty, Context, AddonPreferences, PropertyGroup
 
 # relative imports
 from ..log import logger
 from .. import shared_data
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+    from ..properties.shared import AR_action
+    from ..operators.macros import Font_analysis
+else:
+    AR_preferences = AddonPreferences
+    AR_action = PropertyGroup
+    Font_analysis = object
 # endregion
 
 __module__ = __package__.split(".")[0]
@@ -49,13 +60,13 @@ def check_for_duplicates(check_list: list, name: str, num: int = 1) -> str:
     return name
 
 
-def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: list, depth: int) -> dict:
+def get_pointer_property_as_dict(property: PointerProperty, exclude: list, depth: int) -> dict:
     """
     converts a Blender PointerProperty to a python dict
-    (used internal for property_to_python, pls use property_to_python to convert any Ble)
+    (used internal for property_to_python, pls use property_to_python to convert any Blender Property)
 
     Args:
-        property (bpy.types.PointerProperty): Blender Property to convert
+        property (PointerProperty): Blender Property to convert
         exclude (list):
             property values to exclude, to exclude deeper values use form <value>.<sub-value>
             E.g. for AR_global_actions "actions.name" to excluded the names from the actions
@@ -65,7 +76,6 @@ def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: l
     Returns:
         dict: python dict based on property
     """
-    # REFACTOR indentation
     data = {}  # PointerProperty
     main_exclude = []
     sub_exclude = defaultdict(list)
@@ -78,21 +88,22 @@ def get_pointer_property_as_dict(property: bpy.types.PointerProperty, exclude: l
     main_exclude = set(main_exclude)
     for attr in property.bl_rna.properties[1:]:  # exclude rna_type
         identifier = attr.identifier
-        if identifier not in main_exclude:
-            data[identifier] = property_to_python(
-                getattr(property, identifier),
-                sub_exclude.get(identifier, []),
-                depth - 1
-            )
+        if identifier in main_exclude:
+            continue
+        data[identifier] = property_to_python(
+            getattr(property, identifier),
+            sub_exclude.get(identifier, []),
+            depth - 1
+        )
     return data
 
 
-def property_to_python(property: bpy.types.Property, exclude: list = [], depth: int = 5) -> Union[list, dict, str]:
+def property_to_python(property: Property, exclude: list = [], depth: int = 5) -> Union[list, dict, str]:
     """
     converts any Blender Property to a python object, only needed for Property with complex structure
 
     Args:
-        property (bpy.types.Property): Blender Property to convert
+        property (Property): Blender Property to convert
         exclude (list, optional):
             property values to exclude, to exclude deeper values use form <value>.<sub-value>
             E.g. for AR_global_actions "actions.name" to excluded the names from the actions
@@ -105,39 +116,40 @@ def property_to_python(property: bpy.types.Property, exclude: list = [], depth: 
     Returns:
         Union[list, dict, str]: converts Collection, Arrays to lists and PointerProperty to dict
     """
-    # REFACTOR indentation
     # CollectionProperty are a list of PointerProperties
     if depth <= 0:
         return "max depth"
-    if hasattr(property, 'id_data'):
-        id_object = property.id_data
+    if isinstance(property, set):  # Catch EnumProperty with EnumFlag
+        return list(property)
+    if not hasattr(property, 'id_data'):
+        return property
 
-        # exclude conversions of same property
-        if property == id_object:
-            return property
+    id_object = property.id_data
 
-        class_name = property.__class__.__name__
-        if class_name == 'bpy_prop_collection_idprop':
-            # CollectionProperty
-            return [property_to_python(item, exclude, depth) for item in property]
-        elif class_name == 'bpy_prop_collection':
-            # CollectionProperty
-            if hasattr(property, "bl_rna"):
-                data = get_pointer_property_as_dict(property, exclude, depth)
-                data["items"] = [property_to_python(item, exclude, depth) for item in property]
-                return data
-            else:
-                return [property_to_python(item, exclude, depth) for item in property]
-        elif class_name == 'bpy_prop_array':
-            # ArrayProperty
-            return [property_to_python(item, exclude, depth) for item in property]
+    # exclude conversions of same property
+    if property == id_object:
+        return property
+
+    class_name = property.__class__.__name__
+    if class_name == 'bpy_prop_collection_idprop':
+        # CollectionProperty
+        return [property_to_python(item, exclude, depth) for item in property]
+    if class_name == 'bpy_prop_collection':
+        # CollectionProperty
+        if hasattr(property, "bl_rna"):
+            data = get_pointer_property_as_dict(property, exclude, depth)
+            data["items"] = [property_to_python(item, exclude, depth) for item in property]
+            return data
         else:
-            # PointerProperty
-            return get_pointer_property_as_dict(property, exclude, depth)
-    return property
+            return [property_to_python(item, exclude, depth) for item in property]
+    if class_name == 'bpy_prop_array':
+        # ArrayProperty
+        return [property_to_python(item, exclude, depth) for item in property]
+    # PointerProperty
+    return get_pointer_property_as_dict(property, exclude, depth)
 
 
-def apply_data_to_item(property: bpy.types.Property, data, key=""):
+def apply_data_to_item(property: Property, data, key="") -> None:
     """
     apply given python data to a property,
     used to convert python data (from property_to_python) to Blender Property.
@@ -146,18 +158,27 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
     - single data (like int, string, etc.) with a given key
 
     Args:
-        property (bpy.types.Property): Blender Property to apply the data to
+        property (Property): Blender Property to apply the data to
         data (any): data to apply
         key (str, optional): used to apply a single value of a given Blender Property dynamic. Defaults to "".
     """
     if isinstance(data, list):
+        item = property
+        if key:
+            item = getattr(property, key)
+            if isinstance(item, set):  # EnumProperty with EnumFlag
+                setattr(property, key, set(data))
+                return
+            elif isinstance(item, bpy.types.bpy_prop_array):  # ArrayProperty
+                setattr(property, key, data)
+                return
+        if isinstance(item, (set, bpy.types.bpy_prop_array)):  # EnumProperty with EnumFlag but no key
+            return
         for element in data:
-            if key:
-                subitem = getattr(property, key).add()
-            else:
-                subitem = property.add()
-            apply_data_to_item(subitem, element)
+            apply_data_to_item(item.add(), element)
     elif isinstance(data, dict):
+        if key:
+            property = getattr(property, key)
         for key, value in data.items():
             apply_data_to_item(property, value, key)
     elif hasattr(property, key):
@@ -165,25 +186,25 @@ def apply_data_to_item(property: bpy.types.Property, data, key=""):
             setattr(property, key, data)
 
 
-def add_data_to_collection(collection: bpy.types.CollectionProperty, data: dict):
+def add_data_to_collection(collection: CollectionProperty, data: dict) -> None:
     """
     creates new collection element and applies the data to it
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to apply to
+        collection (CollectionProperty): collection to apply to
         data (dict): data to apply
     """
     new_item = collection.add()
     apply_data_to_item(new_item, data)
 
 
-def insert_to_collection(collection: bpy.types.CollectionProperty, index: int, data: dict):
+def insert_to_collection(collection: CollectionProperty, index: int, data: dict) -> None:
     """
     inset a new element inside a collection and apply the given data to it
     if the index is out of bounds the element is insert at the end of the collection
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to apply to
+        collection (CollectionProperty): collection to apply to
         index (int): index where to insert
         data (dict): data to apply
     """
@@ -193,13 +214,13 @@ def insert_to_collection(collection: bpy.types.CollectionProperty, index: int, d
         collection.move(len(collection) - 1, index)
 
 
-def swap_collection_items(collection: bpy.types.CollectionProperty, index_1: int, index_2: int):
+def swap_collection_items(collection: CollectionProperty, index_1: int, index_2: int) -> None:
     """
     swaps to collection items
     if the index is set to the last element of the collection
 
     Args:
-        collection (bpy.types.CollectionProperty): collection to execute on
+        collection (CollectionProperty): collection to execute on
         index_1 (int): first index to swap with second
         index_2 (int): second index to swap with first
     """
@@ -230,7 +251,7 @@ def enum_list_id_to_name_dict(enum_list: list) -> dict:
     return {identifier: name for identifier, name, *tail in enum_list}
 
 
-def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+def enum_items_to_enum_prop_list(items: CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts enum items to an enum property list
 
@@ -244,7 +265,7 @@ def enum_items_to_enum_prop_list(items: bpy.types.CollectionProperty, value_offs
     return [(item.identifier, item.name, item.description, item.icon, item.value + value_offset) for item in items]
 
 
-def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_offset: int = 0) -> list[tuple]:
+def get_categorized_view_3d_modes(items: CollectionProperty, value_offset: int = 0) -> list[tuple]:
     """
     converts view_3d items to an enum property list with categories for General, Grease Pencil, Curves
 
@@ -269,49 +290,48 @@ def get_categorized_view_3d_modes(items: bpy.types.CollectionProperty, value_off
     return general + grease_pencil + curves
 
 
-def get_name_of_command(context: bpy.types.Context, command: str) -> Optional[str]:
+def get_name_of_command(context: Context, command: str) -> Optional[str]:
     """
     get the name of a given command
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         command (str): Blender command to get name from
 
     Returns:
         Optional[str]: name or none if name not found
     """
-    # REFACTOR indentation
     if command.startswith("bpy.ops."):
         try:
             return eval("%s.get_rna_type().name" % command.split("(")[0])
         except (KeyError):
             return None
-    elif command.startswith("bpy.context."):
-        split = command.split(' = ')
-        if len(split) > 1:
-            *path, prop = split[0].replace("bpy.context.", "").split(".")
-            obj = context
-            if obj:
-                for x in path:
-                    if hasattr(obj, x):
-                        obj = getattr(obj, x)
-                    else:
-                        break
-                else:
-                    if obj:
-                        props = obj.bl_rna.properties
-                        if prop in props:
-                            prop = props[prop].name
 
-            value = split[1]
-            if value.startswith("bpy.data."):
-                value = value.split("[")[-1].replace("]", "")[1:-1]
-
-            return "%s = %s" % (prop, value)
-        else:
-            return ".".join(split[0].split('.')[-2:])
-    else:
+    if not command.startswith("bpy.context."):
         return None
+
+    split = command.split(' = ')
+    if len(split) <= 1:
+        return ".".join(split[0].split('.')[-2:])
+
+    *path, prop = split[0].replace("bpy.context.", "").split(".")
+    obj = context
+    if obj:
+        for x in path:
+            if not hasattr(obj, x):
+                break
+            obj = getattr(obj, x)
+        else:
+            if obj:
+                props = obj.bl_rna.properties
+                if prop in props:
+                    prop = props[prop].name
+
+    value = split[1]
+    if value.startswith("bpy.data."):
+        value = value.split("[")[-1].replace("]", "")[1:-1]
+
+    return "%s = %s" % (prop, value)
 
 
 def extract_properties(properties: str) -> list:
@@ -351,29 +371,28 @@ def update_command(command: str) -> Union[str, bool]:
     Returns:
         Union[str, bool, None]: update string, return False if command doesn't exists anymore
     """
-    # REFACTOR indentation
-    if command.startswith("bpy.ops."):
-        command, values = command.split("(", 1)
-        values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
-        for i in range(len(values)):
-            values[i] = values[i].split("=")
-        try:
-            props = eval("%s.get_rna_type().properties[1:]" % command)
-        except (KeyError):
-            return False
-        inputs = []
-        for prop in props:
-            for value in values:
-                if value[0] == prop.identifier:
-                    inputs.append("%s=%s" % (value[0], value[1]))
-                    values.remove(value)
-                    break
-        return "%s(%s)" % (command, ", ".join(inputs))
-    else:
+    if not command.startswith("bpy.ops."):
         return False
+    command, values = command.split("(", 1)
+    values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
+    for i in range(len(values)):
+        values[i] = values[i].split("=")
+    try:
+        props = eval("%s.get_rna_type().properties[1:]" % command)
+    except (KeyError):
+        return False
+    inputs = []
+    for prop in props:
+        for value in values:
+            if value[0] != prop.identifier:
+                continue
+            inputs.append("%s=%s" % (value[0], value[1]))
+            values.remove(value)
+            break
+    return "%s(%s)" % (command, ", ".join(inputs))
 
 
-def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int):
+def run_queued_macros(context_copy: dict, action_type: str, action_id: str, start: int) -> None:
     """
     runs macros from a given index of a specific action
 
@@ -394,12 +413,12 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
         play(context, action.macros[start:], action, action_type)
 
 
-def execute_individually(context: bpy.types.Context, command: str):
+def execute_individually(context: Context, command: str) -> None:
     """
     execute the given command on each selected object individually
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
         command (str): command to execute
     """
     old_selected_objects = context.selected_objects[:]
@@ -408,9 +427,6 @@ def execute_individually(context: bpy.types.Context, command: str):
 
     for object in old_selected_objects:
         object.select_set(True)
-        context.selectable_objects = [object]
-        context.object = object
-        context.active_object = object
         context.view_layer.objects.active = object
         exec(command)
         with suppress(ReferenceError):
@@ -421,42 +437,45 @@ def execute_individually(context: bpy.types.Context, command: str):
             object.select_set(True)
 
 
-def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, action: 'AR_action', action_type: str
-         ) -> Union[Exception, str, None]:
+def play(
+        context: Context,
+        macros: CollectionProperty,
+        action: AR_action,
+        action_type: str) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
 
     Args:
-        context (bpy.types.Context): active blender context
-        macros (bpy.types.CollectionProperty): macros to execute
+        context (Context): active blender context
+        macros (CollectionProperty): macros to execute
         action (AR_action): action to track
         action_type (str): action type of the given action
 
     Returns:
         Exception, str: error
     """
-    # REFACTOR indentation
     macros = [macro for macro in macros if macro.active]
 
     # non-realtime events, execute before macros get executed
     for i, macro in enumerate(macros):
         split = macro.command.split(":")
-        if split[0] == 'ar.event':
-            data = json.loads(":".join(split[1:]))
-            if data['Type'] == 'Render Complete':
-                shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
-                break
+        if split[0] != 'ar.event':
+            continue
+        data = json.loads(":".join(split[1:]))
+        if data['Type'] == 'Render Complete':
+            shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
+            break
 
     base_area = context.area
 
-    for i, macro in enumerate(macros):  # realtime events
+    for i, macro in enumerate(macros):
         split = macro.command.split(":")
-        if split[0] == 'ar.event':
+        if split[0] == 'ar.event':  # Handle Ar Events
             data: dict = json.loads(":".join(split[1:]))
             if data['Type'] in {'Render Complete'}:
                 return
-            elif data['Type'] == 'Timer':
+            if data['Type'] == 'Timer':
                 bpy.app.timers.register(
                     functools.partial(
                         run_queued_macros,
@@ -468,18 +487,17 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     first_interval=data['Time']
                 )
                 return
-            elif data['Type'] == 'Loop':
+            if data['Type'] == 'Loop':
                 end_index = i + 1
                 loop_count = 1
                 for j, process_macro in enumerate(macros[i + 1:], i + 1):
-                    if process_macro.active:
-                        split = process_macro.command.split(":")
-                        if split[0] == 'ar.event':  # realtime events
-                            process_data = json.loads(":".join(split[1:]))
-                            if process_data['Type'] == 'Loop':
-                                loop_count += 1
-                            elif process_data['Type'] == 'EndLoop':
-                                loop_count -= 1
+                    if not process_macro.active:
+                        continue
+                    split = process_macro.command.split(":")
+                    if split[0] != 'ar.event':
+                        continue
+                    process_data = json.loads(":".join(split[1:]))
+                    loop_count += 2 * (process_data['Type'] == 'Loop') - (process_data['Type'] == 'EndLoop')  # 1 or -1
                     if loop_count == 0:
                         end_index = j
                         break
@@ -566,7 +584,9 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
             if command.startswith("bpy.ops."):
                 split = command.split("(")
                 command = "%s(\"%s\", %s" % (
-                    split[0], macro.operator_execution_context, "(".join(split[1:]))
+                    split[0],
+                    macro.operator_execution_context,
+                    "(".join(split[1:]))
             elif command.startswith("bpy.context."):
                 command = command.replace("bpy.context.", "context.")
 
@@ -582,7 +602,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     if window.screen.areas[0].ui_type == macro.ui_type:
                         temp_window = window
                         temp_screen = temp_window.screen
-                        temp_area = temp_screen.area[0]
+                        temp_area = temp_screen.areas[0]
                         break
                 else:
                     area_type = temp_area.ui_type
@@ -599,8 +619,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
                     window=temp_window,
                     screen=temp_screen,
                     area=temp_area,
-                    region=temp_region
-            ):
+                    region=temp_region):
                 if action.execution_mode == "GROUP":
                     exec(command)
                 else:
@@ -621,7 +640,7 @@ def play(context: bpy.types.Context, macros: bpy.types.CollectionProperty, actio
 
 
 @ persistent
-def execute_render_complete(dummy=None):
+def execute_render_complete(dummy=None) -> None:
     # https://docs.blender.org/api/current/bpy.app.handlers.html
     """
     execute macros, which are called after the event macro "Render Complete"
@@ -659,6 +678,8 @@ def get_font_path() -> str:
     """
     if bpy.context.preferences.view.font_path_ui == '':
         dirc = "\\".join(sys.executable.split("\\")[:-3])
+        if bpy.app.version >= (4, 0, 0):
+            return os.path.join(dirc, "datafiles", "fonts", "Inter.woff2")
         if bpy.app.version >= (3, 4, 0):
             return os.path.join(dirc, "datafiles", "fonts", "DejaVuSans.woff2")
         return os.path.join(dirc, "datafiles", "fonts", "droidsans.ttf")
@@ -683,7 +704,42 @@ def split_and_keep(sep: str, text: str) -> list[str]:
     return text.split(p)
 
 
-def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: str = " ,") -> list[str]:
+def get_attribute(obj: object, name: str) -> object:
+    """
+    Call getattr to get attribute from an object but it can reach attributes of attributes
+    E.g.: x.y.z with the input get_attribute(x, 'y.z')
+
+    Args:
+        obj (object): object to get attributes from
+        name (str): attribute of this object. Can be of format 'attribute.subattribute.subsub.' etc.
+
+    Returns:
+        Any: attribute of the object
+    """
+    for arg_name in name.split("."):
+        obj = getattr(obj, arg_name)
+    return obj
+
+
+def get_attribute_default(obj: object, name: str, default: None) -> object | None:
+    """
+    Call getattr to get attribute from an object but it can reach attributes of attributes
+    E.g.: x.y.z with the input get_attribute(x, 'y.z')
+
+    Args:
+        obj (object): object to get attributes from
+        name (str): attribute of this object. Can be of format 'attribute.subattribute.subsub.' etc.
+        default (None): returned when one attribute doesn't exist
+
+    Returns:
+        Any: attribute of the object
+    """
+    for arg_name in name.split("."):
+        obj = getattr(obj, arg_name, default)
+    return obj
+
+
+def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str = " ,") -> list[str]:
     """
     converts a one line text to multiple lines saved as a list
     (needed because Blender doesn't have text boxes)
@@ -697,7 +753,6 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
     Returns:
         list[str]: multiline text
     """
-    # REFACTOR indentation
     if text == "" or not font.use_dynamic_text:
         return [text]
     characters_width = font.get_width_of_text(text)
@@ -711,27 +766,26 @@ def text_to_lines(text: str, font: 'Font_analysis', limit: int, endcharacter: st
         width = sum(characters_width[start: total_length])
         if width <= limit:
             lines[-1] += psb
-        else:
-            if sum(characters_width[total_line_length: total_length]) > limit:
-                start += line_length
-                while psb != "":
-                    i = int(bl_math.clamp(limit / width * len(psb), 0, len(psb)))
-                    if len(psb) != i:
-                        if sum(characters_width[start: start + i]) <= limit:
-                            while sum(characters_width[start: start + i]) <= limit:
-                                i += 1
-                            i -= 1
-                        else:
-                            while sum(characters_width[start: start + i]) >= limit:
-                                i -= 1
-                            i += 1
-                    lines.append(psb[:i])
-                    psb = psb[i:]
-                    start += i
-                    width = sum(characters_width[start: total_length])
-            else:
-                lines.append(psb)
-                start += line_length + len(psb)
+            continue
+        if sum(characters_width[total_line_length: total_length]) <= limit:
+            lines.append(psb)
+            start += line_length + len(psb)
+            continue
+        start += line_length
+        while psb != "":
+            i = int(bl_math.clamp(limit / width * len(psb), 0, len(psb)))
+            if len(psb) != i:
+                if sum(characters_width[start: start + i]) <= limit:
+                    while sum(characters_width[start: start + i]) <= limit:
+                        i += 1
+                    i -= 1
+                else:
+                    while sum(characters_width[start: start + i]) >= limit:
+                        i -= 1
+            lines.append(psb[:i])
+            psb = psb[i:]
+            start += i
+            width = sum(characters_width[start: total_length])
     if (lines[0] == ""):
         lines.pop(0)
     return lines
@@ -784,15 +838,15 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     return (False, ":(")
 
 
-def get_preferences(context: bpy.types.Context) -> bpy.types.AddonPreferences:
+def get_preferences(context: Context) -> AR_preferences:
     """
     get addon preferences of this addon, which are stored in Blender
 
     Args:
-        context (bpy.types.Context): active blender context
+        context (Context): active blender context
 
     Returns:
-        bpy.types.AddonPreferences: preferences of this addon
+        AR_preferences: preferences of this addon
     """
     return context.preferences.addons[__module__].preferences
 

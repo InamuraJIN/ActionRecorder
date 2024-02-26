@@ -2,7 +2,7 @@ name: flake8 Lint
 
 on:
   push:
-    branches: [master, dev]
+    branches: [master]
   pull_request:
     branches: [master]
 
@@ -12,7 +12,7 @@ jobs:
     name: Lint
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python environment
         uses: actions/setup-python@v4
         with:

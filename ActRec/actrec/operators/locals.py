@@ -3,10 +3,11 @@
 import json
 import uuid
 import numpy
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event, AddonPreferences, OperatorProperties, PropertyGroup
 from bpy.props import StringProperty, IntProperty, EnumProperty, CollectionProperty
 
 # relative imports
@@ -14,8 +15,18 @@ from .. import functions, properties, icon_manager, shared_data
 from ..log import logger
 from . import shared
 from ..functions.shared import get_preferences
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+    from ..properties.categories import AR_category
+    from ..properties.globals import AR_global_actions
+else:
+    AR_preferences = AddonPreferences
+    AR_category = PropertyGroup
+    AR_global_actions = PropertyGroup
 # endregion
 
+CONTEXT_REPORT = 0
+OPERATOR_REPORT = 1
 
 # region Operators
 
@@ -27,14 +38,14 @@ class AR_OT_local_to_global(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
         layout = self.layout
@@ -50,14 +61,14 @@ class AR_OT_local_to_global(Operator):
 
     def local_to_global(
             self,
-            ActRec_pref: bpy.types.Preferences,
-            category: 'AR_category',
-            action: 'AR_global_actions') -> None:
+            ActRec_pref: AR_preferences,
+            category: AR_category,
+            action: AR_global_actions) -> None:
         """
         copy the given local action to a global action
 
         Args:
-            ActRec_pref (bpy.types.Preferences): preferences of this addon
+            ActRec_pref (AR_preferences): preferences of this addon
             category (AR_category): category to copy the action to
             action (AR_global_actions): action to copy
         """
@@ -72,7 +83,7 @@ class AR_OT_local_to_global(Operator):
         new_action = category.actions.add()
         new_action.id = id
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         categories = ActRec_pref.categories
 
@@ -88,6 +99,8 @@ class AR_OT_local_to_global(Operator):
             functions.remove_local_action_from_text(ActRec_pref.local_actions[ActRec_pref.active_local_action_index])
             ActRec_pref.local_actions.remove(ActRec_pref.active_local_action_index)
         functions.save_local_to_scene(ActRec_pref, context.scene)
+        if ActRec_pref.autosave:
+            functions.save(ActRec_pref)
         context.area.tag_redraw()
         return {"FINISHED"}
 
@@ -105,11 +118,11 @@ class AR_OT_local_add(Operator):
     )
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         new = ActRec_pref.local_actions.add()
         new.id  # create new id, uses internal getter
@@ -129,7 +142,7 @@ class AR_OT_local_remove(shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, "", -1)
         label = "NONE"
@@ -138,11 +151,11 @@ class AR_OT_local_remove(shared.Id_based, Operator):
         return "Remove the selected Action\nAction: %s" % (label)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions) and not ActRec_pref.local_record_macros
 
-    def execute(self, context):
+    def execute(self, context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -166,7 +179,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -176,7 +189,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -190,7 +203,7 @@ class AR_OT_local_move_up(shared.Id_based, Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.clear()
 
 
@@ -203,7 +216,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -213,7 +226,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         self.clear()
@@ -227,7 +240,7 @@ class AR_OT_local_move_down(shared.Id_based, Operator):
         context.area.tag_redraw()
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.clear()
 
 
@@ -245,11 +258,11 @@ class AR_OT_local_load(Operator):
     texts: CollectionProperty(type=properties.AR_local_load_text)
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros and not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         texts = self.texts
         texts.clear()
         for text in bpy.data.texts:
@@ -258,21 +271,21 @@ class AR_OT_local_load(Operator):
                 txt.name = text.name
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context):
-        # REFACTOR indentation
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.prop(self, 'source', expand=True)
-        if self.source == 'text':
-            box = layout.box()
-            texts = [txt.name for txt in bpy.data.texts]
-            for text in self.texts:
-                if text.name in texts:
-                    row = box.row()
-                    row.label(text=text.name)
-                    row.prop(text, 'apply', text='')
+        if self.source != 'text':
+            return
+        box = layout.box()
+        texts = [txt.name for txt in bpy.data.texts]
+        for text in self.texts:
+            if text.name not in texts:
+                continue
+            row = box.row()
+            row.label(text=text.name)
+            row.prop(text, 'apply', text='')
 
-    def execute(self, context):
-        # REFACTOR indentation
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         logger.info("Load Local Actions")
         if self.source == 'scene':
@@ -283,24 +296,25 @@ class AR_OT_local_load(Operator):
         else:
             data = []
             for text in self.texts:
-                if text.apply:
-                    if bpy.data.texts.find(text.name) == -1:
-                        continue
-                    text = bpy.data.texts[text.name]
-                    lines = [line.body for line in text.lines]
-                    header = {}
-                    for prop in lines[0].split("#")[-1].split(","):
+                if not text.apply:
+                    continue
+                if bpy.data.texts.find(text.name) == -1:
+                    continue
+                text = bpy.data.texts[text.name]
+                lines = [line.body for line in text.lines]
+                header = {}
+                for prop in lines[0].split("#")[-1].split(","):
+                    key, value = prop.split(":")
+                    header[key.strip()] = eval(value.strip())
+                macros = []
+                for line in lines[1:]:
+                    split_line = line.split("#")
+                    macro = {'command': "#".join(split_line[:-1])}
+                    for prop in split_line[-1].split(","):
                         key, value = prop.split(":")
-                        header[key.strip()] = eval(value.strip())
-                    macros = []
-                    for line in lines[1:]:
-                        split_line = line.split("#")
-                        macro = {'command': "#".join(split_line[:-1])}
-                        for prop in split_line[-1].split(","):
-                            key, value = prop.split(":")
-                            macro[key.strip()] = eval(value.strip())
-                        macros.append(macro)
-                    data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
+                        macro[key.strip()] = eval(value.strip())
+                    macros.append(macro)
+                data.append({'label': text.name, 'id': header['id'], 'macros': macros, 'icon': header['icon']})
         functions.load_local_action(ActRec_pref, data)
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:
@@ -310,7 +324,7 @@ class AR_OT_local_load(Operator):
         self.cancel(context)
         return {"FINISHED"}
 
-    def cancel(self, context):
+    def cancel(self, context: Context) -> None:
         self.texts.clear()
 
 
@@ -320,11 +334,11 @@ class AR_OT_local_selection_up(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.active_local_action_index - 1 >= 0:
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index - 1
@@ -338,11 +352,11 @@ class AR_OT_local_selection_down(Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.active_local_action_index + 1 < len(ActRec_pref.local_actions):
             ActRec_pref.active_local_action_index = ActRec_pref.active_local_action_index + 1
@@ -359,7 +373,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -369,7 +383,7 @@ class AR_OT_local_play(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
@@ -389,19 +403,18 @@ class AR_OT_local_record(shared.Id_based, Operator):
     record_start_index: IntProperty()
 
     @classmethod
-    def description(cls, context, properties):
+    def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
         if ActRec_pref.local_record_macros:
             return "Stops Recording the Macros"
         return "Starts Recording the Macros"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.local_actions)
 
-    def execute(self, context):
-        # REFACTOR indentation
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
@@ -411,81 +424,83 @@ class AR_OT_local_record(shared.Id_based, Operator):
             self.index = index
             self.record_start_index = functions.get_report_text(context).count('\n')
             context.scene.ar.record_undo_end = not context.scene.ar.record_undo_end
-        else:  # end recording and add reports as macros
-            reports = functions.get_report_text(context).splitlines()[self.record_start_index:]
-            reports = [report for report in reports if report.startswith('bpy.')]
-            if not len(reports):
-                self.clear()
-                return {"FINISHED"}
-            reports = numpy.array(functions.merge_report_tracked(reports, shared_data.tracked_actions), dtype=object)
-            shared_data.tracked_actions.clear()
-            logger.info("Record Reports: %s", reports)
+            return {"FINISHED"}
 
-            record_undo_end = context.scene.ar.record_undo_end
-            redo_steps = 0
-            while record_undo_end == bpy.context.scene.ar.record_undo_end and bpy.ops.ed.undo.poll():
-                bpy.ops.ed.undo()
-                redo_steps += 1
-            context = bpy.context
-            i = 0
-
-            data = []
-            skip_op_redo = True
-            len_reports = len(reports)
-            while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
-                bpy_type, register, undo, parent, name, value = reports[i]
-                if bpy_type == 0:  # Context Reports
-                    # register, undo are always True for Context reports
-                    copy_dict = functions.create_object_copy(context, parent, name)
-                    if bpy.ops.ed.redo.poll():
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
-
-                    if not skip_op_redo and bpy.ops.ed.undo.poll():
-                        bpy.ops.ed.undo()
-                        redo_steps += 1
-                        context = bpy.context
-
-                elif bpy_type == 1:  # Operator Reports
-                    if register:
-                        evaluation = functions.evaluate_operator(parent, name, value)
-
-                    if len_reports > i + 1:
-                        skip_op_redo = reports[i + 1][0] == 1
-                    else:
-                        skip_op_redo = True
-                    if undo and skip_op_redo and bpy.ops.ed.redo.poll():
-                        bpy.ops.ed.redo()
-                        redo_steps -= 1
-                        context = bpy.context
-
-                    if register:
-                        data.append(functions.improve_operator_report(context, parent, name, value, evaluation))
-                i += 1
-
-            while redo_steps > 0 and bpy.ops.ed.redo.poll():
-                bpy.ops.ed.redo()
-            context = bpy.context
-
-            error_reports = []
-            action = ActRec_pref.local_actions[index]
-            for report in data:
-                functions.add_report_as_macro(context, ActRec_pref, action, report, error_reports)
-            if error_reports:
-                self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
-            functions.save_local_to_scene(ActRec_pref, bpy.context.scene)
-            if not ActRec_pref.hide_local_text:
-                functions.local_action_to_text(action)
-            context.area.tag_redraw()
+        # end recording and add reports as macros
+        reports = functions.get_report_text(context).splitlines()[self.record_start_index:]
+        reports = [report for report in reports if report.startswith('bpy.')]
+        if not len(reports):
             self.clear()
+            return {"FINISHED"}
+        reports = numpy.array(functions.merge_report_tracked(reports, shared_data.tracked_actions), dtype=object)
+        shared_data.tracked_actions.clear()
+        logger.info("Record Reports: %s", reports)
+
+        record_undo_end = context.scene.ar.record_undo_end
+        redo_steps = 0
+        while record_undo_end == bpy.context.scene.ar.record_undo_end and bpy.ops.ed.undo.poll():
+            bpy.ops.ed.undo()
+            redo_steps += 1
+        context = bpy.context
+        i = 0
+
+        data = []
+        skip_op_redo = True
+        len_reports = len(reports)
+        while bpy.ops.ed.redo.poll() and redo_steps > 0 and len_reports > i:
+            bpy_type, register, undo, parent, name, value = reports[i]
+            if bpy_type == CONTEXT_REPORT:
+                # register, undo are always True for Context reports
+                copy_dict = functions.create_object_copy(context, parent, name)
+                if bpy.ops.ed.redo.poll():
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                if bpy.ops.ed.redo.poll() and copy_dict == functions.create_object_copy(context, parent, name):
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                data.append(functions.improve_context_report(context, copy_dict, parent, name, value))
+
+                if not skip_op_redo and bpy.ops.ed.undo.poll():
+                    bpy.ops.ed.undo()
+                    redo_steps += 1
+                    context = bpy.context
+
+            elif bpy_type == OPERATOR_REPORT:
+                if register:
+                    evaluation = functions.evaluate_operator(parent, name, value)
+
+                if len_reports > i + 1:
+                    skip_op_redo = reports[i + 1][0] == 1
+                else:
+                    skip_op_redo = True
+                if undo and skip_op_redo and bpy.ops.ed.redo.poll():
+                    bpy.ops.ed.redo()
+                    redo_steps -= 1
+                    context = bpy.context
+
+                if register:
+                    data.append(functions.improve_operator_report(context, parent, name, value, evaluation))
+            i += 1
+
+        while redo_steps > 0 and bpy.ops.ed.redo.poll():
+            bpy.ops.ed.redo()
+        context = bpy.context
+
+        error_reports = []
+        action = ActRec_pref.local_actions[index]
+        for report in data:
+            functions.add_report_as_macro(context, ActRec_pref, action, report, error_reports)
+        if error_reports:
+            self.report({'ERROR'}, "Not all reports could be added added:\n%s" % "\n".join(error_reports))
+        functions.save_local_to_scene(ActRec_pref, bpy.context.scene)
+        if not ActRec_pref.hide_local_text:
+            functions.local_action_to_text(action)
+        context.area.tag_redraw()
+        self.clear()
         return {"FINISHED"}
 
 
@@ -494,11 +509,11 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
     bl_options = {'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return not ActRec_pref.local_record_macros
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
@@ -508,7 +523,7 @@ class AR_OT_local_icon(icon_manager.Icontable, shared.Id_based, Operator):
         self.search = ''
         return context.window_manager.invoke_props_dialog(self, width=1000)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         action = ActRec_pref.local_actions[self.id]
         action.icon = ActRec_pref.selected_icon
@@ -531,7 +546,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
     ignore_selection = False
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         ignore = cls.ignore_selection
         cls.ignore_selection = False
@@ -541,7 +556,7 @@ class AR_OT_local_clear(shared.Id_based, Operator):
             and not ActRec_pref.local_record_macros
         )
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]

@@ -14,7 +14,8 @@ from .globals import (
     add_empty_action_keymap,
     is_action_keymap_empty,
     get_action_keymap,
-    remove_action_keymap
+    remove_action_keymap,
+    get_all_action_keymaps
 )
 
 from .locals import (
@@ -48,6 +49,7 @@ from .shared import (
     insert_to_collection,
     swap_collection_items,
     property_to_python,
+    apply_data_to_item,
     get_name_of_command,
     update_command,
     play,
@@ -59,5 +61,7 @@ from .shared import (
     enum_items_to_enum_prop_list,
     install_packages,
     get_preferences,
-    get_categorized_view_3d_modes
+    get_categorized_view_3d_modes,
+    get_attribute,
+    get_attribute_default
 )
