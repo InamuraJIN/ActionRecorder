@@ -520,15 +520,44 @@ def trace_object(base: Struct, path: list[str]) -> Struct:
         Struct: traced object
     """
     for x in path:
-        if x.endswith("]"):  # attribute is collection
-            x, index_str = x.rsplit("[", 1)
-            index = int(index_str.replace("]", ""))
+        # attribute is collection the index is int or str
+        if x.endswith("]"):
+            x, indices = x.split("[", 1)
             base = getattr(base, x)
+            base = trace_collection(base, indices)
+            continue
+
+        base = getattr(base, x)
+    return base
+
+
+def trace_collection(base: Struct, path: str) -> Struct:
+    """
+    trace a collection object from it base to the object that was referenced in this collection
+
+    Args:
+        base (Struct): collection to trace
+        path (str): the trace path where of the collection consisting of "[int/str]"
+
+    Returns:
+        Struct: traced collection object
+    """
+    indices = path.split("[")
+    for index in indices:
+        index = index[:-1]  # delete the last element that should be "]"
+        if index.startswith("\""):  # index is str
+            index = index[1:-1]
+            base = base.get(index, None)
+            if base is None:
+                return None
+        elif str.isdigit(index):  # index is int
+            index = int(index)
             if len(base) <= index:
                 return None
             base = base[index]
-            continue
-        base = getattr(base, x)
+        else:  # not a parsable type
+            logger.warning(f"Trace a collection with a not parsable type {base} with index {index} of path {path}")
+            return None
     return base
 
 
