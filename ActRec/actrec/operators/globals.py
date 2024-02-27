@@ -444,6 +444,7 @@ class AR_OT_global_export(Operator, ExportHelper):
     def invoke(self, context: Context, event: Event) -> set[str]:
         # Make copy of categories and actions ot export_categories and export_actions
         ActRec_pref = get_preferences(context)
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
         for category in ActRec_pref.categories:
             new_category = self.export_categories.add()
             new_category.id = category.id
@@ -456,7 +457,7 @@ class AR_OT_global_export(Operator, ExportHelper):
                 new_action = new_category.actions.add()
                 new_action.id = action.id
                 new_action.label = action.label
-                action_keymap = functions.get_action_keymap(action.id)
+                action_keymap = functions.get_action_keymap(action.id, km)
                 if action_keymap:
                     new_action.shortcut = action_keymap.to_string()
         return ExportHelper.invoke(self, context, event)
@@ -621,9 +622,10 @@ class AR_OT_global_remove(shared.Id_based, Operator):
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
-            if functions.get_action_keymap(id) is not None:
-                functions.remove_action_keymap(id)
+            if functions.get_action_keymap(id, km) is not None:
+                functions.remove_action_keymap(id, km)
             ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))
