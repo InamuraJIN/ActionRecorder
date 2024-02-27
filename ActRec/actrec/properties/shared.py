@@ -133,7 +133,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         Args:
             value (bool): state of macro
         """
-        if not self.is_available:
+        if not self.is_available or self.is_playing:
             return
         context = bpy.context
         ActRec_pref = get_preferences(context)
@@ -194,9 +194,21 @@ The operator can be executed immediately or invoked where the operator can wait 
 
 HINT: Sometimes it helps to change to Invoke to get the expected behavior"""
     )
+    is_playing: BoolProperty(
+        default=False,
+        description="Indicates whether the parent action executes its macros"
+    )
 
 
 class AR_action(Id_based, Alert_system, Icon_system):
+
+    def get_is_playing(self):
+        return self.get("is_playing", False)
+
+    def set_is_playing(self, value):
+        self["is_playing"] = value
+        for macro in self.macros:
+            macro.is_playing = value
 
     label: StringProperty()
     description: StringProperty(default="Play this Action Button")
@@ -212,6 +224,12 @@ Therefore, the action is executed as many times as there are selected objects.""
         name="Execution Mode",
         description="Choses to perform the current actions on the selected objects individually or as a group",
         default="GROUP"
+    )
+    is_playing: BoolProperty(
+        default=False,
+        description="Indicates whether the action executes its macros",
+        get=get_is_playing,
+        set=set_is_playing
     )
 
 
