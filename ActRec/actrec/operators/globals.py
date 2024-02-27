@@ -488,7 +488,8 @@ class AR_OT_global_export(Operator, ExportHelper):
             if action.id in export_action_ids:
                 data['actions'].append(functions.property_to_python(
                     action,
-                    exclude=["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"]
+                    exclude=["name", "selected", "alert", "macros.name",
+                             "macros.is_available", "macros.alert", "is_playing"]
                 ))
 
         if self.include_keymap:
@@ -576,7 +577,8 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         id = uuid.uuid1().hex if action.id in set(x.id for x in ActRec_pref.local_actions) else action.id
         data = functions.property_to_python(
             action,
-            exclude=["name", "alert", "macros.name", "macros.alert", "macros.is_available"]
+            exclude=["name", "alert", "macros.name", "macros.alert",
+                     "macros.is_available", "macros.is_playing", "is_playing"]
         )
         data["id"] = id
         functions.add_data_to_collection(ActRec_pref.local_actions, data)
@@ -706,6 +708,9 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
         if id is None:
             return {'CANCELLED'}
         action = ActRec_pref.global_actions[id]
+        if action.is_playing:
+            self.report({'INFO'}, "The action is already playing!")
+            return {'CANCELLED'}
         err = functions.play(context, action.macros, action, 'global_actions')
         if err:
             self.report({'ERROR'}, str(err))

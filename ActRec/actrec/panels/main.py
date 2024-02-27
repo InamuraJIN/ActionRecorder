@@ -85,6 +85,7 @@ def panel_factory(space_type: str):
                 sort_lock=True
             )
             col = box_row.column()
+            col.active = not selected_action.is_playing
             if not ActRec_pref.local_record_macros:
                 col2 = col.column(align=True)
                 col2.operator("ar.macro_add", text='', icon='ADD')
@@ -94,6 +95,7 @@ def panel_factory(space_type: str):
                 col2.operator("ar.macro_move_up", text='', icon='TRIA_UP')
                 col2.operator("ar.macro_move_down", text='', icon='TRIA_DOWN')
             row = layout.row()
+            row.active = not selected_action.is_playing
             if ActRec_pref.local_record_macros:
                 row.scale_y = 2
                 row.operator("ar.local_record", text='Stop')
@@ -104,7 +106,7 @@ def panel_factory(space_type: str):
                 col = layout.column()
                 row = col.row()
                 row.scale_y = 2
-                row.operator("ar.local_play", text='Play')
+                row.operator("ar.local_play", text="Playing..." if selected_action.is_playing else "Play")
                 col.operator("ar.local_to_global", text='Local to Global')
                 row = col.row(align=True)
                 row.enabled = bpy.ops.ar.local_to_global.poll()

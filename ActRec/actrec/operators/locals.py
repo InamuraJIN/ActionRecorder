@@ -75,7 +75,8 @@ class AR_OT_local_to_global(Operator):
         id = uuid.uuid1().hex if action.id in [x.id for x in ActRec_pref.global_actions] else action.id
         data = functions.property_to_python(
             action,
-            exclude=["name", "alert", "macros.name", "macros.alert", "macros.is_available"]
+            exclude=["name", "alert", "macros.name", "macros.alert",
+                     "macros.is_available", "macros.is_playing", "is_playing"]
         )
         data["id"] = id
         data["selected"] = True
@@ -387,6 +388,9 @@ class AR_OT_local_play(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
+        if action.is_playing:
+            self.report({'INFO'}, "The action is already playing!")
+            return {'CANCELLED'}
         err = functions.play(context, action.macros, action, 'local_actions')
         if err:
             self.report({'ERROR'}, str(err))
@@ -416,10 +420,15 @@ class AR_OT_local_record(shared.Id_based, Operator):
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
-        ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
+        action = ActRec_pref.local_actions[index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
+        ActRec_pref.local_record_macros = not ActRec_pref.local_record_macros
         if ActRec_pref.local_record_macros:  # start recording
-            action = ActRec_pref.local_actions[index]
             self.id = action.id
             self.index = index
             self.record_start_index = functions.get_report_text(context).count('\n')
@@ -560,6 +569,11 @@ class AR_OT_local_clear(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         action.macros.clear()
         functions.save_local_to_scene(ActRec_pref, context.scene)
         if not ActRec_pref.hide_local_text:

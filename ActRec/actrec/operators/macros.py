@@ -56,6 +56,11 @@ class AR_OT_macro_add(shared.Id_based, Operator):
 
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         new_report = False
         command = None
 
@@ -269,6 +274,11 @@ class AR_OT_macro_add_event(shared.Id_based, Operator):
         ActRec_pref = get_preferences(context)
         index = functions.get_local_action_index(ActRec_pref, self.id, self.index)
         action = ActRec_pref.local_actions[index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         if self.macro_index == -1:
             macro = action.macros.add()
         else:
@@ -386,6 +396,11 @@ class AR_OT_macro_remove(Macro_based, Operator):
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         index = functions.get_local_macro_index(action, self.id, self.index)
         action.macros.remove(index)
         functions.save_local_to_scene(ActRec_pref, context.scene)
@@ -417,6 +432,11 @@ class AR_OT_macro_move_up(Macro_based, Operator):
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         index = functions.get_local_macro_index(action, self.id, self.index)
         self.clear()
         if index == -1 or index - 1 < 0:
@@ -453,6 +473,11 @@ class AR_OT_macro_move_down(Macro_based, Operator):
         ActRec_pref = get_preferences(context)
         action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         index = functions.get_local_macro_index(action, self.id, self.index)
         self.clear()
         if index == -1 or index + 1 >= len(action.macros):
@@ -802,6 +827,11 @@ class AR_OT_macro_edit(Macro_based, Operator):
         ActRec_pref = get_preferences(context)
         action_index = self.action_index = functions.get_local_action_index(ActRec_pref, '', self.action_index)
         action = ActRec_pref.local_actions[action_index]
+
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
+
         index = self.index = functions.get_local_macro_index(action, self.id, self.index)
         macro = action.macros[index]
 
@@ -961,6 +991,11 @@ class AR_OT_copy_to_actrec(Operator):  # used in the right click menu of Blender
         ActRec_pref = get_preferences(context)
         if not len(ActRec_pref.local_actions):
             bpy.ops.ar.local_add()
+
+        action = ActRec_pref.local_actions[ActRec_pref.active_local_action_index]
+        if action.is_playing:
+            self.report({'INFO'}, "The action is playing and can not be edited!")
+            return {'CANCELLED'}
 
         # referring to https://docs.blender.org/api/current/bpy.types.Menu.html?menu#extending-the-button-context-menu
         button_pointer = getattr(context, "button_pointer", None)
