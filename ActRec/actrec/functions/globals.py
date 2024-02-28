@@ -49,7 +49,9 @@ def save(ActRec_pref: AR_preferences) -> None:
             "execution_mode",
             "macros.name",
             "macros.is_available",
-            "macros.alert"
+            "macros.is_playing",
+            "macros.alert",
+            "is_playing"
         ]
     )
     with open(ActRec_pref.storage_path, 'w', encoding='utf-8') as storage_file:

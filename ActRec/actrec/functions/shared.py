@@ -410,7 +410,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
     with temp_override:
         ActRec_pref = context.preferences.addons[__module__].preferences
         action = getattr(ActRec_pref, action_type)[action_id]
-        play(context, action.macros[start:], action, action_type)
+        play(context, action.macros, action, action_type, start)
 
 
 def execute_individually(context: Context, command: str) -> None:
@@ -437,11 +437,23 @@ def execute_individually(context: Context, command: str) -> None:
             object.select_set(True)
 
 
+# table to point from the end-loop macro (=key) to the start-loop macro (=value)
+loop_table = {}
+
+# table the holds the iterator (=value) of a loop accessed by the start-loop macro (=key)
+loop_iterator = {}
+
+# table the holds the loop size excluding start-loop macro but including end-loop macro (=value)
+# accessed by the start-loop macro (=key)
+loop_size = {}
+
+
 def play(
         context: Context,
         macros: CollectionProperty,
         action: AR_action,
-        action_type: str) -> Union[Exception, str, None]:
+        action_type: str,
+        start_index: int = 0) -> Union[Exception, str, None]:
     """
     execute all given macros in the given context.
     action, action_type are used to run the macros of the given action with delay to the execution
@@ -451,25 +463,51 @@ def play(
         macros (CollectionProperty): macros to execute
         action (AR_action): action to track
         action_type (str): action type of the given action
+        start_index (int): the index of the macro where to start
 
     Returns:
         Exception, str: error
     """
+    action.is_playing = True
     macros = [macro for macro in macros if macro.active]
 
     # non-realtime events, execute before macros get executed
-    for i, macro in enumerate(macros):
+    for i, macro in enumerate(macros[start_index:]):
         split = macro.command.split(":")
         if split[0] != 'ar.event':
             continue
         data = json.loads(":".join(split[1:]))
         if data['Type'] == 'Render Complete':
+            # SKip only render complete macro
+            if len(macros) <= i + 1:
+                action.is_playing = False
+                return "The 'Render Complete' macro was skipped because no additional macros follow!"
             shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
             break
+        elif data['Type'] == 'Loop':
+            loop_count = 1
+            for j, process_macro in enumerate(macros[i + 1:], 1):
+                if not process_macro.active:
+                    continue
+                split = process_macro.command.split(":")
+                if split[0] != 'ar.event':
+                    continue
+                process_data = json.loads(":".join(split[1:]))
+                loop_count += 2 * (process_data['Type'] == 'Loop') - (process_data['Type'] == 'EndLoop')  # 1 or -1
+                if loop_count == 0:
+                    loop_table[process_macro.id] = macro.id
+                    loop_size[macro.id] = j
+                    loop_iterator[macro.id] = 0
+                    if data['StatementType'] == 'count':
+                        # DEPRECATED used to support old count loop macros
+                        loop_iterator[macro.id] = data["Startnumber"]
+                    break
 
     base_area = context.area
 
-    for i, macro in enumerate(macros):
+    i = start_index
+    while i < len(macros):
+        macro = macros[i]
         split = macro.command.split(":")
         if split[0] == 'ar.event':  # Handle Ar Events
             data: dict = json.loads(":".join(split[1:]))
@@ -488,43 +526,36 @@ def play(
                 )
                 return
             if data['Type'] == 'Loop':
-                end_index = i + 1
-                loop_count = 1
-                for j, process_macro in enumerate(macros[i + 1:], i + 1):
-                    if not process_macro.active:
-                        continue
-                    split = process_macro.command.split(":")
-                    if split[0] != 'ar.event':
-                        continue
-                    process_data = json.loads(":".join(split[1:]))
-                    loop_count += 2 * (process_data['Type'] == 'Loop') - (process_data['Type'] == 'EndLoop')  # 1 or -1
-                    if loop_count == 0:
-                        end_index = j
-                        break
-                if loop_count != 0:
+                # Skip because it is not a complete loop
+                if macro.id not in loop_iterator:
+                    i += 1
                     continue
-                loop_macros = macros[i + 1: end_index]
 
                 if data['StatementType'] == 'python':
                     try:
-                        while eval(data["PyStatement"]):
-                            play(context, loop_macros, action, action_type)
+                        if eval(data["PyStatement"]):
+                            i += 1
+                        else:
+                            i += loop_size[macro.id] + 1
                     except Exception as err:
                         logger.error(err)
                         action.alert = macro.alert = True
+                        action.is_playing = False
                         return err
                 elif data['StatementType'] == 'count':
                     # DEPRECATED used to support old count loop macros
-                    for k in numpy.arange(data["Startnumber"], data["Endnumber"], data["Stepnumber"]):
-                        err = play(context, loop_macros, action, action_type)
-                        if err:
-                            return err
+                    if loop_iterator[macro.id] < data["Endnumber"]:
+                        loop_iterator[macro.id] += data["Stepnumber"]
+                        i += 1
+                    else:
+                        i += loop_size[macro.id] + 1
                 else:
-                    for k in range(data["RepeatCount"]):
-                        err = play(context, loop_macros, action, action_type)
-                        if err:
-                            return err
-                return play(context, macros[end_index + 1:], action, action_type)
+                    if loop_iterator[macro.id] < data["RepeatCount"]:
+                        loop_iterator[macro.id] += 1
+                        i += 1
+                    else:
+                        i += loop_size[macro.id] + 1
+                continue
             elif data['Type'] == 'Select Object':
                 selected_objects = context.selected_objects
 
@@ -539,17 +570,20 @@ def play(
                         selected_objects.append(object)
 
                 if data.get('Object', "") == "":
+                    i += 1
                     continue
 
                 objects = context.view_layer.objects
                 main_object = bpy.data.objects.get(data['Object'])
                 if main_object is None or main_object not in objects.values():
                     action.alert = macro.alert = True
+                    action.is_playing = False
                     return "%s Object doesn't exist in the active view layer" % data['Object']
 
                 objects.active = main_object
                 main_object.select_set(True)
                 selected_objects.append(main_object)
+                i += 1
                 continue
             elif data['Type'] == 'Run Script':
                 text = bpy.data.texts.new(macro.id)
@@ -569,9 +603,13 @@ def play(
                     action.alert = macro.alert = True
                     return error
                 bpy.data.texts.remove(text)
+                i += 1
                 continue
             elif data['Type'] == 'EndLoop':
+                start_id = loop_table[macro.id]
+                i -= loop_size[start_id]
                 continue
+
         try:
             command = macro.command
             if (command.startswith("bpy.ops.ar.local_play")
@@ -579,6 +617,7 @@ def play(
                 err = "Don't run Local Play with default properties, this may cause recursion"
                 logger.error(err)
                 action.alert = macro.alert = True
+                action.is_playing = False
                 return err
 
             if command.startswith("bpy.ops."):
@@ -630,13 +669,17 @@ def play(
 
             if bpy.context and bpy.context.area:
                 bpy.context.area.tag_redraw()
+            i += 1
 
         except Exception as err:
             logger.error("%s; command: %s" % (err, command))
             action.alert = macro.alert = True
             if base_area and area_type:
                 base_area.ui_type = area_type
+            action.is_playing = False
             return err
+    else:
+        action.is_playing = False
 
 
 @ persistent
@@ -656,6 +699,7 @@ def execute_render_complete(dummy=None) -> None:
         action = getattr(ActRec_pref, action_type)[action_id]
         if (start_index := action.macros.find(start_id)) < 0:
             continue
+
         bpy.app.timers.register(
             functools.partial(
                 run_queued_macros,
@@ -666,7 +710,6 @@ def execute_render_complete(dummy=None) -> None:
             ),
             first_interval=0.1
         )
-        # play(context, action.macros[start_index:], action, action_type)
 
 
 def get_font_path() -> str:

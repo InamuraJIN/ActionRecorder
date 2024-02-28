@@ -444,6 +444,7 @@ class AR_OT_global_export(Operator, ExportHelper):
     def invoke(self, context: Context, event: Event) -> set[str]:
         # Make copy of categories and actions ot export_categories and export_actions
         ActRec_pref = get_preferences(context)
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
         for category in ActRec_pref.categories:
             new_category = self.export_categories.add()
             new_category.id = category.id
@@ -456,7 +457,7 @@ class AR_OT_global_export(Operator, ExportHelper):
                 new_action = new_category.actions.add()
                 new_action.id = action.id
                 new_action.label = action.label
-                action_keymap = functions.get_action_keymap(action.id)
+                action_keymap = functions.get_action_keymap(action.id, km)
                 if action_keymap:
                     new_action.shortcut = action_keymap.to_string()
         return ExportHelper.invoke(self, context, event)
@@ -488,7 +489,8 @@ class AR_OT_global_export(Operator, ExportHelper):
             if action.id in export_action_ids:
                 data['actions'].append(functions.property_to_python(
                     action,
-                    exclude=["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"]
+                    exclude=["name", "selected", "alert", "macros.name",
+                             "macros.is_available", "macros.alert", "is_playing"]
                 ))
 
         if self.include_keymap:
@@ -576,7 +578,8 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
         id = uuid.uuid1().hex if action.id in set(x.id for x in ActRec_pref.local_actions) else action.id
         data = functions.property_to_python(
             action,
-            exclude=["name", "alert", "macros.name", "macros.alert", "macros.is_available"]
+            exclude=["name", "alert", "macros.name", "macros.alert",
+                     "macros.is_available", "macros.is_playing", "is_playing"]
         )
         data["id"] = id
         functions.add_data_to_collection(ActRec_pref.local_actions, data)
@@ -621,9 +624,10 @@ class AR_OT_global_remove(shared.Id_based, Operator):
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
         for id in functions.get_global_action_ids(ActRec_pref, self.id, self.index):
-            if functions.get_action_keymap(id) is not None:
-                functions.remove_action_keymap(id)
+            if functions.get_action_keymap(id, km) is not None:
+                functions.remove_action_keymap(id, km)
             ActRec_pref.global_actions.remove(ActRec_pref.global_actions.find(id))
             for category in ActRec_pref.categories:
                 category.actions.remove(category.actions.find(id))
@@ -706,6 +710,9 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
         if id is None:
             return {'CANCELLED'}
         action = ActRec_pref.global_actions[id]
+        if action.is_playing:
+            self.report({'INFO'}, "The action is already playing!")
+            return {'CANCELLED'}
         err = functions.play(context, action.macros, action, 'global_actions')
         if err:
             self.report({'ERROR'}, str(err))
