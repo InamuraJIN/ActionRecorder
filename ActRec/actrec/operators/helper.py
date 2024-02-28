@@ -1,7 +1,7 @@
 # region Imports
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context
 # endregion
 
 
@@ -16,12 +16,12 @@ class AR_OT_helper_object_to_collection(Operator):
     bl_label = "Object to Collection"
     bl_options = {'INTERNAL', 'REGISTER', 'UNDO'}
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         active_coll = context.collection
         for obj in context.objects:
             for coll in obj.users_collection:
-                coll.ojects.unlink(obj)
-            active_coll.ojects.link(obj)
+                coll.objects.unlink(obj)
+            active_coll.objects.link(obj)
         return {'FINISHED'}
 # endregion
 

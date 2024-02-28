@@ -16,7 +16,7 @@ class AR_macro_multiline(PropertyGroup):
         """
         return self.get('text', '')
 
-    def set_text(self, value: str):
+    def set_text(self, value: str) -> None:
         """
         set the text of the multiline macro and update to True
 

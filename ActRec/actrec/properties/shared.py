@@ -1,11 +1,10 @@
 # region Imports
 # external modules
 import uuid
-import functools
 
 # blender modules
 import bpy
-from bpy.types import PropertyGroup
+from bpy.types import PropertyGroup, Context
 from bpy.props import StringProperty, IntProperty, CollectionProperty, BoolProperty, EnumProperty
 
 # relative imports
@@ -29,7 +28,7 @@ class Id_based:
         self['name'] = self.get('name', uuid.uuid1().hex)
         return self['name']
 
-    def set_id(self, value: str):
+    def set_id(self, value: str) -> None:
         """
         Create a UUID from a string of 32 hexadecimal digits
 
@@ -61,7 +60,7 @@ class Alert_system:
         """
         return self.get('alert', False)
 
-    def set_alert(self, value: bool):
+    def set_alert(self, value: bool) -> None:
         """
         automatically reset the alert after 1 second to false again,
         because alert is only shown temporarily in the UI
@@ -71,16 +70,16 @@ class Alert_system:
         """
         self['alert'] = value
         if value:
-            def reset():
+            def reset() -> None:
                 self['alert'] = False
             bpy.app.timers.register(reset, first_interval=1, persistent=True)
 
-    def update_alert(self, context: bpy.types.Context):
+    def update_alert(self, context: Context) -> None:
         """
         redraw the area to show the alert change in the UI
 
         Args:
-            context (bpy.types.Context): active blender context
+            context (Context): active blender context
         """
         if hasattr(context, 'area') and context.area:
             context.area.tag_redraw()
@@ -95,21 +94,21 @@ class Alert_system:
 
 
 class Icon_system:
-    def get_icon(self):
+    def get_icon(self) -> str:
         icons = get_icons_name_map()
         icons.update(get_custom_icon_name_map())
         return icons.get(self.icon_name, self.get("icon", 0))
 
-    def set_icon(self, value):
+    def set_icon(self, value: int) -> None:
         icons = get_icons_value_map()
         icons.update(get_custom_icons_value_map())
         self["icon"] = value
         self["icon_name"] = icons.get(value, "NONE")
 
-    def get_icon_name(self):
+    def get_icon_name(self) -> str:
         return self.get("icon_name", "NONE")
 
-    def set_icon_name(self, value):
+    def set_icon_name(self, value: str) -> None:
         self["icon_name"] = value
     # Icon NONE: Global: BLANK1 (101), Local: MESH_PLANE (286)
     icon: IntProperty(default=0, set=set_icon, get=get_icon)
@@ -126,7 +125,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         """
         return self.get('active', True) and self.is_available
 
-    def set_active(self, value: bool):
+    def set_active(self, value: bool) -> None:
         """
         set the active state if macro is available and macro recording is turned off
         if the value change it is written to the local scene data if autosave is active
@@ -134,14 +133,14 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         Args:
             value (bool): state of macro
         """
-        # REFACTOR indentation
-        if self.is_available:
-            context = bpy.context
-            ActRec_pref = get_preferences(context)
-            if not ActRec_pref.local_record_macros:
-                if self.get('active', True) != value:
-                    functions.save_local_to_scene(ActRec_pref, context.scene)
-                self['active'] = value
+        if not self.is_available or self.is_playing:
+            return
+        context = bpy.context
+        ActRec_pref = get_preferences(context)
+        if not ActRec_pref.local_record_macros:
+            if self.get('active', True) != value:
+                functions.save_local_to_scene(ActRec_pref, context.scene)
+            self['active'] = value
 
     def get_command(self) -> str:
         """
@@ -152,7 +151,7 @@ class AR_macro(Id_based, Alert_system, Icon_system, PropertyGroup):
         """
         return self.get("command", "")
 
-    def set_command(self, value: str):
+    def set_command(self, value: str) -> None:
         """
         sets the macro command and updates it with the running Blender version
         if the command isn't found in the running Blender it will be marked as not available
@@ -195,9 +194,21 @@ The operator can be executed immediately or invoked where the operator can wait 
 
 HINT: Sometimes it helps to change to Invoke to get the expected behavior"""
     )
+    is_playing: BoolProperty(
+        default=False,
+        description="Indicates whether the parent action executes its macros"
+    )
 
 
 class AR_action(Id_based, Alert_system, Icon_system):
+
+    def get_is_playing(self):
+        return self.get("is_playing", False)
+
+    def set_is_playing(self, value):
+        self["is_playing"] = value
+        for macro in self.macros:
+            macro.is_playing = value
 
     label: StringProperty()
     description: StringProperty(default="Play this Action Button")
@@ -213,6 +224,12 @@ Therefore, the action is executed as many times as there are selected objects.""
         name="Execution Mode",
         description="Choses to perform the current actions on the selected objects individually or as a group",
         default="GROUP"
+    )
+    is_playing: BoolProperty(
+        default=False,
+        description="Indicates whether the action executes its macros",
+        get=get_is_playing,
+        set=set_is_playing
     )
 
 

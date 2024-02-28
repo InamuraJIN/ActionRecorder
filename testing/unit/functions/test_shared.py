@@ -1,7 +1,7 @@
 import pytest
 from ActRec.actrec.functions import shared
 import bpy
-import helper
+from .. import helper
 
 
 @pytest.mark.parametrize(
@@ -41,12 +41,14 @@ def clear_load_global(request):
             "icon": 0,
             "icon_name": "NONE",
             "is_available": True,
+            "is_playing": False,
             "ui_type": "",
             "alert": False,
             "operator_execution_context": "EXEC_DEFAULT"
         }),
         ('global_actions["c7a40353164611ecbaad70c94ef23b30"]',
-         ["name", "selected", "alert", "macros.name", "macros.is_available", "macros.alert"],
+         ["name", "selected", "alert", "macros.name", "macros.is_available",
+             "macros.alert", "macros.is_playing", "is_playing"],
          {
              "id": "c7a40353164611ecbaad70c94ef23b30",
              "label": "Subd Smooth",

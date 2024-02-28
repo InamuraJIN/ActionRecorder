@@ -52,7 +52,3 @@ def test_load_icon(file, name, only_new, success):
     pref.icon_path = os.path.dirname(__file__)
     icon_manager.load_icon(pref, path, only_new)
     assert (name in list(icon_manager.preview_collections['ar_custom'])) == success
-
-
-if __name__ == "__main__":
-    pytest.main()

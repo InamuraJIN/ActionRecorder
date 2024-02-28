@@ -4,11 +4,12 @@ from contextlib import suppress
 
 # blender modules
 import bpy
-from bpy.types import Menu
+from bpy.types import Menu, Context
 
 # relative imports
 from .. import keymap
 from ..functions.shared import get_preferences
+from .. import functions
 # endregion
 
 
@@ -19,7 +20,7 @@ class AR_MT_action_pie(Menu):
     bl_idname = "AR_MT_action_pie"
     bl_label = "ActRec Pie Menu"
 
-    def draw(self, context: bpy.types.Context):
+    def draw(self, context: Context) -> None:
         ActRec_pref = get_preferences(context)
         pie = self.layout.menu_pie()
         actions = ActRec_pref.local_actions
@@ -35,7 +36,7 @@ class AR_MT_action_pie(Menu):
 # https://docs.blender.org/api/current/bpy.types.Menu.html?highlight=menu_draw#extending-the-button-context-menu
 
 
-def menu_draw(self, context: bpy.types.Context):
+def menu_draw(self, context: Context) -> None:
     layout = self.layout
     layout.separator()
     layout.operator("ar.copy_to_actrec")
@@ -44,18 +45,22 @@ def menu_draw(self, context: bpy.types.Context):
         layout.operator("ar.copy_to_actrec", text="Copy to Action Recorder (Single)").copy_single = True
     button_operator = getattr(context, "button_operator", None)
     if button_operator and button_operator.bl_rna.identifier == "AR_OT_global_execute_action":
-        if any(kmi.idname == "ar.global_execute_action" and kmi.properties.id == button_operator.id
-               for kmi in keymap.keymaps['default'].keymap_items):
+        km = context.window_manager.keyconfigs.user.keymaps['Screen']
+        kmi = km.keymap_items.find_from_operator(
+            "ar.global_execute_action",
+            properties=button_operator
+        )
+        if kmi:
             layout.operator("ar.remove_ar_shortcut").id = button_operator.id
         else:
             layout.operator("ar.add_ar_shortcut").id = button_operator.id
-        layout.operator("ar.global_edit_description").id = button_operator.id
+        layout.operator("ar.global_edit").id = button_operator.id
 
 
 class WM_MT_button_context(Menu):
     bl_label = "Unused"
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         pass
 # endregion
 

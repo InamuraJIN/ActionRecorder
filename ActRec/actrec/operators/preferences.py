@@ -6,7 +6,7 @@ import subprocess
 
 # blender modules
 import bpy
-from bpy.types import Operator
+from bpy.types import Context, Event, Operator
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ExportHelper
 
@@ -25,16 +25,28 @@ class AR_OT_preferences_directory_selector(Operator, ExportHelper):
     bl_description = " "
     bl_options = {'REGISTER', 'INTERNAL'}
 
-    filename_ext = "."
+    filename_ext = ""
+    filename = ""
+    filepath = ""
+    filter_glob: bpy.props.StringProperty(
+        default="",
+        options={'HIDDEN'},
+        maxlen=255,  # Max internal buffer length, longer would be clamped.
+    )
     use_filter_folder = True
-    filepath: StringProperty(name="File Path", maxlen=0, default=" ")
+    directory: bpy.props.StringProperty(name="Folder Path", maxlen=1024, default="")
 
-    preference_name: StringProperty()
-    path_extension: StringProperty()
+    preference_name: StringProperty(options={'HIDDEN'})
+    path_extension: StringProperty(options={'HIDDEN'})
 
-    def execute(self, context):
+    def invoke(self, context: Context, event: Event) -> set[str]:
+        super().invoke(context, event)
+        self.filepath = ""
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(bpy.context)
-        user_path = self.properties.filepath
+        user_path = self.properties.directory
         if (not os.path.isdir(user_path)):
             msg = "Please select a directory not a file\n" + user_path
             self.report({'ERROR'}, msg)
@@ -50,10 +62,10 @@ class AR_OT_preferences_recover_directory(Operator):
     bl_description = "Recover the standard Storage directory"
     bl_options = {'REGISTER', 'INTERNAL'}
 
-    preference_name: StringProperty()
-    path_extension: StringProperty()
+    preference_name: StringProperty(options={'HIDDEN'})
+    path_extension: StringProperty(options={'HIDDEN'})
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
         setattr(ActRec_pref, self.preference_name, os.path.join(ActRec_pref.addon_directory, self.path_extension))
         return {'FINISHED'}
@@ -67,7 +79,7 @@ class AR_OT_preferences_open_explorer(Operator):
 
     path: StringProperty(name="Path", description="Open the explorer with the given path")
 
-    def open_file_in_explorer(self, path: str):
+    def open_file_in_explorer(self, path: str) -> None:
         """
         opens the file in the os file explorer
 
@@ -81,7 +93,7 @@ class AR_OT_preferences_open_explorer(Operator):
         else:  # Linux
             subprocess.call(["xdg-open", os.path.dirname(path)])
 
-    def open_directory_in_explorer(self, directory: str):
+    def open_directory_in_explorer(self, directory: str) -> None:
         """
         open the directory in the os file explorer
 
@@ -94,7 +106,7 @@ class AR_OT_preferences_open_explorer(Operator):
             opener = "open" if sys.platform == "darwin" else "xdg-open"
             subprocess.call([opener, directory])
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         self.path = os.path.normpath(self.path)
         if os.path.isdir(self.path):
             self.open_directory_in_explorer(self.path)

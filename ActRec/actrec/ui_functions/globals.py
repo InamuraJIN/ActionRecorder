@@ -1,19 +1,28 @@
 # region Imports
+# external modules
+from typing import TYPE_CHECKING
 
 # blender modules
 import bpy
+from bpy.types import UILayout, AddonPreferences
+
+# relative imports
+if TYPE_CHECKING:
+    from ..preferences import AR_preferences
+else:
+    AR_preferences = AddonPreferences
 # endregion
 
 # region UI functions
 
 
-def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str):
+def draw_global_action(layout: UILayout, ActRec_pref: AR_preferences, id: str) -> None:
     """
     draws row of global action button.
 
     Args:
-        layout (bpy.types.UILayout): UI context of Blender
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        layout (UILayout): UI context of Blender
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): UUID of the action, use action.id the get the UUID
     """
     action = ActRec_pref.global_actions[id]
@@ -38,13 +47,13 @@ def draw_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonP
     row.prop(action, 'execution_mode', text="", icon_only=True)
 
 
-def draw_simple_global_action(layout: bpy.types.UILayout, ActRec_pref: bpy.types.AddonPreferences, id: str):
+def draw_simple_global_action(layout: UILayout, ActRec_pref: AR_preferences, id: str) -> None:
     """
     draws row of global action button but only the operator
 
     Args:
-        layout (bpy.types.UILayout): UI context of Blender
-        ActRec_pref (bpy.types.AddonPreferences): preferences of this addon
+        layout (UILayout): UI context of Blender
+        ActRec_pref (AR_preferences): preferences of this addon
         id (str): UUID of the action, use action.id the get the UUID
     """
     action = ActRec_pref.global_actions[id]
