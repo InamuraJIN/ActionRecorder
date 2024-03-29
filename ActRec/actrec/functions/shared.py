@@ -7,7 +7,6 @@ import json
 import os
 import sys
 import numpy
-import importlib
 import functools
 import subprocess
 import traceback
@@ -846,30 +845,6 @@ def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str 
     return lines
 
 
-def check_ensurepip() -> bool:
-    """
-    Ensures that ensurepip is installed
-
-    Returns:
-        bool: True if ensurepip exists or could be installed.
-    """
-    if importlib.util.find_spec('ensurepip') is not None:
-        return True
-
-    logger.warning(
-        "Could not found module 'ensurepip'. Running 'python -m ensurepip'\n")
-
-    try:
-        subprocess.check_output(
-            [sys.executable, '-m', 'ensurepip']
-        )
-    except (PermissionError, subprocess.CalledProcessError) as err:
-        logger.error("Failed installing ensurepip: %s" % err)
-        return False
-
-    return importlib.util.find_spec('ensurepip') is not None
-
-
 def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     """
     install the listed packages and ask for user permission if needed
@@ -880,55 +855,13 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     Returns:
         tuple[bool, str]: (success, installation output)
     """
-    if check_ensurepip():
-        import ensurepip
-        ensurepip.bootstrap()
-
-    os.environ.pop("PIP_REQ_TRACKER", None)
-    path = os.path.join(os.path.dirname(sys.executable), "test_easy_package_installation")
     try:
         # creates and removes dir to check for writing permission to this path
-        os.mkdir(path)
-        os.rmdir(path)
         output = subprocess.check_output(
             [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
         ).decode('utf-8').replace("\r", "")
         return (True, output)
-    except PermissionError as err:
-        logger.error(err)
-        logger.info("Need Admin Permissions to write to %s" % path)
-
-        output = subprocess.check_output(
-            [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
-            stderr=subprocess.STDOUT
-        ).decode('utf-8').replace("\r", "")
-        logger.info(output)
-
-        if sys.platform == "win32":
-            logger.info("Trying to install with admin permission.")
-
-            output = subprocess.check_output(
-                ['powershell.exe', '-WindowStyle', 'hidden', '-Command',
-                    """& { Start-Process -WindowStyle hidden \'%s\' -Wait -ArgumentList \'-m\',
-                    \'pip\', \'install\', %s -Verb RunAs}"""
-                    % (sys.executable, ",".join("\'%s\'" % p for p in package_names))],
-                stderr=subprocess.STDOUT
-            ).decode('unicode_escape').replace("\r", "")
-            if output != '':
-                return (False, output)
-        elif sys.platform.startswith("linux"):
-            logger.info("Trying to install with admin permission.")
-
-            output = subprocess.check_output(
-                ['gnome-terminal', '-x', f'sudo {sys.executable} -m pip install {" ".join(package_names)} --no-color'],
-                shell=True,
-                stderr=subprocess.STDOUT
-            ).decode('utf-8').replace("\r", "")
-            if output != '':
-                return (False, output)
-        else:
-            return (False, err)
-    except subprocess.CalledProcessError as err:
+    except (PermissionError, OSError, subprocess.CalledProcessError) as err:
         logger.error(err)
         return (False, err.output)
     return (False, ":(")
