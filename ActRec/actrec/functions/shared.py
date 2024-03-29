@@ -856,11 +856,33 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
         tuple[bool, str]: (success, installation output)
     """
     try:
-        # creates and removes dir to check for writing permission to this path
+        # install package
         output = subprocess.check_output(
             [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
         ).decode('utf-8').replace("\r", "")
+
+        # get sys.path from pip after installation to update the current sys.path
+        output_paths = subprocess.check_output(
+            [sys.executable, '-m', 'site']
+        ).decode('utf-8').replace("\r", "")
+
+        # parse the output to get all sys.path paths
+        in_path_list = False
+        for line in output_paths.splitlines():
+            if line.strip() == "sys.path = [":
+                in_path_list = True
+                continue
+            elif not in_path_list:
+                continue
+            if line.strip() == "]":
+                break
+
+            path = line.strip(" \'\",\t").replace("\\\\", "\\")
+            if path not in sys.path:
+                sys.path.append(path)
+
         return (True, output)
+
     except (PermissionError, OSError, subprocess.CalledProcessError) as err:
         logger.error(err)
         return (False, err.output)
