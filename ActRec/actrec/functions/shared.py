@@ -895,9 +895,9 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
         ).decode('utf-8').replace("\r", "")
         return (True, output)
     except PermissionError as err:
+        logger.error(err)
+        logger.info("Need Admin Permissions to write to %s" % path)
         if sys.platform == "win32":
-            logger.info(err)
-            logger.info("Need Admin Permissions to write to %s" % path)
             logger.info("Trying to install with admin permission.")
             output = subprocess.check_output(
                 [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
@@ -916,6 +916,7 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
         else:
             return (False, err)
     except subprocess.CalledProcessError as err:
+        logger.error(err)
         return (False, err.output)
     return (False, ":(")
 
