@@ -33,12 +33,11 @@
         "WHEELDOWNMOUSE",
         "WHEELUPMOUSE"
     ],
-    "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": [
+    "flake8.args": [
         "--max-line-length=120",
         "--ignore=E121,E123,E126,E226,E24,E704,F722,F821,F401,W503,W504"
     ],
-    "python.formatting.autopep8Args": [
+    "autopep8.args": [
         "--max-line-length",
         "120",
         "--experimental"

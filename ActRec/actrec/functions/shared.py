@@ -7,8 +7,8 @@ import json
 import os
 import sys
 import numpy
+import importlib
 import functools
-import ensurepip
 import subprocess
 import traceback
 from typing import TYPE_CHECKING
@@ -138,7 +138,9 @@ def property_to_python(property: Property, exclude: list = [], depth: int = 5) -
         # CollectionProperty
         if hasattr(property, "bl_rna"):
             data = get_pointer_property_as_dict(property, exclude, depth)
-            data["items"] = [property_to_python(item, exclude, depth) for item in property]
+            data["items"] = [
+                property_to_python(item, exclude, depth) for item in property
+            ]
             return data
         else:
             return [property_to_python(item, exclude, depth) for item in property]
@@ -172,7 +174,8 @@ def apply_data_to_item(property: Property, data, key="") -> None:
             elif isinstance(item, bpy.types.bpy_prop_array):  # ArrayProperty
                 setattr(property, key, data)
                 return
-        if isinstance(item, (set, bpy.types.bpy_prop_array)):  # EnumProperty with EnumFlag but no key
+        # EnumProperty with EnumFlag but no key
+        if isinstance(item, (set, bpy.types.bpy_prop_array)):
             return
         for element in data:
             apply_data_to_item(item.add(), element)
@@ -374,7 +377,8 @@ def update_command(command: str) -> Union[str, bool]:
     if not command.startswith("bpy.ops."):
         return False
     command, values = command.split("(", 1)
-    values = extract_properties(values[:-1])  # values [:-1] remove closing bracket
+    # values [:-1] remove closing bracket
+    values = extract_properties(values[:-1])
     for i in range(len(values)):
         values[i] = values[i].split("=")
     try:
@@ -482,7 +486,8 @@ def play(
             if len(macros) <= i + 1:
                 action.is_playing = False
                 return "The 'Render Complete' macro was skipped because no additional macros follow!"
-            shared_data.render_complete_macros.append((action_type, action.id, macros[i + 1].id))
+            shared_data.render_complete_macros.append(
+                (action_type, action.id, macros[i + 1].id))
             break
         elif data['Type'] == 'Loop':
             loop_count = 1
@@ -493,7 +498,9 @@ def play(
                 if split[0] != 'ar.event':
                     continue
                 process_data = json.loads(":".join(split[1:]))
-                loop_count += 2 * (process_data['Type'] == 'Loop') - (process_data['Type'] == 'EndLoop')  # 1 or -1
+                loop_count += 2 * \
+                    (process_data['Type'] == 'Loop') - \
+                    (process_data['Type'] == 'EndLoop')  # 1 or -1
                 if loop_count == 0:
                     loop_table[process_macro.id] = macro.id
                     loop_size[macro.id] = j
@@ -595,8 +602,10 @@ def play(
                     error = traceback.format_exception(*sys.exc_info())
                     # corrects the filename of the exception to the text name, otherwise "<string>"
                     error_split = error[3].replace('"<string>"', '').split(',')
-                    error[3] = '%s "%s",%s' % (error_split[0], text.name, error_split[1])
-                    error.pop(2)  # removes exec(self.as_string(), mod.__dict__) in bpy_types.py
+                    error[3] = '%s "%s",%s' % (
+                        error_split[0], text.name, error_split[1])
+                    # removes exec(self.as_string(), mod.__dict__) in bpy_types.py
+                    error.pop(2)
                     error.pop(1)  # removes text.as_module()
                     error = "".join(error)
                     logger.error("%s; command: %s" % (error, data))
@@ -647,7 +656,8 @@ def play(
                     area_type = temp_area.ui_type
                     temp_area.ui_type = macro.ui_type
             if temp_area:
-                for region in reversed(temp_area.regions):  # mostly "WINDOW" is at the end of the list
+                # mostly "WINDOW" is at the end of the list
+                for region in reversed(temp_area.regions):
                     if region.type != "WINDOW":
                         continue
                     temp_region = region
@@ -720,7 +730,8 @@ def get_font_path() -> str:
         str: path to the font
     """
     if bpy.context.preferences.view.font_path_ui == '':
-        dirc = "\\".join(sys.executable.split("\\")[:-3])
+        dirc = os.path.dirname(os.path.dirname(
+            os.path.dirname(sys.executable)))
         if bpy.app.version >= (4, 0, 0):
             return os.path.join(dirc, "datafiles", "fonts", "Inter.woff2")
         if bpy.app.version >= (3, 4, 0):
@@ -741,7 +752,8 @@ def split_and_keep(sep: str, text: str) -> list[str]:
     Returns:
         list[str]: list of splitted str
     """
-    p = chr(ord(max(text)) + 1)  # creates str, which isn't contained inside the text to uses as split separator
+    # creates str, which isn't contained inside the text to uses as split separator
+    p = chr(ord(max(text)) + 1)
     for s in sep:
         text = text.replace(s, s + p)
     return text.split(p)
@@ -834,6 +846,30 @@ def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str 
     return lines
 
 
+def check_ensurepip() -> bool:
+    """
+    Ensures that ensurepip is installed
+
+    Returns:
+        bool: True if ensurepip exists or could be installed.
+    """
+    if importlib.util.find_spec('ensurepip') is not None:
+        return True
+
+    logger.warning(
+        "Could not found module 'ensurepip'. Running 'python -m ensurepip'\n")
+
+    try:
+        subprocess.check_output(
+            [sys.executable, '-m', 'ensurepip']
+        )
+    except (PermissionError, subprocess.CalledProcessError) as err:
+        logger.error("Failed installing ensurepip: %s" % err)
+        return False
+
+    return importlib.util.find_spec('ensurepip') is not None
+
+
 def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     """
     install the listed packages and ask for user permission if needed
@@ -844,9 +880,12 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     Returns:
         tuple[bool, str]: (success, installation output)
     """
-    ensurepip.bootstrap()
+    if check_ensurepip():
+        import ensurepip
+        ensurepip.bootstrap()
+
     os.environ.pop("PIP_REQ_TRACKER", None)
-    path = "%s\\test_easy_package_installation" % os.path.dirname(sys.executable)
+    path = os.path.join(os.path.dirname(sys.executable), "test_easy_package_installation")
     try:
         # creates and removes dir to check for writing permission to this path
         os.mkdir(path)
@@ -859,7 +898,7 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
         if sys.platform == "win32":
             logger.info(err)
             logger.info("Need Admin Permissions to write to %s" % path)
-            logger.info("Try again to install fontTools as admin")
+            logger.info("Trying to install with admin permission.")
             output = subprocess.check_output(
                 [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
                 stderr=subprocess.STDOUT
