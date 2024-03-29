@@ -897,13 +897,16 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
     except PermissionError as err:
         logger.error(err)
         logger.info("Need Admin Permissions to write to %s" % path)
+
+        output = subprocess.check_output(
+            [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
+            stderr=subprocess.STDOUT
+        ).decode('utf-8').replace("\r", "")
+        logger.info(output)
+
         if sys.platform == "win32":
             logger.info("Trying to install with admin permission.")
-            output = subprocess.check_output(
-                [sys.executable, '-m', 'pip', 'uninstall', '-y', *package_names, '--no-color'],
-                stderr=subprocess.STDOUT
-            ).decode('utf-8').replace("\r", "")
-            logger.info(output)
+
             output = subprocess.check_output(
                 ['powershell.exe', '-WindowStyle', 'hidden', '-Command',
                     """& { Start-Process -WindowStyle hidden \'%s\' -Wait -ArgumentList \'-m\',
@@ -911,6 +914,16 @@ def install_packages(*package_names: list[str]) -> tuple[bool, str]:
                     % (sys.executable, ",".join("\'%s\'" % p for p in package_names))],
                 stderr=subprocess.STDOUT
             ).decode('unicode_escape').replace("\r", "")
+            if output != '':
+                return (False, output)
+        elif sys.platform.startswith("linux"):
+            logger.info("Trying to install with admin permission.")
+
+            output = subprocess.check_output(
+                ['gnome-terminal', '-x', f'sudo {sys.executable} -m pip install {" ".join(package_names)} --no-color'],
+                shell=True,
+                stderr=subprocess.STDOUT
+            ).decode('utf-8').replace("\r", "")
             if output != '':
                 return (False, output)
         else:
