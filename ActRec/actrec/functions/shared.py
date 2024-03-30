@@ -729,13 +729,17 @@ def get_font_path() -> str:
         str: path to the font
     """
     if bpy.context.preferences.view.font_path_ui == '':
-        dirc = os.path.dirname(os.path.dirname(
-            os.path.dirname(sys.executable)))
-        if bpy.app.version >= (4, 0, 0):
-            return os.path.join(dirc, "datafiles", "fonts", "Inter.woff2")
-        if bpy.app.version >= (3, 4, 0):
-            return os.path.join(dirc, "datafiles", "fonts", "DejaVuSans.woff2")
-        return os.path.join(dirc, "datafiles", "fonts", "droidsans.ttf")
+        version = bpy.app.version
+        version_directory = os.path.dirname(bpy.app.binary_path)
+        for root, dirs, _ in os.walk(version_directory):
+            if len(root) and root.strip(" /\\").endswith("datafiles") and "fonts" in dirs:
+                version_directory = os.path.join(root, "fonts")
+                break
+        if version >= (4, 0, 0):
+            return os.path.join(version_directory, "Inter.woff2")
+        if version >= (3, 4, 0):
+            return os.path.join(version_directory, "DejaVuSans.woff2")
+        return os.path.join(version_directory, "datafiles", "fonts", "droidsans.ttf")
     else:
         return bpy.context.preferences.view.font_path_ui
 
