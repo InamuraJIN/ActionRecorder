@@ -90,7 +90,7 @@ def executed_operator_to_dict(ops: Operator) -> dict:
     else:
         props = ops.properties
         if not hasattr(props, 'bl_rna'):
-            return props
+            return props if isinstance(props, dict) else data
         for key in props.bl_rna.properties.keys()[1:]:
             data[key] = convert_value_to_python(getattr(props, key))
     return data
