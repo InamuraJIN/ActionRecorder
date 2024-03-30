@@ -1,5 +1,5 @@
 {
-    "version": [4, 1, 0],
+    "version": [4, 1, 1],
     "files": {
         "ActRec/actrec/functions/__init__.py": [4, 1, 0],
         "ActRec/actrec/functions/categories.py": [4, 1, 0],
@@ -40,7 +40,7 @@
         "ActRec/actrec/preferences.py": [4, 1, 0],
         "ActRec/actrec/shared_data.py": [4, 0, 8],
         "ActRec/actrec/update.py": [4, 1, 0],
-        "ActRec/__init__.py": [4, 1, 0]
+        "ActRec/__init__.py": [4, 1, 1]
     },
     "remove": []
 }
