@@ -739,7 +739,7 @@ def get_font_path() -> str:
             return os.path.join(version_directory, "Inter.woff2")
         if version >= (3, 4, 0):
             return os.path.join(version_directory, "DejaVuSans.woff2")
-        return os.path.join(version_directory, "datafiles", "fonts", "droidsans.ttf")
+        return os.path.join(version_directory, "droidsans.ttf")
     else:
         return bpy.context.preferences.view.font_path_ui
 
