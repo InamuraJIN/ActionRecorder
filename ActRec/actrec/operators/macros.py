@@ -513,7 +513,7 @@ class Font_analysis():
         font = TTFont(self.path)
         self.t = font['cmap'].getcmap(3, 1).cmap
         self.s = font.getGlyphSet()
-        self.width_in_pixels = 10 / font['head'].unitsPerEm
+        self.units_per_em = font['head'].unitsPerEm
 
     @classmethod
     def is_installed(cls) -> bool:
@@ -556,20 +556,22 @@ class Font_analysis():
                 return False
         return True
 
-    def get_width_of_text(self, text: str) -> list[float]:
+    def get_width_of_text(self, context: Context, text: str) -> list[float]:
         """
         get the width of each character of the text in pixels,
         because Blender uses Pixel for measurement of window width
 
         Args:
+            context (Context): active blender context
             text (str): text to get width from
 
         Returns:
             list[float]: width for each character in the text
         """
         total = []
+        font_style = context.preferences.ui_styles[0].widget
         for c in text:
-            total.append(self.s[self.t[ord(c)]].width * self.width_in_pixels)
+            total.append(self.s[self.t[ord(c)]].width * font_style.points/self.units_per_em)
         return total
 
 
@@ -714,7 +716,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         if self.use_last_command:
             return
         self.lines.clear()
-        for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
+        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width - 20):
             new = self.lines.add()
             new['text'] = line
 
@@ -742,7 +744,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         if not self.use_last_command:
             return
         self.lines.clear()
-        for line in functions.text_to_lines(value, AR_OT_macro_edit.font, self.width - 20):
+        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width - 20):
             new = self.lines.add()
             new['text'] = line
 

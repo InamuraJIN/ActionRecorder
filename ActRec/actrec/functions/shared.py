@@ -730,16 +730,16 @@ def get_font_path() -> str:
     """
     if bpy.context.preferences.view.font_path_ui == '':
         version = bpy.app.version
-        version_directory = os.path.dirname(bpy.app.binary_path)
-        for root, dirs, _ in os.walk(version_directory):
-            if len(root) and root.strip(" /\\").endswith("datafiles") and "fonts" in dirs:
-                version_directory = os.path.join(root, "fonts")
-                break
+        font_directory = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(bpy.__file__)))),
+            "datafiles",
+            "fonts"
+        )
         if version >= (4, 0, 0):
-            return os.path.join(version_directory, "Inter.woff2")
+            return os.path.join(font_directory, "Inter.woff2")
         if version >= (3, 4, 0):
-            return os.path.join(version_directory, "DejaVuSans.woff2")
-        return os.path.join(version_directory, "droidsans.ttf")
+            return os.path.join(font_directory, "DejaVuSans.woff2")
+        return os.path.join(font_directory, "droidsans.ttf")
     else:
         return bpy.context.preferences.view.font_path_ui
 
@@ -797,12 +797,13 @@ def get_attribute_default(obj: object, name: str, default: None) -> object | Non
     return obj
 
 
-def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str = " ,") -> list[str]:
+def text_to_lines(context: Context, text: str, font: Font_analysis, limit: int, endcharacter: str = " ,") -> list[str]:
     """
     converts a one line text to multiple lines saved as a list
     (needed because Blender doesn't have text boxes)
 
     Args:
+        context (Context): active blender context
         text (str): text to convert
         font (Font_analysis): loaded font to work on
         limit (int): maximum size of one line
@@ -813,7 +814,7 @@ def text_to_lines(text: str, font: Font_analysis, limit: int, endcharacter: str 
     """
     if text == "" or not font.use_dynamic_text:
         return [text]
-    characters_width = font.get_width_of_text(text)
+    characters_width = font.get_width_of_text(context, text)
     possible_breaks = split_and_keep(endcharacter, text)
     lines = [""]
     start = 0
