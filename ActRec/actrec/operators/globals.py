@@ -481,10 +481,15 @@ class AR_OT_global_export(Operator, ExportHelper):
             )
         for category in ActRec_pref.categories:
             if category.id in export_category_ids:
-                data['categories'].append(functions.property_to_python(
+                item = functions.property_to_python(
                     category,
                     exclude=["name", "selected", "actions.name", "areas.name", "areas.modes.name"]
-                ))
+                )
+                length = len(item["actions"])
+                for i, action in enumerate(reversed(item["actions"]), start=1):
+                    if action["id"] not in export_action_ids:
+                        item["actions"].pop(length - i)
+                data['categories'].append(item)
         for action in ActRec_pref.global_actions:
             if action.id in export_action_ids:
                 data['actions'].append(functions.property_to_python(
