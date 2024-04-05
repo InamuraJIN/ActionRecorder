@@ -46,7 +46,17 @@ def load_action_keymap_data(data: list, items: KeyMapItems) -> None:
         kmi.map_type = key['map_type']
 
 
-def append_keymap(self, data: dict, export_action_ids: list, km: KeyMap) -> None:
+def append_keymap(data: dict, export_action_ids: list, km: KeyMap) -> None:
+    """
+    Appends the given keymap to the data dict with on the key 'keymap'
+    wich holds a dict of the values 'id, active, type, value,
+    any, shift, ctrl, alt, oskey, key_modifier, repeat, map_type'.
+
+    Args:
+        data (dict): The dict where the keymap gets appended.
+        export_action_ids (list): The ids of the action that get exported i.e. are selected for export
+        km (KeyMap): The keymap to append.
+    """
     for kmi in km.keymap_items:
         if kmi.idname == "ar.global_execute_action" and kmi.properties.id in export_action_ids:
             data['keymap'].append({
