@@ -49,7 +49,7 @@ class AR_preferences(AddonPreferences):
         default=os.path.dirname(os.path.dirname(__file__)),
         get=lambda self: self.bl_rna.properties['source_addon_directory'].default
     )  # get the base addon directory of the source files
-    
+
     addon_directory: StringProperty(
         name="addon directory",
         default=bpy.utils.extension_path_user(base_package, create=True),
@@ -122,7 +122,6 @@ class AR_preferences(AddonPreferences):
         options={'HIDDEN'}
     )
 
-
     # update
     update: BoolProperty()
     restart: BoolProperty()
@@ -142,7 +141,6 @@ class AR_preferences(AddonPreferences):
         subtype='PERCENTAGE'
     )  # used as slider
 
-    
     # update
     update: BoolProperty()
     restart: BoolProperty()

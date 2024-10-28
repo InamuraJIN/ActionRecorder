@@ -690,7 +690,7 @@ def play(
         action.is_playing = False
 
 
-@ persistent
+@persistent
 def execute_render_complete(dummy=None) -> None:
     # https://docs.blender.org/api/current/bpy.app.handlers.html
     """
