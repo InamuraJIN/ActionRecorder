@@ -22,6 +22,7 @@ from bpy.app.handlers import persistent
 from . import config
 from .log import logger
 from .functions.shared import get_preferences
+from .. import __package__ as base_package
 if TYPE_CHECKING:
     from .preferences import AR_preferences
 else:
@@ -29,7 +30,6 @@ else:
 # endregion
 
 
-__module__ = __package__.split(".")[0]
 
 
 class Update_manager:
@@ -57,7 +57,7 @@ def on_start(dummy: Scene = None) -> None:
     ActRec_pref = get_preferences(bpy.context)
     if not (ActRec_pref.auto_update and Update_manager.version_file_thread is None):
         return
-    t = threading.Thread(target=no_stream_download_version_file, args=[__module__], daemon=True)
+    t = threading.Thread(target=no_stream_download_version_file, args=[base_package], daemon=True)
     t.start()
     Update_manager.version_file_thread = t
 

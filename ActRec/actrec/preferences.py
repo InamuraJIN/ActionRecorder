@@ -13,6 +13,7 @@ import rna_keymap_ui
 # relative imports
 from . import properties, functions, config, update, keymap, log, shared_data
 from .log import logger, log_sys
+from .. import __package__ as base_package
 
 if TYPE_CHECKING:
     def get_preferences(): return
@@ -24,7 +25,7 @@ else:
 
 
 class AR_preferences(AddonPreferences):
-    bl_idname = __package__.split(".")[0]
+    bl_idname = base_package
 
     def update_is_loaded(self, context: Context) -> None:
         context.scene.name = context.scene.name

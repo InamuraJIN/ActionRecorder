@@ -22,6 +22,7 @@ from bpy.types import PointerProperty, Property, CollectionProperty, Context, Ad
 # relative imports
 from ..log import logger
 from .. import shared_data
+from ... import __package__ as base_package
 if TYPE_CHECKING:
     from ..preferences import AR_preferences
     from ..properties.shared import AR_action
@@ -32,7 +33,6 @@ else:
     Font_analysis = object
 # endregion
 
-__module__ = __package__.split(".")[0]
 
 # region functions
 
@@ -411,7 +411,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
     else:
         temp_override = context.temp_override(**context_copy)
     with temp_override:
-        ActRec_pref = context.preferences.addons[__module__].preferences
+        ActRec_pref = get_preferences(context)
         action = getattr(ActRec_pref, action_type)[action_id]
         play(context, action.macros, action, action_type, start)
 
@@ -904,6 +904,6 @@ def get_preferences(context: Context) -> AR_preferences:
     Returns:
         AR_preferences: preferences of this addon
     """
-    return context.preferences.addons[__module__].preferences
+    return context.preferences.addons[base_package].preferences
 
 # endregion
