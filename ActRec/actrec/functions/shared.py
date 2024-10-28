@@ -12,6 +12,7 @@ import subprocess
 import traceback
 from typing import TYPE_CHECKING
 from mathutils import Vector, Matrix, Color, Euler, Quaternion
+from ... import __package__ as base_package
 
 # blender modules
 import bpy
@@ -31,8 +32,6 @@ else:
     AR_action = PropertyGroup
     Font_analysis = object
 # endregion
-
-__module__ = __package__.split(".")[0]
 
 # region functions
 
@@ -411,7 +410,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
     else:
         temp_override = context.temp_override(**context_copy)
     with temp_override:
-        ActRec_pref = context.preferences.addons[__module__].preferences
+        ActRec_pref = get_preferences(context)
         action = getattr(ActRec_pref, action_type)[action_id]
         play(context, action.macros, action, action_type, start)
 
@@ -850,50 +849,6 @@ def text_to_lines(context: Context, text: str, font: Font_analysis, limit: int, 
     return lines
 
 
-def install_packages(*package_names: list[str]) -> tuple[bool, str]:
-    """
-    install the listed packages and ask for user permission if needed
-
-    Args:
-        package_names list[str]: name of the package
-
-    Returns:
-        tuple[bool, str]: (success, installation output)
-    """
-    try:
-        # install package
-        output = subprocess.check_output(
-            [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
-        ).decode('utf-8').replace("\r", "")
-
-        # get sys.path from pip after installation to update the current sys.path
-        output_paths = subprocess.check_output(
-            [sys.executable, '-m', 'site']
-        ).decode('utf-8').replace("\r", "")
-
-        # parse the output to get all sys.path paths
-        in_path_list = False
-        for line in output_paths.splitlines():
-            if line.strip() == "sys.path = [":
-                in_path_list = True
-                continue
-            elif not in_path_list:
-                continue
-            if line.strip() == "]":
-                break
-
-            path = line.strip(" \'\",\t").replace("\\\\", "\\")
-            if path not in sys.path:
-                sys.path.append(path)
-
-        return (True, output)
-
-    except (PermissionError, OSError, subprocess.CalledProcessError) as err:
-        logger.error(err)
-        return (False, err.output)
-    return (False, ":(")
-
-
 def get_preferences(context: Context) -> AR_preferences:
     """
     get addon preferences of this addon, which are stored in Blender
@@ -904,6 +859,6 @@ def get_preferences(context: Context) -> AR_preferences:
     Returns:
         AR_preferences: preferences of this addon
     """
-    return context.preferences.addons[__module__].preferences
+    return context.preferences.addons[base_package].preferences
 
 # endregion

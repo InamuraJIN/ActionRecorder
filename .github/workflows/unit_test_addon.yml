@@ -14,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        blender-version: ["4.0", "3.6", "3.3"]
+        blender-version: ["4.2", "3.6",]
         #os: [ubuntu-latest, windows-latest, macos-latest]
-        # FIXME Addon doesn't work on Ubuntu (don't know why)
+        # FIXME Addon tests doesn't work on Ubuntu (don't know why)
         os: [windows-latest]
     env:
       BLENDER_CACHE: ${{ github.workspace }}/.blender_releases_cache # The place where blender releases are downloaded

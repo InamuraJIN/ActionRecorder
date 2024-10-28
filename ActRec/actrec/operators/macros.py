@@ -497,7 +497,7 @@ class Font_analysis():
     def __init__(self, font_path: str) -> None:
         self.path = font_path
 
-        if importlib.util.find_spec('fontTools') is None:
+        if Font_analysis.is_installed():
             self.use_dynamic_text = False
             return
 
@@ -517,44 +517,37 @@ class Font_analysis():
 
     @classmethod
     def is_installed(cls) -> bool:
+        """
+        Check if the fontTools and brotli package is installed through its wheels
+
+        Returns:
+            bool: True if both packages are installed, otherwise False
+        """
 
         return (
             importlib.util.find_spec('fontTools') is not None
-            and (bpy.app.version < (3, 4, 0) or importlib.util.find_spec('brotli'))
+            and importlib.util.find_spec('brotli') is not None
         )
 
-    @classmethod
-    def install(cls, logger: Logger) -> bool:
-        """
-        install fonttools to blender modules if not installed
+    # @classmethod
+    # def install(cls, logger: Logger) -> bool:
+    #     """
+    #     Install fonttools and brotli from the wheels
 
-        Returns:
-            bool: success
-        """
-        if bpy.app.version >= (3, 4, 0):
-            # Blender 3.4 uses woff2 therefore the package brotli is required
-            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
-                success, output = functions.install_packages('fontTools', 'brotli')
-                if success:
-                    logger.info(output)
-                else:
-                    logger.warning(output)
+    #     Returns:
+    #         bool: success
+    #     """
+    #     if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
+    #         success, output = functions.install_packages('fontTools', 'brotli')
+    #         if success:
+    #             logger.info(output)
+    #         else:
+    #             logger.warning(output)
 
-            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
-                logger.warning("For some reason fontTools or brotli couldn't be installed :(")
-                return False
-        else:
-            if importlib.util.find_spec('fontTools') is None:
-                success, output = functions.install_packages('fontTools')
-                if success:
-                    logger.info(output)
-                else:
-                    logger.warning(output)
-
-            if importlib.util.find_spec('fontTools') is None:
-                logger.warning("For some reason fontTools couldn't be installed :(")
-                return False
-        return True
+    #     if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
+    #         logger.warning("For some reason fontTools or brotli couldn't be installed :(")
+    #         return False
+    #     return True
 
     def get_width_of_text(self, context: Context, text: str) -> list[float]:
         """

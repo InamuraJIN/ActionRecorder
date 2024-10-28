@@ -9,12 +9,12 @@ from datetime import datetime
 # blender modules
 import bpy
 from bpy.app.handlers import persistent
+import addon_utils
+from .. import __package__ as base_package
 
 # relative imports
 from . import config
 # endregion
-
-__module__ = __package__.split(".")[0]
 
 # region Log system
 
@@ -29,38 +29,27 @@ class Log_system:
         Args:
             count (int): amount of log files which are kept simultaneously
         """
-        dir = self.directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+        dir = self.directory = os.path.join(bpy.utils.extension_path_user(base_package, create=True), "logs")
         if not os.path.exists(dir):
             os.mkdir(dir)
         all_logs = os.listdir(dir)
-        log_later = []
+        self.log_later = []
         while len(all_logs) >= count:
             try:
                 # delete oldest file
                 os.remove(min([os.path.join(dir, filename) for filename in all_logs], key=os.path.getctime))
             except PermissionError as err:
-                log_later.append("File is already used -> PermissionError: %s" % str(err))
+                self.log_later.append("File is already used -> PermissionError: %s" % str(err))
                 break
             except FileNotFoundError as err:
-                log_later.append("For some reason the File doesn't exists %s" % str(err))
+                self.log_later.append("For some reason the File doesn't exists %s" % str(err))
                 break
             all_logs = os.listdir(dir)
-        name = ""
-        for arg in sys.argv:
-            if arg.endswith(".blend"):
-                name = "%s_" % ".".join(os.path.basename(arg).split(".")[:-1])
-        self.path = os.path.join(dir, "ActRec_%s%s.log" % (name, datetime.today().strftime('%d-%m-%Y_%H-%M-%S')))
+        self.path = os.path.join(dir, "ActRec_%s.log" % (datetime.today().strftime('%d-%m-%Y_%H-%M-%S')))
 
-        logger = logging.getLogger(__module__)
+        logger = logging.getLogger(base_package)
         self.logger = logger
         logger.setLevel(logging.DEBUG)
-
-        logger.info(
-            "Logging ActRec %s running on Blender %s"
-            % (".".join([str(x) for x in config.version]), bpy.app.version_string)
-        )
-        for log_text in log_later:
-            logger.info(log_text)
 
         sys.excepthook = self.exception_handler
 
@@ -87,6 +76,25 @@ class Log_system:
         file_handler.setFormatter(file_formatter)
         self.logger.addHandler(file_handler)
         self.file_handler = file_handler
+
+        self.startup_log()
+
+    def startup_log(self):
+        """
+        Logging startup information of the logfile
+        """
+        addon_version = (-1, -1, -1)
+        for mod in addon_utils.modules():
+            if mod.__name__ == base_package:
+                addon_version = mod.bl_info.get("version", addon_version)
+                break
+
+        logger.info(
+            "Logging ActRec %s running on Blender %s"
+            % (".".join([str(x) for x in addon_version]), bpy.app.version_string)
+        )
+        for log_text in self.log_later:
+            logger.info(log_text)
 
 
 def update_log_amount_in_config(amount: int) -> None:

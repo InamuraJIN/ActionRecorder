@@ -1,7 +1,6 @@
 # region Imports
 # external modules
 import os
-import importlib
 from typing import TYPE_CHECKING
 
 # blender modules
@@ -11,8 +10,9 @@ from bpy.types import AddonPreferences, Context
 import rna_keymap_ui
 
 # relative imports
-from . import properties, functions, config, update, keymap, log, shared_data
+from . import properties, functions, config, keymap, log, shared_data
 from .log import logger, log_sys
+from .. import __package__ as base_package
 
 if TYPE_CHECKING:
     def get_preferences(): return
@@ -24,7 +24,7 @@ else:
 
 
 class AR_preferences(AddonPreferences):
-    bl_idname = __package__.split(".")[0]
+    bl_idname = base_package
 
     def update_is_loaded(self, context: Context) -> None:
         context.scene.name = context.scene.name
@@ -44,17 +44,22 @@ class AR_preferences(AddonPreferences):
         set=set_is_loaded
     )
 
+    source_addon_directory: StringProperty(
+        name="source addon directory",
+        default=os.path.dirname(os.path.dirname(__file__)),
+        get=lambda self: self.bl_rna.properties['source_addon_directory'].default
+    )  # get the base addon directory of the source files
+    
     addon_directory: StringProperty(
         name="addon directory",
-        default=os.path.dirname(os.path.dirname(__file__)),
+        default=bpy.utils.extension_path_user(base_package, create=True),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
-    )  # get the base addon directory
+    )  # get the base addon directory for local files
 
     preference_tab: EnumProperty(
         items=[('settings', "Settings", ""),
                ('path', "Paths", ""),
-               ('keymap', "Keymap", ""),
-               ('update', "Update", "")],
+               ('keymap', "Keymap", "")],
         name="Tab",
         description="Switch between preference tabs"
     )
@@ -103,7 +108,7 @@ class AR_preferences(AddonPreferences):
     icon_path: StringProperty(
         name="Icons Path",
         description="The Path to the Storage for the added Icons",
-        default=os.path.join(os.path.dirname(os.path.dirname(__file__)), "Icons"),
+        default=os.path.join(bpy.utils.extension_path_user(base_package, create=True), "Icons"),
         get=get_icon_path,
         set=set_icon_path
     )
@@ -117,6 +122,27 @@ class AR_preferences(AddonPreferences):
         options={'HIDDEN'}
     )
 
+
+    # update
+    update: BoolProperty()
+    restart: BoolProperty()
+    version: StringProperty()
+    auto_update: BoolProperty(
+        default=True,
+        name="Auto Update",
+        description="automatically search for a new update"
+    )
+    update_progress: IntProperty(
+        name="Update Progress",
+        default=-1,
+        min=-1,
+        max=100,
+        soft_min=0,
+        soft_max=100,
+        subtype='PERCENTAGE'
+    )  # used as slider
+
+    
     # update
     update: BoolProperty()
     restart: BoolProperty()
@@ -271,7 +297,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
     storage_path: StringProperty(
         name="Storage Path",
         description="The Path to the Storage for the saved Categories",
-        default=os.path.join(os.path.dirname(os.path.dirname(__file__)), "Storage.json"),
+        default=os.path.join(bpy.utils.extension_path_user(base_package, create=True), "Storage.json"),
         get=get_storage_path,
         set=set_storage_path
     )
@@ -301,21 +327,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
         col = layout.column()
         row = col.row(align=True)
         row.prop(ActRec_pref, 'preference_tab', expand=True)
-        if ActRec_pref.preference_tab == 'update':
-            col.operator('wm.url_open', text="Release Notes").url = config.release_notes_url
-            row = col.row()
-            if ActRec_pref.update:
-                update.draw_update_button(row, ActRec_pref)
-            else:
-                row.operator('ar.update_check', text="Check For Updates")
-                if ActRec_pref.restart:
-                    row.operator('ar.show_restart_menu', text="Restart to Finish")
-            if ActRec_pref.version != '':
-                if ActRec_pref.update:
-                    col.label(text="A new Version is available (%s)" % ActRec_pref.version)
-                else:
-                    col.label(text="You are using the latest Version (%s)" % ActRec_pref.version)
-        elif ActRec_pref.preference_tab == 'path':
+        if ActRec_pref.preference_tab == 'path':
             col.label(text='Action Storage Folder')
             row = col.row()
             ops = row.operator(
@@ -395,17 +407,10 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
                     rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()
-            row.prop(self, 'auto_update')
             row.prop(self, 'autosave')
             row = col.row()
             row.prop(self, 'hide_local_text')
             row.prop(self, 'local_create_empty')
-            if importlib.util.find_spec('fontTools') is None:
-                row = col.row()
-                if self.multiline_support_installing:
-                    row.label(text="Installing fontTools...")
-                else:
-                    row.operator('ar.macro_install_multiline_support')
             col.separator(factor=1.5)
             row = col.row()
             row.operator('wm.url_open', text="Manual", icon='ASSET_MANAGER').url = config.manual_url
