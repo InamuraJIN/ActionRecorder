@@ -37,7 +37,8 @@ def get_user_path(package: str, path: str = '', create: bool = False):
         if err.args[0] == "The \"package\" does not name an extension":
             print("--> This error might be caused as the addon is installed the first time.")
             print("    If this errors remains please try reinstalling the Add-on and report it to the developer.")
-            print("    Fallback to old extension directory: %s." % fallback)
+
+        print("    Fallback to old extension directory: %s." % fallback)
         return fallback
 
 # endregion
