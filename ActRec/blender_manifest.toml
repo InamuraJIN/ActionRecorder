@@ -61,17 +61,14 @@ wheels = [
 # # For each permission it is important to also specify the reason why it is required.
 # # Keep this a single short sentence without a period (.) at the end.
 # # For longer explanations use the documentation or detail page.
-#
-# [permissions]
-# network = "Need to sync motion-capture data to server"
-files = "Save/Load the global action list (Storage.json)"
-# clipboard = "Copy and paste bone transforms"
+[permissions]
+files = "Save/Load the global action list (Storage.json), save custom icons and write to log file."
 
 # # Optional: advanced build settings.
 # # https://docs.blender.org/manual/en/dev/advanced/extensions/command_line_arguments.html#command-line-args-extension-build
-# [build]
 # # These are the default build excluded patterns.
 # # You only need to edit them if you want different options.
+[build]
 paths_exclude_pattern = [
   "__pycache__/",
   "/.git/",
