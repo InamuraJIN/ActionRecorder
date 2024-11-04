@@ -45,16 +45,7 @@ class Log_system:
         Args:
             count (int): amount of log files which are kept simultaneously
         """
-        dir = self.directory = None
-        try:
-            dir = self.directory = os.path.join(wrapper.get_user_path(base_package, create=True), "logs")
-        except ValueError as err:
-            print("ERROR ActRec: %s" % str(err))
-            if err.args[0] == "The \"package\" does not name an extension":
-                print("--> This error might be caused as the addon is installed the first time.")
-                print("    If this errors remains please try reinstalling the Add-on and report it to the developer.")
-                print("    The Logger of this Add-on will be disabled now.")
-            return
+        dir = self.directory = os.path.join(wrapper.get_user_path(base_package, create=True), "logs")
 
         if not os.path.exists(dir):
             os.mkdir(dir)
