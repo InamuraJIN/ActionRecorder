@@ -14,6 +14,7 @@ from .. import __package__ as base_package
 
 # relative imports
 from . import config
+from .functions import wrapper
 # endregion
 
 # region Log system
@@ -29,7 +30,32 @@ class Log_system:
         Args:
             count (int): amount of log files which are kept simultaneously
         """
-        dir = self.directory = os.path.join(bpy.utils.extension_path_user(base_package, create=True), "logs")
+        logger = logging.getLogger(base_package)
+        self.logger = logger
+        logger.setLevel(logging.DEBUG)
+
+        self.setup_file_logging(count)
+
+        sys.excepthook = self.exception_handler
+
+    def setup_file_logging(self, count: int) -> None:
+        """
+        Setup the file logging if possible.
+
+        Args:
+            count (int): amount of log files which are kept simultaneously
+        """
+        dir = self.directory = None
+        try:
+            dir = self.directory = os.path.join(wrapper.get_user_path(base_package, create=True), "logs")
+        except ValueError as err:
+            print("ERROR ActRec: %s" % str(err))
+            if err.args[0] == "The \"package\" does not name an extension":
+                print("--> This error might be caused as the addon is installed the first time.")
+                print("    If this errors remains please try reinstalling the Add-on and report it to the developer.")
+                print("    The Logger of this Add-on will be disabled now.")
+            return
+
         if not os.path.exists(dir):
             os.mkdir(dir)
         all_logs = os.listdir(dir)
@@ -47,20 +73,27 @@ class Log_system:
             all_logs = os.listdir(dir)
         self.path = os.path.join(dir, "ActRec_%s.log" % (datetime.today().strftime('%d-%m-%Y_%H-%M-%S')))
 
-        logger = logging.getLogger(base_package)
-        self.logger = logger
-        logger.setLevel(logging.DEBUG)
-
-        sys.excepthook = self.exception_handler
-
     def exception_handler(self, exc_type, exc_value, exc_tb) -> None:
         traceback.print_exception(exc_type, exc_value, exc_tb)
         self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
+
+    def check_file_exists(self) -> bool:
+        """
+        Checks if file logging is possible
+
+        Returns:
+            bool: True if file logging is possible otherwise False
+        """
+
+        return hasattr(self, 'path') and self.path is not None
 
     def detach_file(self) -> None:
         """
         remove file of the logger
         """
+        if not self.check_file_exists():
+            return
+
         self.file_handler.close()
         self.logger.removeHandler(self.file_handler)
 
@@ -68,6 +101,9 @@ class Log_system:
         """
         adds a file to the logger
         """
+        if not self.check_file_exists():
+            return
+
         file_formatter = logging.Formatter(
             "%(levelname)s - %(relativeCreated)d - %(filename)s:%(funcName)s - %(message)s"
         )

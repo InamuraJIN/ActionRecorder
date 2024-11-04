@@ -13,6 +13,7 @@ import rna_keymap_ui
 from . import properties, functions, config, keymap, log, shared_data
 from .log import logger, log_sys
 from .. import __package__ as base_package
+from .functions import wrapper
 
 if TYPE_CHECKING:
     def get_preferences(): return
@@ -52,7 +53,7 @@ class AR_preferences(AddonPreferences):
 
     addon_directory: StringProperty(
         name="addon directory",
-        default=bpy.utils.extension_path_user(base_package, create=True),
+        default=wrapper.get_user_path(base_package, create=True),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
     )  # get the base addon directory for local files
 
@@ -108,7 +109,7 @@ class AR_preferences(AddonPreferences):
     icon_path: StringProperty(
         name="Icons Path",
         description="The Path to the Storage for the added Icons",
-        default=os.path.join(bpy.utils.extension_path_user(base_package, create=True), "Icons"),
+        default=os.path.join(wrapper.get_user_path(base_package, create=True), "Icons"),
         get=get_icon_path,
         set=set_icon_path
     )
@@ -295,7 +296,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
     storage_path: StringProperty(
         name="Storage Path",
         description="The Path to the Storage for the saved Categories",
-        default=os.path.join(bpy.utils.extension_path_user(base_package, create=True), "Storage.json"),
+        default=os.path.join(wrapper.get_user_path(base_package, create=True), "Storage.json"),
         get=get_storage_path,
         set=set_storage_path
     )
