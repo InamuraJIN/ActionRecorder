@@ -62,7 +62,7 @@ wheels = [
 # # Keep this a single short sentence without a period (.) at the end.
 # # For longer explanations use the documentation or detail page.
 [permissions]
-files = "Save/Load the global action list (Storage.json), save custom icons and write to log file."
+files = "Save/Load the global actions, custom icons and log file"
 
 # # Optional: advanced build settings.
 # # https://docs.blender.org/manual/en/dev/advanced/extensions/command_line_arguments.html#command-line-args-extension-build
