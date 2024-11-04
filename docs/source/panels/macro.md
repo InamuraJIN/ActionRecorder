@@ -97,25 +97,3 @@ Executes all macros from the selected Action (Shortcut: `alt + .`).
 ### Local to Global
 Moves the selected Action to the Global Panel. A popup appears to select the Category to append the Action to.
 The "Settings/Buttons" below `Local to Global` decided weather to `Copy` the Action (keep this Action in `Local` and move an exact copy it to the `Global` section) or `Move` (removes this action from `Local` and append it to the `Global` section).
-
-## Multiline Support
-
-:::{figure-md}
-![Multiline Support Install](../images/MacroEditor_MultilineInstall.png)
-
-First Popup to install Multiline Support
-:::
-
-If `Don't Ask Again` is checked it can be later installed in the Preferences
-
-:::{figure-md}
-![Multiline Preferences](../images/Preferences_SettingsMultiline.png)
-
-Later install in the Preferences
-:::
-
-If Install is pressed the Popup will change to the following:\
-![Multiline Installing](../images/MacroEditor_MultilineInstalling.png)
-
-After the installation finished the following appear:\
-![Multiline Installed](../images/MacroEditor_MultilineInstalled.png)
