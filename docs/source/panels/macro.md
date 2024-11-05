@@ -32,7 +32,7 @@ Copies the command to the clipboard.
 
 ### Execution Context
 The context which the operator will be executed with. 
-Most of the time `Execution` is the right selection.
+Most of the time `Execute` is the right selection.
 
 :::{Hint}
 Sometimes it is helpful to set it to `Invoke` where the operator can access user input or startup a process that will not be executed immediately.
