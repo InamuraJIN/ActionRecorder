@@ -497,7 +497,7 @@ class Font_analysis():
     def __init__(self, font_path: str) -> None:
         self.path = font_path
 
-        if importlib.util.find_spec('fontTools') is None:
+        if not Font_analysis.is_installed():
             self.use_dynamic_text = False
             return
 
@@ -517,44 +517,17 @@ class Font_analysis():
 
     @classmethod
     def is_installed(cls) -> bool:
+        """
+        Check if the fontTools and brotli package is installed through its wheels
+
+        Returns:
+            bool: True if both packages are installed, otherwise False
+        """
 
         return (
             importlib.util.find_spec('fontTools') is not None
-            and (bpy.app.version < (3, 4, 0) or importlib.util.find_spec('brotli'))
+            and importlib.util.find_spec('brotli') is not None
         )
-
-    @classmethod
-    def install(cls, logger: Logger) -> bool:
-        """
-        install fonttools to blender modules if not installed
-
-        Returns:
-            bool: success
-        """
-        if bpy.app.version >= (3, 4, 0):
-            # Blender 3.4 uses woff2 therefore the package brotli is required
-            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
-                success, output = functions.install_packages('fontTools', 'brotli')
-                if success:
-                    logger.info(output)
-                else:
-                    logger.warning(output)
-
-            if importlib.util.find_spec('fontTools') is None or importlib.util.find_spec('brotli') is None:
-                logger.warning("For some reason fontTools or brotli couldn't be installed :(")
-                return False
-        else:
-            if importlib.util.find_spec('fontTools') is None:
-                success, output = functions.install_packages('fontTools')
-                if success:
-                    logger.info(output)
-                else:
-                    logger.warning(output)
-
-            if importlib.util.find_spec('fontTools') is None:
-                logger.warning("For some reason fontTools couldn't be installed :(")
-                return False
-        return True
 
     def get_width_of_text(self, context: Context, text: str) -> list[float]:
         """
@@ -571,100 +544,9 @@ class Font_analysis():
         total = []
         font_style = context.preferences.ui_styles[0].widget
         for c in text:
-            total.append(self.s[self.t[ord(c)]].width * font_style.points/self.units_per_em)
+            # 0.925 is a constant for fine tuning
+            total.append(self.s[self.t[ord(c)]].width * font_style.points/self.units_per_em * 0.925)
         return total
-
-
-class AR_OT_macro_multiline_support(Operator):
-    bl_idname = "ar.macro_multiline_support"
-    bl_label = "Multiline Support"
-    bl_options = {'INTERNAL'}
-    bl_description = "Adds multiline support the edit macro dialog"
-
-    def invoke(self, context: Context, event: Event) -> set[str]:
-        return context.window_manager.invoke_props_dialog(self, width=350)
-
-    def draw(self, context: Context) -> None:
-        ActRec_pref = get_preferences(context)
-        layout = self.layout
-
-        if Font_analysis.is_installed():
-            layout.label(text="Support Enabled")
-            return
-
-        layout.label(text="Do you want to install multiline support?")
-        if bpy.app.version >= (3, 4, 0):
-            layout.label(text="This requires the fontTools, brotli package to be installed.")
-        else:
-            layout.label(text="This requires the fontTools package to be installed.")
-        row = layout.row()
-        if ActRec_pref.multiline_support_installing:
-            if bpy.app.version >= (3, 4, 0):
-                row.label(text="Installing fontTools, brotli...")
-            else:
-                row.label(text="Installing fontTools...")
-        else:
-            row.operator('ar.macro_install_multiline_support', text="Install")
-            row.prop(ActRec_pref, 'multiline_support_dont_ask')
-
-    def execute(self, context: Context) -> set[str]:
-        bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
-        return {'FINISHED'}
-
-    def cancel(self, context: Context) -> None:
-        # Also recall when done is not clicked
-        bpy.ops.ar.macro_edit("INVOKE_DEFAULT", edit=True, multiline_asked=True)
-
-
-class AR_OT_macro_install_multiline_support(Operator):
-    """
-    Try's to install the package fonttools
-    to get the width of the given command and split it into multiple lines
-    """
-    bl_idname = "ar.macro_install_multiline_support"
-    bl_label = "Install Multiline Support"
-    bl_options = {'INTERNAL'}
-
-    success = []
-
-    @classmethod
-    def poll(cls, context: Context) -> bool:
-        ActRec_pref = get_preferences(context)
-        return not ActRec_pref.multiline_support_installing
-
-    def invoke(self, context: Context, event: Event) -> set[str]:
-        def install(success: list, logger):
-            success.append(Font_analysis.install(logger))
-
-        self.success.clear()
-        ActRec_pref = get_preferences(context)
-        context.window_manager.modal_handler_add(self)
-        self.timer = context.window_manager.event_timer_add(0.1, window=context.window)
-        self.thread = threading.Thread(target=install, args=(self.success, logger), daemon=True)
-        self.thread.start()
-        ActRec_pref.multiline_support_installing = True
-        return {'RUNNING_MODAL'}
-
-    def modal(self, context: Context, event: Event) -> set[str]:
-
-        if event.type != 'TIMER':
-            return {'PASS_THROUGH'}
-
-        if not self.thread.is_alive():
-            return self.execute(context)
-        return {'RUNNING_MODAL'}
-
-    def execute(self, context: Context) -> set[str]:
-        ActRec_pref = get_preferences(context)
-        self.thread.join()
-        ActRec_pref.multiline_support_installing = False
-        if context and context.area:
-            context.area.tag_redraw()
-        if len(self.success) and self.success[0]:
-            self.report({'INFO'}, "Successfully installed multiline support")
-            return {'FINISHED'}
-        self.report({'ERROR'}, "Could not install multiline support. See Log for further information.")
-        return {'CANCELLED'}
 
 
 class AR_OT_macro_edit(Macro_based, Operator):
@@ -716,7 +598,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         if self.use_last_command:
             return
         self.lines.clear()
-        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width - 20):
+        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width):
             new = self.lines.add()
             new['text'] = line
 
@@ -744,7 +626,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         if not self.use_last_command:
             return
         self.lines.clear()
-        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width - 20):
+        for line in functions.text_to_lines(bpy.context, value, AR_OT_macro_edit.font, self.width):
             new = self.lines.add()
             new['text'] = line
 
@@ -776,7 +658,6 @@ class AR_OT_macro_edit(Macro_based, Operator):
     last_command: StringProperty(name="Last Command", get=get_last_command, set=set_last_command)
     last_id: StringProperty(name="Last Id")
     edit: BoolProperty(default=False)
-    multiline_asked: BoolProperty(default=False)
     clear_operator: BoolProperty(
         name="Clear Operator",
         description="Delete the parameters of an operator command. Otherwise the complete command is cleared",
@@ -790,7 +671,7 @@ class AR_OT_macro_edit(Macro_based, Operator):
         set=set_use_last_command
     )
     lines: CollectionProperty(type=properties.AR_macro_multiline)
-    width: IntProperty(default=500, name="width", description="Window width of the Popup")
+    width: IntProperty(default=750, name="width", description="Window width of the Popup")
     font = None
     time = 0
     is_operator = False
@@ -836,12 +717,6 @@ class AR_OT_macro_edit(Macro_based, Operator):
 
         index = self.index = functions.get_local_macro_index(action, self.id, self.index)
         macro = action.macros[index]
-
-        if not self.multiline_asked and not Font_analysis.is_installed() and not ActRec_pref.multiline_support_dont_ask:
-            bpy.ops.ar.macro_multiline_support("INVOKE_DEFAULT")
-            self.cancel(context)
-            self.multiline_asked = True
-            return {'CANCELLED'}  # Recall this Operator when handled
 
         font_path = functions.get_font_path()
         if AR_OT_macro_edit.font is None or AR_OT_macro_edit.font.path != font_path:
@@ -959,7 +834,6 @@ class AR_OT_macro_edit(Macro_based, Operator):
 
     def cancel(self, context: Context) -> None:
         self.edit = False
-        self.multiline_asked = False
         self.use_last_command = False
         self.clear()
 
@@ -1155,9 +1029,7 @@ classes = [
     AR_OT_macro_move_up,
     AR_OT_macro_move_down,
     AR_OT_macro_edit,
-    AR_OT_copy_to_actrec,
-    AR_OT_macro_multiline_support,
-    AR_OT_macro_install_multiline_support
+    AR_OT_copy_to_actrec
 ]
 
 # region Registration

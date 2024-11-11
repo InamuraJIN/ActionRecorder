@@ -567,7 +567,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     bl_description = "Transfer the selected Action to Local-actions"
     bl_options = {'UNDO'}
 
-    @ classmethod
+    @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
         return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))

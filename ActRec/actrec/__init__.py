@@ -1,6 +1,8 @@
 ﻿# region Imports
 # external modules
 import json
+import os
+import shutil
 
 # blender modules
 import bpy
@@ -10,7 +12,7 @@ from bpy.props import PointerProperty
 # relative imports
 # unused import needed to give direct access to the modules
 from . import functions, menus, operators, panels, properties, ui_functions, uilist
-from . import config, icon_manager, keymap, log, preferences, update
+from . import config, icon_manager, keymap, log, preferences
 from .functions.shared import get_preferences
 from . import shared_data
 # endregion
@@ -35,6 +37,12 @@ def on_load(dummy=None):
     context = bpy.context
     ActRec_pref = get_preferences(context)
     ActRec_pref.operators_list_length = 0
+
+    # Copy Storage.json for first startup from addon source directory to user directory
+    if not os.path.exists(ActRec_pref.storage_path):
+        source_storage_path = os.path.join(ActRec_pref.source_addon_directory, "Storage.json")
+        shutil.copyfile(source_storage_path, ActRec_pref.storage_path)  # copy the file
+
     # load local actions
     if bpy.data.filepath == "":
         try:
@@ -70,6 +78,13 @@ def on_load(dummy=None):
     icon_manager.load_icons(ActRec_pref)
     log.logger.info("Finished: Load ActRec Data")
 
+    if bpy.app.version < (4, 2, 0):
+        success = functions.install_wheels(ActRec_pref)
+        if success:
+            log.logger.info("Successfully installed and loaded wheels")
+        else:
+            log.logger.error("Failed to install or load wheels")
+
 # region Registration
 
 
@@ -81,7 +96,6 @@ def register():
     panels.register()
     uilist.register()
     icon_manager.register()
-    update.register()
     preferences.register()
     keymap.register()
 
@@ -104,7 +118,6 @@ def unregister():
     panels.unregister()
     uilist.unregister()
     icon_manager.unregister()
-    update.unregister()
     preferences.unregister()
     keymap.unregister()
     ui_functions.unregister()

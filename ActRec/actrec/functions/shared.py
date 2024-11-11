@@ -1,5 +1,6 @@
 # region Imports
 # external modules
+import importlib.util
 from typing import Optional, Union
 from contextlib import suppress
 from collections import defaultdict
@@ -10,8 +11,10 @@ import numpy
 import functools
 import subprocess
 import traceback
+import importlib
 from typing import TYPE_CHECKING
 from mathutils import Vector, Matrix, Color, Euler, Quaternion
+from ... import __package__ as base_package
 
 # blender modules
 import bpy
@@ -31,8 +34,6 @@ else:
     AR_action = PropertyGroup
     Font_analysis = object
 # endregion
-
-__module__ = __package__.split(".")[0]
 
 # region functions
 
@@ -411,7 +412,7 @@ def run_queued_macros(context_copy: dict, action_type: str, action_id: str, star
     else:
         temp_override = context.temp_override(**context_copy)
     with temp_override:
-        ActRec_pref = context.preferences.addons[__module__].preferences
+        ActRec_pref = get_preferences(context)
         action = getattr(ActRec_pref, action_type)[action_id]
         play(context, action.macros, action, action_type, start)
 
@@ -691,7 +692,7 @@ def play(
         action.is_playing = False
 
 
-@ persistent
+@persistent
 def execute_render_complete(dummy=None) -> None:
     # https://docs.blender.org/api/current/bpy.app.handlers.html
     """
@@ -823,75 +824,19 @@ def text_to_lines(context: Context, text: str, font: Font_analysis, limit: int, 
         total_line_length = start + line_length
         total_length = total_line_length + len(psb)
         width = sum(characters_width[start: total_length])
+
+        # append to current line
         if width <= limit:
             lines[-1] += psb
             continue
-        if sum(characters_width[total_line_length: total_length]) <= limit:
-            lines.append(psb)
-            start += line_length + len(psb)
-            continue
-        start += line_length
-        while psb != "":
-            i = int(bl_math.clamp(limit / width * len(psb), 0, len(psb)))
-            if len(psb) != i:
-                if sum(characters_width[start: start + i]) <= limit:
-                    while sum(characters_width[start: start + i]) <= limit:
-                        i += 1
-                    i -= 1
-                else:
-                    while sum(characters_width[start: start + i]) >= limit:
-                        i -= 1
-            lines.append(psb[:i])
-            psb = psb[i:]
-            start += i
-            width = sum(characters_width[start: total_length])
+
+        # create new line
+        start = len("".join(lines))
+        lines.append(psb)
+
     if (lines[0] == ""):
         lines.pop(0)
     return lines
-
-
-def install_packages(*package_names: list[str]) -> tuple[bool, str]:
-    """
-    install the listed packages and ask for user permission if needed
-
-    Args:
-        package_names list[str]: name of the package
-
-    Returns:
-        tuple[bool, str]: (success, installation output)
-    """
-    try:
-        # install package
-        output = subprocess.check_output(
-            [sys.executable, '-m', 'pip', 'install', *package_names, '--no-color']
-        ).decode('utf-8').replace("\r", "")
-
-        # get sys.path from pip after installation to update the current sys.path
-        output_paths = subprocess.check_output(
-            [sys.executable, '-m', 'site']
-        ).decode('utf-8').replace("\r", "")
-
-        # parse the output to get all sys.path paths
-        in_path_list = False
-        for line in output_paths.splitlines():
-            if line.strip() == "sys.path = [":
-                in_path_list = True
-                continue
-            elif not in_path_list:
-                continue
-            if line.strip() == "]":
-                break
-
-            path = line.strip(" \'\",\t").replace("\\\\", "\\")
-            if path not in sys.path:
-                sys.path.append(path)
-
-        return (True, output)
-
-    except (PermissionError, OSError, subprocess.CalledProcessError) as err:
-        logger.error(err)
-        return (False, err.output)
-    return (False, ":(")
 
 
 def get_preferences(context: Context) -> AR_preferences:
@@ -904,6 +849,86 @@ def get_preferences(context: Context) -> AR_preferences:
     Returns:
         AR_preferences: preferences of this addon
     """
-    return context.preferences.addons[__module__].preferences
+    return context.preferences.addons[base_package].preferences
 
+
+def install_wheels(ActRec_pref: AR_preferences) -> bool:
+    """
+    Tires to install the required wheels for the addon and loads them into the system path.
+    If the wheels are already installed it will only add them to the path.
+    NOTE: This function should only be used for Blender prior to version 4.2
+
+    Args:
+        context (Context): active blender context
+
+    Returns:
+        bool: installation success
+    """
+    # Deprecated This function should be removed if Blender 3.6 LTS is no longer supported
+    def load_packages(installation_path: str) -> bool:
+        """
+        Added the installation path to the system path and tries find the packages.
+
+        Args:
+            installation_path (str): The path were the packages is installed.
+
+        Returns:
+            bool: found the packages successfully
+        """
+        site_package_path = os.path.join(installation_path, "Python310", "site-packages")
+        if site_package_path not in sys.path:
+            sys.path.append(site_package_path)
+        found_packages = (importlib.util.find_spec("fontTools") is not None
+                          and importlib.util.find_spec("brotli") is not None)
+        if not found_packages:
+            importlib.invalidate_caches()
+            found_packages = (importlib.util.find_spec("fontTools") is not None
+                              and importlib.util.find_spec("brotli") is not None)
+        return found_packages
+
+    installation_path = os.path.join(ActRec_pref.source_addon_directory, "lib")
+
+    if load_packages(installation_path):
+        return True
+
+    package_names = None
+    if sys.platform == "win32":
+        package_names = [
+            "fonttools-4.54.1-cp310-cp310-win_amd64.whl",
+            "Brotli-1.1.0-cp310-cp310-win_amd64.whl"
+        ]
+    elif sys.platform == "darwin":
+        package_names = [
+            "fonttools-4.54.1-cp310-cp310-macosx_10_9_universal2.whl",
+            "Brotli-1.1.0-cp310-cp310-macosx_10_9_universal2.whl"
+        ]
+    elif sys.platform == "linux":
+        package_names = [
+            "fonttools-4.54.1-py3-none-any.whl",
+            "Brotli-1.1.0-cp310-cp310-manylinux_2_5_x86_64." +
+            "manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl"
+        ]
+
+    if package_names is None:
+        logger.error("Cannot install required packages as this platform is not supported")
+        return False
+
+    wheel_path = os.path.join(ActRec_pref.source_addon_directory, "wheels")
+    installation_env = {
+        **os.environ,
+        "PYTHONUSERBASE": installation_path
+    }
+    package_paths = [os.path.join(wheel_path, package_name) for package_name in package_names]
+    try:
+        subprocess.run(
+            [sys.executable, '-m', 'pip', 'install', *package_paths, '--no-color', '--user', '--ignore-installed'],
+            env=installation_env
+        )
+    except (PermissionError, OSError, subprocess.CalledProcessError) as err:
+        logger.error(err)
+        return False
+
+    if load_packages(installation_path):
+        return True
+    return False
 # endregion

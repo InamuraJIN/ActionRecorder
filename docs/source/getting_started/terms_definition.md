@@ -21,7 +21,12 @@ By default it is saved in the `Storage.json` file which is located inside the in
 
 :::{hint}
 By default the path to the `Storage`-File is\
-`
+```
 C:\Users\<USER>\AppData\Roaming\Blender Foundation\Blender\3.3\scripts\addons\ActRec\Storage.json
-`
+```
+
+As of Blender version 4.2 the `Storage`-File is located in the extension user directory:\
+```
+C:\Users\<USER>\AppData\Roaming\Blender Foundation\Blender\4.2\extensions\.user\user_default\action_recorder\Storage.json<>
+```
 :::

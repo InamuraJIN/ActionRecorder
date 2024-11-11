@@ -26,7 +26,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'myst_parser'
+    'myst_parser',
+    'sphinx_copybutton'
 ]
 
 templates_path = ['_templates']
@@ -45,7 +46,7 @@ myst_enable_extensions = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 html_static_path = ['_static']
 html_context = {
    "default_mode": "auto"

@@ -5,7 +5,6 @@ from bpy.types import Panel, Context
 
 # relative imports
 from .. import config
-from .. import update
 from ..log import log_sys
 from ..functions.shared import get_preferences
 # endregion
@@ -36,10 +35,6 @@ def panel_factory(space_type: str):
         def draw(self, context: Context) -> None:
             ActRec_pref = get_preferences(context)
             layout = self.layout
-            if ActRec_pref.update:
-                box = layout.box()
-                box.label(text="new Version available (%s)" % ActRec_pref.version)
-                update.draw_update_button(box, ActRec_pref)
             box = layout.box()
             box_row = box.row()
             col = box_row.column()
@@ -174,7 +169,6 @@ def panel_factory(space_type: str):
 
         def draw(self, context: Context) -> None:
             layout = self.layout
-            ActRec_pref = get_preferences(context)
             layout.operator(
                 'wm.url_open',
                 text="Manual",
@@ -198,23 +192,6 @@ def panel_factory(space_type: str):
                 'wm.url_open',
                 text="Release Notes"
             ).url = config.release_notes_url
-            row = layout.row()
-            if ActRec_pref.update:
-                update.draw_update_button(row, ActRec_pref)
-            else:
-                row.operator('ar.update_check', text="Check For Updates")
-                if ActRec_pref.restart:
-                    row.operator(
-                        'ar.show_restart_menu',
-                        text="Restart to Finish"
-                    )
-            if ActRec_pref.version != '':
-                if ActRec_pref.update:
-                    layout.label(
-                        text="new Version available (%s)" % ActRec_pref.version
-                    )
-                else:
-                    layout.label(text="latest Version (%s)" % ActRec_pref.version)
     AR_PT_help.__name__ = "AR_PT_help_%s" % space_type
 
     class AR_PT_advanced(Panel):

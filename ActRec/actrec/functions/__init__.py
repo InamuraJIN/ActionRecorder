@@ -59,9 +59,9 @@ from .shared import (
     execute_render_complete,
     enum_list_id_to_name_dict,
     enum_items_to_enum_prop_list,
-    install_packages,
     get_preferences,
     get_categorized_view_3d_modes,
     get_attribute,
-    get_attribute_default
+    get_attribute_default,
+    install_wheels
 )
