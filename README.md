@@ -1,17 +1,16 @@
+# Website (Installation & Documentation)
+**https://inamurajin.github.io/ActionRecorder/**
+
 # LINK
- - [Action Recorder](#action-recorder)
- - [Add-ons Explained](#add-ons-explained)
- - [INSTALL](#install)
- - [Tutorial&Readme](#tutorialreadme)
- - [Update](#update)
- - [Community](#community)
- - [Bug Reports and Requests](#bug-reports-and-requests)
-# PLEASE!
-Our workload has made it difficult for us to update and fix bugs<br>
-New programmers are expected to be created!<br>
-We have therefore made some major changes to the Action Recorder add-on<br>
-For example, we have separated the Python files and added comments to make it easier for other programmers to understand<br>
-Please Fork this add-on!<br><br>
+- [Website (Installation \& Documentation)](#website-installation--documentation)
+- [LINK](#link)
+- [Action Recorder](#action-recorder)
+- [Add-ons Explained](#add-ons-explained)
+- [INSTALL](#install)
+- [Old Tutorial\&Readme](#old-tutorialreadme)
+- [Update](#update)
+- [Community](#community)
+- [Bug Reports and Requests](#bug-reports-and-requests)
 
 # Action Recorder
 Are you tirred of coding long intimidating coding task just for one-off modeling? Or may be you're not good coding at all !<br>
@@ -37,7 +36,7 @@ Convert complex, repetitive tasks into one click!
 
 You have to remember is "Add" & "Play" Only!
 
-Supported Versions: 2.83 to 2.9
+Supported Versions: 3.6 to 4.2
 
 Simplify complex repetitive tasks, which were difficult to do with the standard “Repeat Last”(Shift+R) function of Blender, by registering multiple actions.
 
@@ -63,7 +62,7 @@ Click the "Install Add-on" button<br>
 
 このページの右側に「Release」ボタンからZipファイルをダウンロードして下さい
 
-# Tutorial&Readme
+# Old Tutorial&Readme
 🇯🇵[日本語](https://inamurajin.wixsite.com/website/post/tutorial_readme_jp)<br>
 ※ 日本語解説の更新は停止します。前バージョンの記事で参考に出来ますが、詳しくは英語版でご覧ください
 

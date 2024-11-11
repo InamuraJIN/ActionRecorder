@@ -62,5 +62,6 @@ from .shared import (
     get_preferences,
     get_categorized_view_3d_modes,
     get_attribute,
-    get_attribute_default
+    get_attribute_default,
+    install_wheels
 )

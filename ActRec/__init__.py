@@ -7,7 +7,7 @@ bl_info = {
     "blender": (4, 2, 0),
     "location": "View 3D",
     "warning": "",
-    "docs_url": 'https://github.com/InamuraJIN/ActionRecorder/blob/master/README.md',  # Documentation
+    "docs_url": 'https://inamurajin.github.io/ActionRecorder/',  # Documentation
     "tracker_url": 'https://inamurajin.wixsite.com/website/post/bug-report',  # Report Bug
     "link": 'https://twitter.com/Inamura_JIN',
     "category": "System"

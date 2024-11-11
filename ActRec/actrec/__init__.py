@@ -78,6 +78,13 @@ def on_load(dummy=None):
     icon_manager.load_icons(ActRec_pref)
     log.logger.info("Finished: Load ActRec Data")
 
+    if bpy.app.version < (4, 2, 0):
+        success = functions.install_wheels(ActRec_pref)
+        if success:
+            log.logger.info("Successfully installed and loaded wheels")
+        else:
+            log.logger.error("Failed to install or load wheels")
+
 # region Registration
 
 
