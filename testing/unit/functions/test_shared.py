@@ -334,3 +334,39 @@ def test_swap_collection_items(clear_load_global, index1, index2, output1, outpu
         index2 = len(clear_load_global) - 1
     assert helper.compare_with_dict(clear_load_global[index1], output1)
     assert helper.compare_with_dict(clear_load_global[index2], output2)
+
+
+def test_play_script_error_resets_is_playing():
+    """Test that is_playing is reset to False when script execution fails"""
+    import json
+    from ActRec.actrec.properties.shared import AR_action, AR_macro
+    
+    # Create a test action with a failing script macro
+    action = AR_action()
+    action.id = "test_action_id"
+    
+    macro = action.macros.add()
+    macro.id = "test_macro_id" 
+    macro.active = True
+    
+    # Create a failing script event
+    script_data = {
+        'Type': 'Run Script',
+        'ScriptText': 'raise Exception("Test error")'
+    }
+    macro.command = f"ar.event:{json.dumps(script_data)}"
+    
+    # Verify is_playing starts as False
+    assert action.is_playing == False
+    
+    # Execute the play function - this should fail and reset is_playing
+    context = bpy.context
+    result = shared.play(context, action.macros, action, 'test_actions')
+    
+    # Verify that:
+    # 1. An error was returned
+    # 2. is_playing was reset to False
+    assert result is not None  # Error was returned
+    assert "Test error" in str(result)  # Contains our test error
+    assert action.is_playing == False  # is_playing was reset
+    assert action.alert == True  # Alert was set
