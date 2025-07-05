@@ -609,6 +609,7 @@ def play(
                     error = "".join(error)
                     logger.error("%s; command: %s" % (error, data))
                     action.alert = macro.alert = True
+                    action.is_playing = False
                     return error
                 bpy.data.texts.remove(text)
                 i += 1

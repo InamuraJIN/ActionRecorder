@@ -394,6 +394,8 @@ class AR_OT_local_play(shared.Id_based, Operator):
         err = functions.play(context, action.macros, action, 'local_actions')
         if err:
             self.report({'ERROR'}, str(err))
+        # Ensure is_playing is always reset, even if the play function didn't reset it
+        action.is_playing = False
         self.clear()
         return {'FINISHED'}
 
