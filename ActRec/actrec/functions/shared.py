@@ -116,6 +116,12 @@ def property_to_python(property: Property, exclude: list = [], depth: int = 5) -
         Union[list, dict, str]: converts Collection, Arrays to lists and PointerProperty to dict
     """
     # CollectionProperty are a list of PointerProperties
+    if hasattr(property, "bl_rna") and property.bl_rna.identifier == "AR_preferences":
+        return "Preferences Object (Skipped to prevent loop)"
+    
+    if depth <= 0:
+        return "max depth"
+
     if depth <= 0:
         return "max depth"
     if isinstance(property, set):  # Catch EnumProperty with EnumFlag

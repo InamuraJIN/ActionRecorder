@@ -22,18 +22,24 @@ else:
 
 # region Preferences
 
-
 class AR_preferences(AddonPreferences):
+    global_selected_ids_internal: StringProperty(default="")
     bl_idname = __package__.split(".")[0]
+
+    # --- Stable Internal Properties for Blender 5.0 ---
+    is_loaded_internal: BoolProperty(default=False)
+    icon_path_internal: StringProperty(default="")
+    storage_path_internal: StringProperty(default="")
+    active_local_action_index_internal: IntProperty(default=0)
 
     def update_is_loaded(self, context: Context) -> None:
         context.scene.name = context.scene.name
 
     def get_is_loaded(self) -> bool:
-        return self.get("is_loaded", False) and shared_data.data_loaded
+        return self.is_loaded_internal and shared_data.data_loaded
 
     def set_is_loaded(self, value: bool) -> None:
-        self["is_loaded"] = value
+        self.is_loaded_internal = value
 
     is_loaded: BoolProperty(
         name="INTERNAL",
@@ -48,7 +54,7 @@ class AR_preferences(AddonPreferences):
         name="addon directory",
         default=os.path.dirname(os.path.dirname(__file__)),
         get=lambda self: self.bl_rna.properties['addon_directory'].default
-    )  # get the base addon directory
+    )
 
     preference_tab: EnumProperty(
         items=[('settings', "Settings", ""),
@@ -59,7 +65,6 @@ class AR_preferences(AddonPreferences):
         description="Switch between preference tabs"
     )
 
-    # log
     log_amount: IntProperty(
         name="Log Amount",
         description="Number of log files kept\nChanges apply on the next launch of Blender",
@@ -70,33 +75,22 @@ class AR_preferences(AddonPreferences):
 
     # icon manager
     def get_icon_path(self) -> str:
-        """
-        getter of icon_path
-        fallback to relative path of the addon if folder doesn't exists
-
-        Returns:
-            str: path of the folder
-        """
-        origin_path = self.get('icon_path', 'Fallback')
+        origin_path = self.icon_path_internal
+        if origin_path == "":
+            origin_path = os.path.join(self.addon_directory, "Icons")
+            self.icon_path_internal = origin_path
+            
         if os.path.exists(origin_path):
-            return self['icon_path']
+            return origin_path
         else:
             path = os.path.join(self.addon_directory, "Icons")
-            if origin_path != 'Fallback':
-                logger.error("ActRec ERROR: Icon Path \"%s\" don't exist, fallback to %s" % (origin_path, path))
-            self['icon_path'] = path
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
+            self.icon_path_internal = path
             return path
 
     def set_icon_path(self, origin_path: str) -> None:
-        """setter of icon_path
-        creates new folder if needed
-
-        Args:
-            origin_path (str): path of the new icon folder
-        """
-        self['icon_path'] = origin_path
+        self.icon_path_internal = origin_path
         if not (os.path.exists(origin_path) and os.path.isdir(origin_path)):
             os.makedirs(origin_path, exist_ok=True)
 
@@ -108,7 +102,6 @@ class AR_preferences(AddonPreferences):
         set=set_icon_path
     )
 
-    # Icon NONE: Global: BLANK1 (101), Local: MESH_PLANE (286)
     selected_icon: IntProperty(
         name="selected icon",
         description="only internal usage",
@@ -134,35 +127,23 @@ class AR_preferences(AddonPreferences):
         soft_min=0,
         soft_max=100,
         subtype='PERCENTAGE'
-    )  # used as slider
+    )
 
     # locals
     local_actions: CollectionProperty(type=properties.AR_local_actions)
 
     def get_active_local_action_index(self) -> int:
-        """
-        getter of active_local_action_index
-
-        Returns:
-            int: index of the active local action
-        """
-        value = self.get('active_local_action_index', 0)
+        value = self.active_local_action_index_internal
         actions_length = len(self.local_actions)
-        return value if value < actions_length else actions_length - 1
+        return value if value < actions_length else max(0, actions_length - 1)
 
     def set_active_local_action_index(self, value: int):
-        """
-        setter of active_local_action_index
-        sets a new local index if possible
-
-        Args:
-            value (int): index to set
-        """
-        ActRec_pref = get_preferences(bpy.context)
+        # Using context from argument is safer if available, but we'll use bpy.context for now
+        ActRec_pref = self # Inside the class, self is the pref object
         if not ActRec_pref.local_record_macros:
             actions_length = len(self.local_actions)
-            value = value if value < actions_length else actions_length - 1
-            self['active_local_action_index'] = value if value >= 0 else actions_length - 1
+            safe_value = value if value < actions_length else actions_length - 1
+            self.active_local_action_index_internal = safe_value if safe_value >= 0 else 0
 
     active_local_action_index: IntProperty(
         name="Select",
@@ -179,21 +160,14 @@ class AR_preferences(AddonPreferences):
     local_record_macros: BoolProperty(name="Record Macros", default=False)
 
     def hide_show_local_in_texteditor(self, context: Context):
-        """
-        update function of hide_local_text
-        gets called every time the value of the hide_local_text is changed
-        hides/show the local action as text files in the texteditor of Blender
-
-        Args:
-            context (Context): unused
-        """
         if self.hide_local_text:
             for text in bpy.data.texts:
-                if text.lines[0].body.strip().startswith("###ActRec_pref###"):
+                if text.lines and text.lines[0].body.strip().startswith("###ActRec_pref###"):
                     bpy.data.texts.remove(text)
         else:
             for action in self.local_actions:
                 functions.local_action_to_text(action)
+    
     hide_local_text: BoolProperty(
         name="Hide Local Action in Texteditor",
         description="Hide the Local Action in the Texteditor",
@@ -211,8 +185,7 @@ class AR_preferences(AddonPreferences):
     multiline_support_installing: BoolProperty(name="INTERNAL", default=False)
     multiline_support_dont_ask: BoolProperty(
         name="Don't Ask Again",
-        description="""Turns off the request for multiline support.
-Can also be installed under Preferences > Add-ons > Action Recorder > Settings""",
+        description="Turns off the request for multiline support.",
         default=False
     )
 
@@ -237,31 +210,20 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
 
     # categories
     def get_storage_path(self) -> str:
-        """
-        getter of storage_path
-        fallback to relative path of the addon if folder doesn't exists
-
-        Returns:
-            str: path of the storage file
-        """
-        origin_path = self.get('storage_path', 'Fallback')
+        origin_path = self.storage_path_internal
+        if origin_path == "":
+             origin_path = os.path.join(self.addon_directory, "Storage.json")
+             self.storage_path_internal = origin_path
+             
         if os.path.exists(origin_path):
-            return self['storage_path']
+            return origin_path
         else:
             path = os.path.join(self.addon_directory, "Storage.json")
-            if origin_path != 'Fallback':
-                logger.error("ActRec ERROR: Storage Path \"%s\" don't exist, fallback to %s" % (origin_path, path))
-            self['storage_path'] = path
+            self.storage_path_internal = path
             return path
 
     def set_storage_path(self, origin_path: str) -> None:
-        """
-        setter of storage_path
-
-        Args:
-            origin_path (str): path of the new storage file
-        """
-        self['storage_path'] = origin_path
+        self.storage_path_internal = origin_path
         if os.path.exists(origin_path) and os.path.isfile(origin_path):
             return
         os.makedirs(os.path.dirname(origin_path), exist_ok=True)
@@ -278,29 +240,25 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
 
     categories: CollectionProperty(type=properties.AR_category)
 
-    def get_selected_category(self) -> str:
-        """
-        getter of selected_category
+    # Added a stable storage for the selected category ID
+    selected_category_id: StringProperty(default="")
 
-        Returns:
-            str: returns the id (uuid hex format) of the selected category
-        """
-        return self.get("categories.selected_id", '')
-    selected_category: StringProperty(get=get_selected_category, default='')
+    def get_selected_category(self) -> str:
+        return self.selected_category_id
+    
+    def set_selected_category(self, value: str):
+        self.selected_category_id = value
+
+    selected_category: StringProperty(get=get_selected_category, set=set_selected_category, default='')
     show_all_categories: BoolProperty(name="Show All Categories", default=False)
 
     def draw(self, context: Context) -> None:
-        """
-        draws the addon preferences
-
-        Args:
-            context (Context): active blender context
-        """
-        ActRec_pref = get_preferences(context)
+        ActRec_pref = self
         layout = self.layout
         col = layout.column()
         row = col.row(align=True)
         row.prop(ActRec_pref, 'preference_tab', expand=True)
+        
         if ActRec_pref.preference_tab == 'update':
             col.operator('wm.url_open', text="Release Notes").url = config.release_notes_url
             row = col.row()
@@ -315,22 +273,15 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
                     col.label(text="A new Version is available (%s)" % ActRec_pref.version)
                 else:
                     col.label(text="You are using the latest Version (%s)" % ActRec_pref.version)
+        
         elif ActRec_pref.preference_tab == 'path':
             col.label(text='Action Storage Folder')
             row = col.row()
-            ops = row.operator(
-                "ar.preferences_directory_selector",
-                text="Select Action Button's Storage Folder",
-                icon='FILEBROWSER'
-            )
+            ops = row.operator("ar.preferences_directory_selector", text="Select Action Button's Storage Folder", icon='FILEBROWSER')
             ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
 
-            ops = row.operator(
-                "ar.preferences_recover_directory",
-                text="Recover Default Folder",
-                icon='FOLDER_REDIRECT'
-            )
+            ops = row.operator("ar.preferences_recover_directory", text="Recover Default Folder", icon='FOLDER_REDIRECT')
             ops.preference_name = "storage_path"
             ops.path_extension = "Storage.json"
             row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.storage_path
@@ -340,30 +291,20 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             box_row.label(text=self.storage_path)
             op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
             op.text = self.storage_path
+            
             col.separator(factor=1.5)
             row = col.row().split(factor=0.5)
             row.label(text="Icon Storage Folder")
             row2 = row.row(align=True).split(factor=0.65, align=True)
-            row2.operator(
-                "ar.add_custom_icon",
-                text="Add Custom Icon",
-                icon='PLUS'
-            )
+            row2.operator("ar.add_custom_icon", text="Add Custom Icon", icon='PLUS')
             row2.operator("ar.delete_custom_icon", text="Delete", icon='TRASH')
+            
             row = col.row()
-            ops = row.operator(
-                "ar.preferences_directory_selector",
-                text="Select Icon Storage Folder",
-                icon='FILEBROWSER'
-            )
+            ops = row.operator("ar.preferences_directory_selector", text="Select Icon Storage Folder", icon='FILEBROWSER')
             ops.preference_name = "icon_path"
             ops.path_extension = ""
 
-            ops = row.operator(
-                "ar.preferences_recover_directory",
-                text="Recover Default Folder",
-                icon='FOLDER_REDIRECT'
-            )
+            ops = row.operator("ar.preferences_recover_directory", text="Recover Default Folder", icon='FOLDER_REDIRECT')
             ops.preference_name = "icon_path"
             ops.path_extension = "Icons"
             row.operator('ar.preferences_open_explorer', text="", icon='FILEBROWSER').path = self.icon_path
@@ -373,10 +314,12 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             box_row.label(text=self.icon_path)
             op = box_row.operator('ar.copy_text', text="", icon="COPYDOWN")
             op.text = self.icon_path
+            
             col.separator(factor=1.5)
             row2 = col.row(align=True).split(factor=0.7, align=True)
             row2.operator('ar.preferences_open_explorer', text="Open Log").path = log_sys.path
             row2.prop(self, 'log_amount')
+            
         elif ActRec_pref.preference_tab == 'keymap':
             col2 = col.column()
             kc = bpy.context.window_manager.keyconfigs.user
@@ -393,6 +336,7 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
                 )
                 for kmi in [*ar_keymaps, *functions.get_all_action_keymaps(km)]:
                     rna_keymap_ui.draw_kmi(kc.keymaps, kc, km, kmi, col2, 0)
+                    
         elif ActRec_pref.preference_tab == 'settings':
             row = col.row()
             row.prop(self, 'auto_update')
@@ -413,22 +357,23 @@ Can also be installed under Preferences > Add-ons > Action Recorder > Settings""
             row.operator('wm.url_open', text="Bug Report", icon='URL').url = config.bug_report_url
 # endregion
 
-
 classes = [
     AR_preferences
 ]
 
 # region Registration
 
-
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-
 def unregister():
-    ActRec_pref = functions.get_preferences(bpy.context)
-    log.update_log_amount_in_config(ActRec_pref.log_amount)
+    # Attempt to get pref safely; if this fails, we skip log config update
+    try:
+        ActRec_pref = get_preferences(bpy.context)
+        log.update_log_amount_in_config(ActRec_pref.log_amount)
+    except:
+        pass
     for cls in classes:
         bpy.utils.unregister_class(cls)
 # endregion

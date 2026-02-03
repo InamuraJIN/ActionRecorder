@@ -15,16 +15,12 @@ from .. import functions
 
 class AR_local_actions(shared.AR_action, PropertyGroup):
     def get_active_macro_index(self) -> int:
-        """
-        get the active index of the local macro.
-        If the index is out of range the last index of all macros is passed on.
-
-        Returns:
-            int: macro index
-        """
-        value = self.get('active_macro_index', 0)
-        macros_length = len(self.macros)
-        return value if value < macros_length else macros_length - 1
+            # Default to 0 instead of -1 if empty to satisfy UI layouts
+            value = self.get('active_macro_index', 0)
+            macros_length = len(self.macros)
+            if macros_length == 0:
+                return 0
+            return value if value < macros_length else macros_length - 1
 
     def set_active_macro_index(self, value: int) -> None:
         """

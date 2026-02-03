@@ -44,7 +44,12 @@
     ],
     "github-actions.workflows.pinned.workflows": [
         ".github/workflows/unit_test_addon.yml"
-    ]
+    ],
+  //Use this lines to remove annorying blender new api errors on vscode
+  //   "python.analysis.diagnosticSeverityOverrides": {
+	// 	"reportInvalidTypeForm": "none",
+	// 	"reportIndexIssue": "none"
+	// }
 }
 
 // ActRec_pref (bpy.types.Preferences): preferences of this addon

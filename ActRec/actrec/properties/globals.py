@@ -12,49 +12,54 @@ from ..functions.shared import get_preferences
 
 # region PropertyGroups
 
-
 class AR_global_actions(shared.AR_action, PropertyGroup):
 
     def get_selected(self) -> bool:
         """
         default Blender property getter
-
-        Returns:
-            bool: selected state of action
         """
         return self.get("selected", False)
 
     def set_selected(self, value: bool) -> None:
         """
-        set selected macro or if ctrl is pressed multiple macros can be selected
-        if ctrl is not pressed all selected macros get deselected except the new selected.
-
-        Args:
-            value (bool): state of selection
+        Updated for Blender 5.0 compatibility.
+        Uses a comma-separated string stored in preferences to track multi-selection.
         """
         ActRec_pref = get_preferences(bpy.context)
-        selected_ids = list(ActRec_pref.get("global_actions.selected_ids", []))
+        
+        # BLENDER 5.0 FIX: Retrieve string and convert to list
+        raw_ids = ActRec_pref.global_selected_ids_internal
+        selected_ids = raw_ids.split(",") if raw_ids else []
+
         # implementation similar to a UIList (only one selection of all can be active),
         # with extra multi selection by pressing ctrl
-        value |= (len(selected_ids) > 1)  # used as bool or
+        value |= (len(selected_ids) > 1) 
         if not value:
             self['selected'] = False
+            # Remove self from the string if it exists
+            if self.id in selected_ids:
+                selected_ids.remove(self.id)
+                ActRec_pref.global_selected_ids_internal = ",".join(selected_ids)
             return
 
         # uses check_ctrl operator to check for ctrl event
         ctrl_value = bpy.ops.ar.check_ctrl('INVOKE_DEFAULT')
+        
         # {'CANCELLED'} == ctrl is not pressed
         if selected_ids and ctrl_value == {'CANCELLED'}:
-            ActRec_pref["global_actions.selected_ids"] = []
+            # Deselect others
             for selected_id in selected_ids:
                 action = ActRec_pref.global_actions.get(selected_id, None)
-                if action is None:
-                    continue
-                action.selected = (not bool(action))
+                if action:
+                    action['selected'] = False
             selected_ids.clear()
-        selected_ids.append(self.id)
-        ActRec_pref["global_actions.selected_ids"] = selected_ids
-        self['selected'] = value
+
+        if self.id not in selected_ids:
+            selected_ids.append(self.id)
+        
+        # BLENDER 5.0 FIX: Save back as string
+        ActRec_pref.global_selected_ids_internal = ",".join(selected_ids)
+        self['selected'] = True
 
     selected: BoolProperty(
         default=False,
@@ -67,22 +72,9 @@ class AR_global_actions(shared.AR_action, PropertyGroup):
 
 class AR_global_import_action(PropertyGroup):
     def get_use(self) -> bool:
-        """
-        get state whether the action will be used to import
-        with extra check if the category of this action is also selected for import
-
-        Returns:
-            bool: action import state
-        """
         return self.get('use', True) and self.get('category.use', True)
 
     def set_use(self, value: bool) -> None:
-        """
-        set state whether the action will be used to import
-
-        Args:
-            value (bool): action import state
-        """
         if self.get('category.use', True):
             self['use'] = value
 
@@ -100,23 +92,10 @@ class AR_global_import_action(PropertyGroup):
 
 class AR_global_import_category(PropertyGroup):
     def get_use(self) -> bool:
-        """
-        get state whether the category will be used to import
-
-        Returns:
-            bool: category import state
-        """
         return self.get("use", True)
 
     def set_use(self, value: bool) -> None:
-        """
-        set state whether the category will be used to import
-
-        Args:
-            value (bool): category import state
-        """
         self['use'] = value
-        # needed for the action to check if there category is imported
         for action in self.actions:
             action['category.use'] = value
 
@@ -135,22 +114,9 @@ class AR_global_import_category(PropertyGroup):
 
 class AR_global_export_action(shared.Id_based, PropertyGroup):
     def get_use(self) -> bool:
-        """
-        get state whether the action will be used to export
-        with extra check if the category of this action is also selected for export or export_all is active
-
-        Returns:
-            bool: action export state
-        """
         return self.get("use", True) and self.get('category.use', True) or self.get('export_all', False)
 
     def set_use(self, value: bool) -> None:
-        """
-        set state whether the action will be used to export
-
-        Args:
-            value (bool): action export state
-        """
         if self.get('category.use', True) and not self.get('export_all', False):
             self['use'] = value
 
@@ -167,21 +133,9 @@ class AR_global_export_action(shared.Id_based, PropertyGroup):
 
 class AR_global_export_categories(shared.Id_based, PropertyGroup):
     def get_use(self) -> bool:
-        """
-        get state whether the category will be used to export or export_all is active
-
-        Returns:
-            bool: category export state
-        """
         return self.get("use", True) or self.get("export_all", False)
 
     def set_use(self, value: bool) -> None:
-        """
-        set state whether the category will be used to export
-
-        Args:
-            value (bool): category export state
-        """
         if self.get("export_all", False):
             return
         self['use'] = value
@@ -200,7 +154,6 @@ class AR_global_export_categories(shared.Id_based, PropertyGroup):
     )
 # endregion
 
-
 classes = [
     AR_global_actions,
     AR_global_import_action,
@@ -211,11 +164,9 @@ classes = [
 
 # region Registration
 
-
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-
 
 def unregister():
     for cls in classes:
