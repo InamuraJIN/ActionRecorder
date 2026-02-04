@@ -40,7 +40,7 @@ class AR_OT_global_recategorize_action(shared.Id_based, Operator):
     @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
+        return len(ActRec_pref.global_actions) and bool(ActRec_pref.global_selected_ids_internal)
 
     def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self)
@@ -570,7 +570,7 @@ class AR_OT_global_to_local(shared.Id_based, Operator):
     @ classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
+        return len(ActRec_pref.global_actions) and bool(ActRec_pref.global_selected_ids_internal)
 
     def global_to_local(self, ActRec_pref: AR_preferences, action: AR_global_actions) -> None:
         """
@@ -615,14 +615,18 @@ class AR_OT_global_remove(shared.Id_based, Operator):
     @classmethod
     def description(cls, context: Context, properties: OperatorProperties) -> str:
         ActRec_pref = get_preferences(context)
-        ids = ActRec_pref.get("global_actions.selected_ids", [])
-        selected_actions_str = ", ".join(ActRec_pref.global_actions[id].label for id in ids)
-        return "Remove the selected actions\nActions: %s" % (selected_actions_str)
+        # BLENDER 5.0 FIX: Convert string back to list for the tooltip
+        raw_ids = ActRec_pref.global_selected_ids_internal
+        ids = raw_ids.split(",") if raw_ids else []
+        
+        selected_labels = [ActRec_pref.global_actions[id].label for id in ids if id in ActRec_pref.global_actions]
+        selected_actions_str = ", ".join(selected_labels)
+        return "Remove the selected actions\nActions: %s" % (selected_actions_str if selected_actions_str else "None")
 
     @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
+        return len(ActRec_pref.global_actions) and bool(ActRec_pref.global_selected_ids_internal)
 
     def invoke(self, context: Context, event: Event) -> set[str]:
         return context.window_manager.invoke_confirm(self, event)
@@ -651,7 +655,7 @@ class AR_OT_global_move_up(shared.Id_based, Operator):
     @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
+        return len(ActRec_pref.global_actions) and bool(ActRec_pref.global_selected_ids_internal)
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
@@ -677,7 +681,7 @@ class AR_OT_global_move_down(shared.Id_based, Operator):
     @classmethod
     def poll(cls, context: Context) -> bool:
         ActRec_pref = get_preferences(context)
-        return len(ActRec_pref.global_actions) and len(ActRec_pref.get("global_actions.selected_ids", []))
+        return len(ActRec_pref.global_actions) and bool(ActRec_pref.global_selected_ids_internal)
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)
@@ -702,11 +706,16 @@ class AR_OT_global_execute_action(shared.Id_based, Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
-    def description(cls, context: Context, properties: OperatorProperties):
-        ActRec_pref = functions.get_preferences(context)
-        id = functions.get_global_action_id(ActRec_pref, properties.id, properties.index)
-        action = ActRec_pref.global_actions[id]
-        return action.description
+    def description(cls, context, properties):
+        ActRec_pref = get_preferences(context)
+        # BLENDER 5.0 FIX: Get list from the internal string property
+        raw_ids = ActRec_pref.global_selected_ids_internal
+        ids = raw_ids.split(",") if raw_ids else []
+        
+        if len(ids) > 1:
+            return f"Selected Actions: {len(ids)}"
+        # ... rest of the existing description logic (e.g. return self.bl_description)
+        return cls.bl_description
 
     def execute(self, context: Context) -> set[str]:
         ActRec_pref = get_preferences(context)

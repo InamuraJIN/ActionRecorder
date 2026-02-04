@@ -61,17 +61,13 @@ class AR_category(shared.Id_based, PropertyGroup):
         return self.get("selected", False)
 
     def set_selected(self, value: bool):
-        """
-        set the category as active, False will not change anything
-
-        Args:
-            value (bool): state of category
-        """
         ActRec_pref = get_preferences(bpy.context)
-        selected_id = ActRec_pref.get("categories.selected_id", "")
-        # implementation similar to a UIList (only one selection of all can be active)
+        # CHANGED: Use the new property we created in preferences.py
+        selected_id = ActRec_pref.selected_category_id 
+        
         if value:
-            ActRec_pref["categories.selected_id"] = self.id
+            # CHANGED: Use the new property instead of ["categories.selected_id"]
+            ActRec_pref.selected_category_id = self.id
             self['selected'] = value
             category = ActRec_pref.categories.get(selected_id, None)
             if category:
@@ -80,9 +76,8 @@ class AR_category(shared.Id_based, PropertyGroup):
             self['selected'] = value
 
     label: StringProperty()
-    selected: BoolProperty(description='Select this Category',
-                           name='Select', get=get_selected, set=set_selected)
-    actions: CollectionProperty(type=AR_category_actions)
+    selected: BoolProperty(description='Select this Category', name='Select', get=get_selected, set=set_selected)
+    actions: CollectionProperty(type=AR_category_actions) 
     areas: CollectionProperty(type=AR_category_areas)
 # endregion
 

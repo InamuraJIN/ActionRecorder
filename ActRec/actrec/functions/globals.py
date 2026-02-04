@@ -133,22 +133,12 @@ def get_global_action_id(ActRec_pref: AR_preferences, id: str, index: int) -> Un
         return None
 
 
-def get_global_action_ids(ActRec_pref: AR_preferences, id: str, index: int) -> list:
-    """
-    get global action is inside a list or selected global actions if not found
-
-    Args:
-        ActRec_pref (AR_preferences): preferences of this addon
-        id (str): id to check
-        index (int): index of action
-
-    Returns:
-        list: list with ids of actions
-    """
-    id = get_global_action_id(ActRec_pref, id, index)
-    if id is None:
-        return ActRec_pref.get("global_actions.selected_ids", [])
-    return [id]
+def get_global_action_ids(ActRec_pref, id, index):
+    # BLENDER 5.0 FIX: Convert the internal string back to a list for the operators
+    raw_ids = ActRec_pref.global_selected_ids_internal
+    if raw_ids:
+        return raw_ids.split(",")
+    return []
 
 
 def add_empty_action_keymap(id: str, km: KeyMap) -> KeyMapItem:

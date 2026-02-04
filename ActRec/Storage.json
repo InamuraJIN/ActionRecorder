@@ -51,13 +51,13 @@
           "id": "c7a7a7d9164611ecb20d70c94ef23b30"
         },
         {
+          "id": "c7a7f5bd164611ec8b7d70c94ef23b30"
+        },
+        {
           "id": "c7a7cecf164611ecbea570c94ef23b30"
         },
         {
           "id": "c7a7ced2164611ec9dcf70c94ef23b30"
-        },
-        {
-          "id": "c7a7f5bd164611ec8b7d70c94ef23b30"
         }
       ],
       "areas": [
@@ -128,7 +128,7 @@
   ],
   "actions": [
     {
-      "icon": 3,
+      "icon": 47,
       "icon_name": "CANCEL",
       "id": "c7a1f271164611eca91770c94ef23b30",
       "label": "Delete",
@@ -264,7 +264,7 @@
       ]
     },
     {
-      "icon": 289,
+      "icon": 334,
       "icon_name": "MESH_UVSPHERE",
       "id": "c7a73281164611eca36c70c94ef23b30",
       "label": "AddCubeSphere",
@@ -333,7 +333,7 @@
       ]
     },
     {
-      "icon": 608,
+      "icon": 6,
       "icon_name": "AUTOMERGE_ON",
       "id": "c7a759ee164611ecb84c70c94ef23b30",
       "label": "Merge",
@@ -362,10 +362,10 @@
       ]
     },
     {
-      "icon": 391,
+      "icon": 393,
       "icon_name": "ALIGN_CENTER",
       "id": "c7a780f7164611ecb42870c94ef23b30",
-      "label": "CheckerEdoge",
+      "label": "Checker Edge Loop",
       "description": "Play this Action Button",
       "macros": [
         {
@@ -391,7 +391,7 @@
       ]
     },
     {
-      "icon": 462,
+      "icon": 445,
       "icon_name": "MOD_CAST",
       "id": "c7a7a7d9164611ecb20d70c94ef23b30",
       "label": "Crease&Shap",
@@ -420,7 +420,7 @@
       ]
     },
     {
-      "icon": 288,
+      "icon": 325,
       "icon_name": "MESH_CIRCLE",
       "id": "c7a7cecf164611ecbea570c94ef23b30",
       "label": "CreaseClear",
@@ -449,7 +449,7 @@
       ]
     },
     {
-      "icon": 201,
+      "icon": 212,
       "icon_name": "GROUP_VERTEX",
       "id": "c7a7ced2164611ec9dcf70c94ef23b30",
       "label": "ResetShape",
@@ -468,7 +468,7 @@
       ]
     },
     {
-      "icon": 555,
+      "icon": 566,
       "icon_name": "PIVOT_ACTIVE",
       "id": "c7a7f5bd164611ec8b7d70c94ef23b30",
       "label": "Origin To Select",
@@ -527,7 +527,7 @@
       ]
     },
     {
-      "icon": 307,
+      "icon": 337,
       "icon_name": "META_CUBE",
       "id": "c7a81cb8164611ecb9ca70c94ef23b30",
       "label": "Seam&UV",
@@ -625,7 +625,7 @@
       ]
     },
     {
-      "icon": 132,
+      "icon": 161,
       "icon_name": "UV_DATA",
       "id": "c7a843b2164611ec929870c94ef23b30",
       "label": "ClearSeam",
@@ -702,7 +702,7 @@
       ]
     },
     {
-      "icon": 166,
+      "icon": 198,
       "icon_name": "TEXTURE_DATA",
       "id": "c7a8918b164611ecb21d70c94ef23b30",
       "label": "AlignLayout",
@@ -761,7 +761,7 @@
       ]
     },
     {
-      "icon": 287,
+      "icon": 327,
       "icon_name": "MESH_CUBE",
       "id": "c7a8b816164611ecab0970c94ef23b30",
       "label": "AddCube",
@@ -859,7 +859,7 @@
       ]
     },
     {
-      "icon": 127,
+      "icon": 142,
       "icon_name": "NODE_MATERIAL",
       "id": "146b8a47986011ed86faa8a1598ce02d",
       "label": "Subd Smooth",
@@ -869,28 +869,8 @@
           "icon": 0,
           "icon_name": "NONE",
           "id": "c7a40355164611ecb9cd70c94ef23b30",
-          "label": "Shade Smooth",
+          "label": "Shade Smooth by Angle",
           "command": "bpy.ops.object.shade_smooth()",
-          "active": true,
-          "ui_type": "",
-          "operator_execution_context": "EXEC_DEFAULT"
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a42aa4164611ecba6570c94ef23b30",
-          "label": "Auto Smooth = True",
-          "command": "bpy.context.object.data.use_auto_smooth = True",
-          "active": true,
-          "ui_type": "",
-          "operator_execution_context": "EXEC_DEFAULT"
-        },
-        {
-          "icon": 0,
-          "icon_name": "NONE",
-          "id": "c7a6be1e164611ec8ede70c94ef23b30",
-          "label": "Auto Smooth Angle = 3.14159",
-          "command": "bpy.context.object.data.auto_smooth_angle = 3.14159",
           "active": true,
           "ui_type": "",
           "operator_execution_context": "EXEC_DEFAULT"
@@ -898,7 +878,7 @@
       ]
     },
     {
-      "icon": 127,
+      "icon": 142,
       "icon_name": "NODE_MATERIAL",
       "id": "c7a40353164611ecbaad70c94ef23b30",
       "label": "Subd Smooth",
@@ -919,7 +899,7 @@
           "icon_name": "NONE",
           "id": "35bf6e3e986011edb5cfa8a1598ce02d",
           "label": "Shade Smooth",
-          "command": "bpy.ops.object.shade_smooth(use_auto_smooth=True)",
+          "command": "bpy.ops.object.shade_smooth()",
           "active": true,
           "ui_type": "VIEW_3D",
           "operator_execution_context": "EXEC_DEFAULT"
@@ -947,7 +927,7 @@
       ]
     },
     {
-      "icon": 256,
+      "icon": 30,
       "icon_name": "RESTRICT_SELECT_OFF",
       "id": "4275b287986211edb4bca8a1598ce02d",
       "label": "SelectCube",
